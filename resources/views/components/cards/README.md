@@ -51,11 +51,11 @@ Componentes Blade baseados nas referências de Cards do Figma.
 
 ### Total a vencer
 
-<x-cards.finance-card variant="overdue" title="Total a Vencer" value="R$12.300,00" indicator="↘"/>
+<x-cards.finance-card variant="overdue" title="Total a Vencer" value="R$12.300,00"/>
 
 ### Faturas pendentes
 
-<x-cards.finance-card variant="pending" title="Faturas Pendentes" value="14" indicator=""/>
+<x-cards.finance-card variant="pending" title="Faturas Pendentes" value="14" />
 
 ### Variantes
 

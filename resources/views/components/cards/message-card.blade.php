@@ -22,26 +22,65 @@
         display: flex;
         min-height: 76px;
         align-items: center;
-        gap: 12px;
+        gap: var(--spacing-sm);
         border-radius: 7px;
-        padding: 12px 14px;
-        font-family: inherit;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-family: var(--font-family);
     }
-    .message-card--filled { background: #edfffc; color: #123c3b; }
-    .message-card--outlined { border: 1px solid #e9e9e9; background: #fff; color: #414141; }
+
+    .message-card-filled {
+        background: var(--color-surface);
+        color: var(--color-secondary);
+    }
+
+    .message-card-outlined {
+        border: 1px solid var(--color-border);
+        background: var(--color-background);
+        color: var(--color-heading);
+    }
+
     .message-card__icon {
         display: block;
-        width: 32px;
-        height: 32px;
-        flex: 0 0 32px;
+        width: var(--spacing-xl);
+        height: var(--spacing-xl);
         border-radius: 50%;
-        background: #fff1e3;
+        background: var(--color-surface);
     }
-    .message-card--filled .message-card__icon { background: #008f83; }
-    .message-card__body { display: flex; min-width: 0; flex-direction: column; gap: 1px; }
-    .message-card__value { font-size: 20px; font-weight: 600; line-height: 1.15; }
-    .message-card--filled .message-card__value { color: #009688; }
-    .message-card__label { font-size: 14px; line-height: 1.3; }
-    .message-card__trend { margin-top: 4px; color: #35a65b; font-size: 9px; }
-    .message-card__trend span { margin-left: 5px; color: #899295; }
+
+    .message-card-filled .message-card__icon {
+        background: var(--color-primary);
+    }
+
+    .message-card__body {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .message-card__value {
+        font-size: var(--font-size-body);
+        font-weight: 600;
+        line-height: 1.15;
+    }
+
+    .message-card-filled .message-card__value {
+        color: var(--color-primary);
+    }
+
+    .message-card__label {
+        font-size: var(--font-size-label);
+        line-height: 1.3;
+    }
+
+    .message-card__trend {
+        margin-top: var(--spacing-xs);
+        color: var(--color-success);
+        font-size: var(--font-size-caption);
+    }
+
+    .message-card__trend span {
+        margin-left: var(--spacing-xs);
+            color: var(--color-caption);
+}
 </style>

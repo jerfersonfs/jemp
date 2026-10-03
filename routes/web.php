@@ -10,3 +10,4 @@ Route::get('/', function () {
 Route::get('/components-preview', function () {
     return view('components-preview');
 });
+   
