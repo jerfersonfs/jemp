@@ -18,7 +18,7 @@
         </div>
     @endif
 
-    <!-- Formulário apontando para a nossa rota POST -->
+    <!-- Formulário apontando para rota POST -->
     <form method="POST" action="{{ route('login.post') }}">
         @csrf <!-- Proteção obrigatória do Laravel contra ataques CSRF -->
 

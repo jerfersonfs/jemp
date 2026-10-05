@@ -19,5 +19,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return 'Bem-vindo ao JEMP! Você está logado.';
     })->name('dashboard');
-
+// CRUD de Produtos
+    Route::resource('produtos', \App\Http\Controllers\ProductController::class);
 });
