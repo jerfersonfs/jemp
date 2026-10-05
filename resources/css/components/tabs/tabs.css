@@ -1,0 +1,19 @@
+.jemp-tabset { min-width: 0; font-family: var(--font-family); }
+.jemp-tabset__list { display: flex; min-width: 0; gap: var(--spacing-lg); overflow-x: auto; border-bottom: 1px solid color-mix(in srgb, var(--color-secondary) 16%, white); scrollbar-width: thin; }
+.jemp-tabset__tab { position: relative; display: inline-flex; min-height: 2.75rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 0; border-bottom: 2px solid transparent; background: transparent; padding: .625rem .125rem; color: var(--color-caption); font: inherit; font-size: var(--font-size-label); font-weight: 600; cursor: pointer; transition: border-color 140ms ease, color 140ms ease; }
+.jemp-tabset__tab:hover { color: var(--color-heading); }
+.jemp-tabset__tab[aria-selected="true"] { border-bottom-color: var(--color-primary); color: var(--color-primary); }
+.jemp-tabset__tab:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 25%, transparent); outline-offset: -3px; border-radius: .375rem; }
+.jemp-tabset__panels { padding-top: var(--spacing-md); }
+.jemp-tabset__panel[hidden] { display: none; }
+.jemp-tabset__panel:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 25%, transparent); outline-offset: 3px; border-radius: .375rem; }
+
+.jemp-tabset--pills .jemp-tabset__list { gap: var(--spacing-sm); border-bottom: 0; }
+.jemp-tabset--pills .jemp-tabset__tab { min-height: 2.75rem; border: 1px solid transparent; border-radius: .5rem; background: var(--color-surface); padding-inline: var(--spacing-md); color: var(--color-caption); }
+.jemp-tabset--pills .jemp-tabset__tab:hover { border-color: color-mix(in srgb, var(--color-primary) 25%, white); color: var(--color-secondary); }
+.jemp-tabset--pills .jemp-tabset__tab[aria-selected="true"] { border-color: var(--color-primary); background: var(--color-surface); color: var(--color-primary); }
+.jemp-tabset--pills .jemp-tabset__panels { padding-top: var(--spacing-md); }
+
+@media (prefers-reduced-motion: reduce) {
+    .jemp-tabset__tab { transition: none; }
+}

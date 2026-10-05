@@ -1,109 +1,93 @@
 # Dialogs
 
-Componentes Blade reutilizáveis baseados na seção de Dialogs do Figma.
+Componentes Blade reutilizáveis de diálogo, formulário, confirmação, abas, data e notificação.
 
-## 1. Alert
+## Dialog básico
 
-### Uso básico
-
-<x-dialogs.alert variant="warning" message="Operação cancelada."/>
-
-### Exemplos
-
-<x-dialogs.alert variant="error" message="Não foi possível concluir a operação."/>
-
-<x-dialogs.alert variant="success" message="Produto cadastrado com sucesso."/>
-
-<x-dialogs.alert variant="info" message="Produto editado."/>
-
-<x-dialogs.alert variant="bell" message="40 novas pendências para pagamento."/>
-
-### Variantes
-
-- `warning`
-- `error`
-- `success`
-- `info`
-- `bell`
-
----
-
-## 2. Confirmation
-
-### Uso básico
-
-<x-dialogs.confirmation  title="Excluir produto" message="Esta ação não poderá ser desfeita." confirm-label="Excluir produto"/>
-
----
-
-## 3. Dialog
-
-### Uso básico
-
-<x-dialogs.dialog title="Cadastrar produto" description="Informe as características do produto.">
+```blade
+<x-dialogs.dialog title="Novo registro" description="Preencha os dados.">
     Conteúdo do dialog
 </x-dialogs.dialog>
+```
 
----
+Props principais: `title`, `description`, `size` (`small`, `medium`, `large`), `submit-label`, `cancel-label` e `show-actions`.
 
-## 4. Product Form
+## Confirmação
 
-### Uso básico
+```blade
+<x-dialogs.confirmation title="Excluir produto" message="Esta ação não poderá ser desfeita." confirm-label="Excluir" />
+```
 
-<x-dialogs.form />
+## Formulário compartilhado
 
-### Modo de edição
+O componente `<x-dialogs.form-dialog>` pode ser usado para formulários de perfil, inclusão e edição de registros. Informe os campos por `fields`; o controller deve fornecer `action`, valores e processamento do formulário.
 
-<x-dialogs.form mode="edit" :values="$product"/>
+```blade
+<x-dialogs.form-dialog
+    title="Cadastrar produto"
+    action="{{ route('products.store') }}"
+    submit-label="Cadastrar"
+    :fields="[
+        ['name' => 'name', 'label' => 'Produto', 'type' => 'text', 'required' => true],
+        ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'required' => true],
+    ]" />
+```
 
-### Observações
+Para edição, use `mode="edit"` com `method="PUT"` ou `method="PATCH"` e forneça `action`. Essa variação aplica detalhes azuis usando `--color-info` no título, borda, foco dos campos e ação principal. O modo padrão é `create`, com detalhes na cor primária do JEMP. Os tipos aceitos são inputs HTML, `select` com `options` e `textarea`. Há suporte a `required`, `readonly`, `disabled`, `placeholder`, valores antigos e erros de validação.
 
-O componente suporta os modos de criação e edição.
+```blade
+<x-dialogs.form-dialog
+    mode="edit"
+    title="Editar produto"
+    method="PUT"
+    action="{{ route('products.update', $product) }}"
+    :fields="$fields" />
+```
 
----
+## Seletor de data
 
-## 5. Profile Dialog
+Usa o input nativo de data do navegador para permitir entrada pelo teclado e calendário nativo.
 
-### Uso básico
+```blade
+<x-dialogs.date-picker name="due_date" label="Data de vencimento" :value="$dueDate" min="2025-01-01" />
+```
 
-<x-dialogs.profile-dialog :name="$name" :email="$email" :username="$username"/>
+Props: `name`, `label`, `value`, `min`, `max`, `required` e `disabled`.
 
----
+## Dialog com abas
 
-## 6. Tabbed Dialog
-
-### Uso básico
-
-<x-dialogs.tabbed-dialog first-label="Acesso" second-label="Senha">
-    <x-slot:second>
-        Conteúdo da aba Senha
-    </x-slot:second>
-
-    Conteúdo da aba Acesso
+```blade
+<x-dialogs.tabbed-dialog first-label="Dados" second-label="Acesso">
+    Conteúdo da primeira aba
+    <x-slot:second>Conteúdo da segunda aba</x-slot:second>
 </x-dialogs.tabbed-dialog>
+```
 
----
+## Dialog de detalhes
 
-## 7. Popover
+`<x-dialogs.details-dialog>` apresenta informações de um registro em uma grade de rótulos/valores, com seções opcionais em abas. Use `variant="indicator"` para mostrar a lista tabular de registros que compõem um indicador; o padrão é `record`.
 
-### Uso básico
+```blade
+<x-dialogs.details-dialog
+    title="Detalhes do cliente"
+    :details="[
+        ['label' => 'Nome', 'value' => $customer->name],
+        ['label' => 'Documento', 'value' => $customer->document],
+    ]" />
 
-<x-dialogs.popover trigger="Cadastrar produto" title="Cadastro rápido">
-    Conteúdo do popover
-</x-dialogs.popover>
+<x-dialogs.details-dialog
+    variant="indicator"
+    title="Notas que compõem o indicador"
+    :columns="$columns"
+    :rows="$invoices" />
+```
 
----
+Associe `data-dialog-open="id"` no gatilho à camada `data-dialog-layer="id"` que envolve o componente. A preview demonstra abertura por uma ação na linha e pela ação "Ver dados" do indicador.
 
-## 8. Date Picker
+## Alertas
 
-### Uso básico
+`<x-dialogs.alert>` oferece as variantes `warning`, `error`, `success`, `info` e `bell`, além de `title`, `message` e `dismissible`.
 
-<x-dialogs.date-picker month="1" year="2025" selected-day="5"/>
+## Integração e preview
 
----
-
-## Observações
-
-Os componentes de formulário fornecem a estrutura visual e os campos nativos necessários.
-
-Ao integrar os componentes em uma tela, conecte seus métodos, validações e bindings aos fluxos correspondentes da aplicação.
+Formulários devem receber suas rotas e dados do controller. A página `preview/components-preview` usa valores de demonstração e evita enviar os formulários. Para abrir uma camada de diálogo na preview, associe `data-dialog-open="id"` no botão a uma camada `data-dialog-layer="id"`.

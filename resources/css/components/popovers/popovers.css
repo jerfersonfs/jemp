@@ -1,0 +1,16 @@
+.jemp-popover { position: relative; display: inline-flex; min-width: 0; font-family: var(--font-family); }
+.jemp-popover__trigger { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--color-primary) 24%, white); border-radius: .5rem; background: var(--color-primary); padding: .5rem 1rem; color: white; font: inherit; font-size: var(--font-size-button); font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); transition: background-color 140ms ease, box-shadow 140ms ease; }
+.jemp-popover__trigger:hover { background: color-mix(in srgb, var(--color-primary) 90%, black); box-shadow: 0 2px 4px rgb(0 0 0 / 8%); }
+.jemp-popover__trigger:focus-visible, .jemp-popover__close:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent); outline-offset: 2px; }
+.jemp-popover__panel[hidden] { display: none; }
+.jemp-popover__panel { position: absolute; z-index: 40; top: calc(100% + var(--spacing-sm)); left: 0; width: min(20rem, calc(100vw - 2rem)); max-height: min(42rem, calc(100vh - 2rem)); overflow: auto; border: 1px solid color-mix(in srgb, var(--color-secondary) 14%, white); border-radius: .75rem; background: var(--color-surface); padding: var(--spacing-md); color: var(--color-caption); box-shadow: 0 4px 8px rgb(0 0 0 / 9%); animation: jemp-popover-in 140ms ease both; }
+.jemp-popover--wide .jemp-popover__panel { width: min(30rem, calc(100vw - 2rem)); }
+.jemp-popover__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--spacing-sm); }
+.jemp-popover__header h2 { margin: 0; color: var(--color-primary); font-size: var(--font-size-h3); line-height: 1.3; }
+.jemp-popover__header p { margin: var(--spacing-xs) 0 0; color: var(--color-caption); font-size: var(--font-size-caption); line-height: 1.45; }
+.jemp-popover__close { flex: 0 0 auto; border: 0; border-radius: .375rem; background: transparent; padding: .125rem .375rem; color: var(--color-caption); font: inherit; font-size: 1.25rem; cursor: pointer; }
+.jemp-popover__close:hover { background: color-mix(in srgb, white 70%, transparent); }
+.jemp-popover__body { display: grid; gap: var(--spacing-sm); margin-top: var(--spacing-md); }
+.jemp-popover__actions { display: flex; justify-content: flex-end; gap: var(--spacing-sm); margin-top: var(--spacing-md); }
+@keyframes jemp-popover-in { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .jemp-popover__panel { animation: none; } }

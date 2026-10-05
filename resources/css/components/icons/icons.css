@@ -1,0 +1,16 @@
+.jemp-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.jemp-icon i { display: block; font-size: inherit; line-height: 1; }
+.jemp-icon--sm { font-size: 1rem; }
+.jemp-icon--md { font-size: 1.25rem; }
+.jemp-icon--lg { font-size: 1.5rem; }
+.jemp-icon--xl { font-size: 2rem; }
+.jemp-icon--black { color: #000; }
+.jemp-icon--white { color: #fff; }

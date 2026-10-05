@@ -20,7 +20,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
-/resources/views/components-preview.blade.php
+/resources/views/preview/components-preview.blade.php
+/resources/css/preview
 /vendor
 _ide_helper.php
 Homestead.json

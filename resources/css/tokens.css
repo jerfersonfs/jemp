@@ -14,15 +14,17 @@
     --color-info:#2563EB;
 
     /* Tipografia */
-    --font-family: 'Plus Jakarta Sans', sans-serif;
+    --font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
 
-    --font-size-h1: 32px;
-    --font-size-h2: 24px;
-    --font-size-body: 16px;
-    --font-size-caption: 12px;
-    --font-size-label: 14px;
-    --font-size-button: 14px;
-    --font-size-section: 14px;
+    --font-size-display: clamp(2.25rem, 4vw, 3rem);
+    --font-size-h1: clamp(2rem, 3vw, 2.5rem);
+    --font-size-h2: clamp(1.5rem, 2.25vw, 2rem);
+    --font-size-h3: 1.25rem;
+    --font-size-body: 1rem;
+    --font-size-caption: 0.875rem;
+    --font-size-label: 0.9375rem;
+    --font-size-button: 0.9375rem;
+    --font-size-section: 1.125rem;
 
     /* Espaçamento */
     --spacing-xs: 4px;

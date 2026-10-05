@@ -1,0 +1,107 @@
+.jemp-dialog,
+.jemp-confirmation {
+    box-sizing: border-box;
+    width: min(100%, 38rem);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, white);
+    border-radius: .75rem;
+    background: white;
+    padding: var(--spacing-lg);
+    color: var(--color-caption);
+    font-family: var(--font-family);
+    box-shadow: 0 20px 24px -4px rgb(0 0 0 / 8%), 0 8px 8px -4px rgb(0 0 0 / 3%);
+}
+
+.jemp-dialog--small { width: min(100%, 28rem); }
+.jemp-dialog--large { width: min(100%, 46rem); }
+.jemp-dialog--editing { border-color: color-mix(in srgb, var(--color-info) 32%, white); }
+
+.jemp-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--spacing-md); }
+.jemp-dialog__title { margin: 0; color: var(--color-primary); font-size: var(--font-size-h2); font-weight: 700; line-height: 1.25; }
+.jemp-dialog__description { margin: var(--spacing-xs) 0 0; color: var(--color-caption); font-size: var(--font-size-body); line-height: 1.55; }
+.jemp-dialog--editing .jemp-dialog__title { color: var(--color-info); }
+.jemp-dialog--editing .jemp-dialog__close:hover { color: var(--color-info); }
+.jemp-dialog__close { flex: 0 0 auto; border: 0; border-radius: .5rem; background: transparent; padding: .15rem .4rem; color: var(--color-caption); cursor: pointer; font: inherit; font-size: 1.5rem; line-height: 1; }
+.jemp-dialog__close:hover { background: var(--color-background); }
+.jemp-dialog__body { margin-top: var(--spacing-lg); }
+.jemp-details-dialog__body { margin-top: var(--spacing-lg); }
+.jemp-details-dialog__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-md); margin: 0; }
+.jemp-details-dialog__item { min-width: 0; border: 1px solid color-mix(in srgb, var(--color-secondary) 14%, white); border-radius: .5rem; background: white; padding: var(--spacing-md); }
+.jemp-details-dialog__item dt { color: var(--color-caption); font-size: var(--font-size-caption); }
+.jemp-details-dialog__item dd { margin: var(--spacing-xs) 0 0; color: var(--color-heading); font-size: var(--font-size-body); font-weight: 600; overflow-wrap: anywhere; }
+.jemp-details-dialog--indicator .jemp-details-dialog__body { max-height: min(55vh, 34rem); overflow: auto; }
+.jemp-details-dialog__section { min-width: 0; }
+.jemp-details-dialog .jemp-dialog__footer { margin-top: var(--spacing-xl); }
+.jemp-dialog__footer { display: flex; justify-content: flex-end; gap: var(--spacing-sm); margin-top: var(--spacing-lg); }
+.jemp-dialog__button,
+.jemp-confirmation__button { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: .5rem; padding: .625rem 1rem; font: inherit; font-size: var(--font-size-button); font-weight: 600; line-height: 1.25; cursor: pointer; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }
+.jemp-dialog__button:active,
+.jemp-confirmation__button:active { box-shadow: none; }
+.jemp-dialog__button--primary { background: var(--color-primary); color: white; }
+.jemp-dialog__button--primary:hover { background: color-mix(in srgb, var(--color-primary) 88%, black); }
+.jemp-form-dialog--edit .jemp-dialog__button--primary { background: var(--color-info); }
+.jemp-form-dialog--edit .jemp-dialog__button--primary:hover { background: color-mix(in srgb, var(--color-info) 88%, black); }
+.jemp-dialog__button--secondary,
+.jemp-confirmation__button { border-color: color-mix(in srgb, var(--color-primary) 22%, white); background: white; color: var(--color-secondary); }
+.jemp-dialog__button--secondary:hover,
+.jemp-confirmation__button:hover { background: var(--color-background); }
+
+.jemp-confirmation { --confirm-color: var(--color-danger); width: min(100%, 30rem); border-radius: .75rem; }
+.jemp-confirmation--primary { --confirm-color: var(--color-primary); }
+.jemp-confirmation__title { margin: 0; color: var(--color-heading); font-size: var(--font-size-h2); }
+.jemp-confirmation__message { margin: var(--spacing-sm) 0 0; font-size: var(--font-size-body); line-height: 1.55; }
+.jemp-confirmation__actions { display: flex; justify-content: flex-end; gap: var(--spacing-sm); margin-top: var(--spacing-lg); }
+.jemp-confirmation__button--confirm { border-color: var(--confirm-color); background: var(--confirm-color); color: white; }
+.jemp-confirmation__button--confirm:hover { background: color-mix(in srgb, var(--confirm-color) 88%, black); }
+
+.jemp-form-dialog { display: grid; gap: var(--spacing-md); font-family: var(--font-family); }
+.jemp-form-dialog--create { --form-accent: var(--color-primary); }
+.jemp-form-dialog--edit { --form-accent: var(--color-info); }
+.jemp-form-dialog__field { display: grid; grid-template-columns: minmax(6rem, .55fr) minmax(0, 1.6fr); align-items: center; gap: var(--spacing-sm); color: var(--color-secondary); font-size: var(--font-size-label); }
+.jemp-form-dialog__field label { font-weight: 500; }
+.jemp-form-dialog__field input,
+.jemp-form-dialog__field select,
+.jemp-form-dialog__field textarea,
+.jemp-date-field__input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--form-accent, var(--color-primary)) 32%, white); border-radius: .5rem; background: white; padding: .625rem .875rem; color: var(--color-secondary); font: inherit; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); transition: border-color 140ms ease, box-shadow 140ms ease; }
+.jemp-form-dialog__field textarea { min-height: 6rem; resize: vertical; }
+.jemp-form-dialog__field input:focus,
+.jemp-form-dialog__field select:focus,
+.jemp-form-dialog__field textarea:focus,
+.jemp-date-field__input:focus { outline: 0; border-color: var(--form-accent, var(--color-primary)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--form-accent, var(--color-primary)) 17%, transparent); }
+.jemp-form-dialog__field [aria-invalid="true"] { border-color: var(--color-danger); }
+.jemp-form-dialog__error { grid-column: 2; color: var(--color-danger); font-size: var(--font-size-caption); }
+.jemp-form-dialog__footer { display: flex; justify-content: flex-end; margin-top: var(--spacing-xs); }
+
+.jemp-date-field { display: grid; gap: var(--spacing-xs); color: var(--color-secondary); font-family: var(--font-family); }
+.jemp-date-field__label { font-size: var(--font-size-label); font-weight: 600; }
+.jemp-date-field__input { max-width: 100%; min-height: 2.875rem; accent-color: var(--color-primary); }
+.jemp-date-field__input:disabled { background: var(--color-background); cursor: not-allowed; opacity: .7; }
+
+.jemp-tabs { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); font-family: var(--font-family); }
+.jemp-tabs > input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+.jemp-tabs > label { border: 1px solid color-mix(in srgb, var(--color-primary) 24%, white); border-radius: .5rem .5rem 0 0; background: white; padding: .5rem .875rem; color: var(--color-secondary); font-size: var(--font-size-button); cursor: pointer; transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease; }
+.jemp-tabs > input:checked + label { border-color: var(--color-primary); background: var(--color-primary); color: white; }
+.jemp-tabs > input:focus-visible + label { outline: 3px solid color-mix(in srgb, var(--color-primary) 32%, transparent); outline-offset: 2px; }
+.jemp-tabs__panels { flex-basis: 100%; border: 1px solid color-mix(in srgb, var(--color-primary) 24%, white); border-radius: 0 .5rem .5rem .5rem; background: var(--color-surface); padding: var(--spacing-md); }
+.jemp-tabs__panel:nth-child(2) { display: none; }
+.jemp-tabs > input:nth-of-type(2):checked ~ .jemp-tabs__panels .jemp-tabs__panel:first-child { display: none; }
+.jemp-tabs > input:nth-of-type(2):checked ~ .jemp-tabs__panels .jemp-tabs__panel:nth-child(2) { display: block; }
+
+.jemp-notice { --notice-color: var(--color-warning); --notice-bg: color-mix(in srgb, var(--color-warning) 8%, white); display: flex; min-height: 3.5rem; align-items: center; gap: var(--spacing-sm); border: 1px solid color-mix(in srgb, var(--notice-color) 28%, white); border-radius: .5rem; background: var(--notice-bg); padding: var(--spacing-sm) var(--spacing-md); color: var(--notice-color); font-family: var(--font-family); }
+.jemp-notice--error { --notice-color: var(--color-danger); --notice-bg: color-mix(in srgb, var(--color-danger) 7%, white); }
+.jemp-notice--success { --notice-color: var(--color-success); --notice-bg: color-mix(in srgb, var(--color-success) 7%, white); }
+.jemp-notice--info { --notice-color: var(--color-info); --notice-bg: color-mix(in srgb, var(--color-info) 7%, white); }
+.jemp-notice--bell { --notice-color: var(--color-primary); --notice-bg: var(--color-surface); }
+.jemp-notice__icon { display: grid; width: 1.75rem; height: 1.75rem; flex: 0 0 1.75rem; place-items: center; font-size: 1.25rem; font-weight: 700; }
+.jemp-notice__content { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.jemp-notice__title { font-size: var(--font-size-label); font-weight: 600; }
+.jemp-notice__message { font-size: var(--font-size-body); line-height: 1.4; }
+.jemp-notice__close { border: 0; background: transparent; color: var(--color-secondary); cursor: pointer; font: inherit; font-size: 1.5rem; line-height: 1; }
+.jemp-notice__actions { display: flex; align-items: center; gap: var(--spacing-sm); }
+
+@media (max-width: 520px) {
+    .jemp-dialog__footer, .jemp-confirmation__actions { flex-wrap: wrap; }
+    .jemp-form-dialog__field { grid-template-columns: 1fr; gap: var(--spacing-xs); }
+    .jemp-form-dialog__error { grid-column: 1; }
+    .jemp-notice { align-items: flex-start; }
+    .jemp-details-dialog__grid { grid-template-columns: 1fr; }
+}

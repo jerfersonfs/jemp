@@ -7,7 +7,5 @@ Route::get('/', function () {
 });*/
 
 // Rota para teste de componentes
-Route::get('/components-preview', function () {
-    return view('components-preview');
-});
-   
+Route::view('/components-preview', 'preview.components-preview')
+    ->name('components.preview');

@@ -1,0 +1,37 @@
+.jemp-table-region { min-width: 0; }
+.jemp-table-region__filters { margin-bottom: var(--spacing-md); }
+.jemp-table-region__footer { margin-top: var(--spacing-md); }
+.jemp-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+.jemp-table-scroll { width: 100%; overflow-x: auto; border: 1px solid color-mix(in srgb, var(--color-secondary) 14%, white); border-radius: .75rem; background: white; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); scrollbar-color: color-mix(in srgb, var(--color-secondary) 24%, white) transparent; }
+.jemp-table { width: 100%; min-width: 42rem; border-collapse: separate; border-spacing: 0 3px; padding: var(--spacing-xs); color: var(--color-secondary); font-family: var(--font-family); font-size: var(--font-size-body); text-align: left; }
+.jemp-table caption { padding: var(--spacing-sm) var(--spacing-md); color: var(--color-caption); text-align: left; }
+.jemp-table th { padding: .75rem var(--spacing-sm); color: var(--color-heading); font-size: var(--font-size-label); font-weight: 600; line-height: 1.4; white-space: nowrap; }
+.jemp-table td { border-block: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); background: var(--color-surface); padding: .7rem var(--spacing-sm); line-height: 1.35; white-space: nowrap; transition: background-color 120ms ease; }
+.jemp-table tbody tr:hover td { background: color-mix(in srgb, var(--color-surface) 70%, white); }
+.jemp-table tbody td:first-child { border-left: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); border-radius: .625rem 0 0 .625rem; padding-left: var(--spacing-md); }
+.jemp-table tbody td:last-child { border-right: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); border-radius: 0 .625rem .625rem 0; padding-right: var(--spacing-md); }
+.jemp-table__status { display: inline-flex; min-height: 1.5rem; align-items: center; justify-content: center; border-radius: 999px; padding: .125rem .625rem; color: white; font-size: var(--font-size-caption); font-weight: 600; line-height: 1.2; }
+.jemp-table__status--success { background: var(--color-success); }
+.jemp-table__status--warning { background: var(--color-warning); }
+.jemp-table__status--danger { background: var(--color-danger); }
+.jemp-table__status--info { background: var(--color-info); }
+.jemp-table__status--neutral { background: var(--color-caption); }
+.jemp-table__detail { border: 0; border-radius: .375rem; background: transparent; padding: .25rem .375rem; color: var(--color-primary); font: inherit; font-size: var(--font-size-caption); font-weight: 600; cursor: pointer; }
+.jemp-table__detail:hover { background: var(--color-surface); }
+.jemp-table__detail:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 28%, transparent); outline-offset: 2px; }
+.jemp-table__empty { padding: var(--spacing-xl) !important; color: var(--color-caption); text-align: center; white-space: normal !important; }
+.jemp-table-scroll:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 28%, transparent); outline-offset: 2px; }
+
+.jemp-table-region--filtered .jemp-table-scroll { border-radius: .75rem; }
+.jemp-table-region--spreadsheet .jemp-table-scroll { border-radius: .375rem; box-shadow: none; }
+.jemp-table-region--spreadsheet .jemp-table { border-collapse: collapse; border-spacing: 0; padding: 0; }
+.jemp-table-region--spreadsheet .jemp-table th { border: 1px solid color-mix(in srgb, var(--color-secondary) 16%, white); background: color-mix(in srgb, var(--color-surface) 64%, white); padding: .625rem var(--spacing-sm); }
+.jemp-table-region--spreadsheet .jemp-table td { border: 1px solid color-mix(in srgb, var(--color-secondary) 14%, white); border-radius: 0 !important; background: white; padding: .625rem var(--spacing-sm); }
+.jemp-table-region--spreadsheet .jemp-table tbody tr:hover td { background: color-mix(in srgb, var(--color-surface) 70%, white); }
+.jemp-table-region--spreadsheet .jemp-table tbody td:first-child,
+.jemp-table-region--spreadsheet .jemp-table tbody td:last-child { padding-inline: var(--spacing-sm); }
+
+@media (max-width: 640px) {
+    .jemp-table { min-width: 38rem; }
+    .jemp-table th, .jemp-table td { padding-inline: .625rem; }
+}

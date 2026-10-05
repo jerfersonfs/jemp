@@ -45,6 +45,8 @@ Componentes Blade baseados nas referências de Cards do Figma.
 - `large`
 - `compact`
 
+Para abrir um dialog de detalhamento no botão `Ver dados`, informe `details-target` com o id da camada `data-dialog-layer` correspondente.
+
 ---
 
 ## 3. Finance Card

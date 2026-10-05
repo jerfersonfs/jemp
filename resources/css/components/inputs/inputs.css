@@ -1,0 +1,23 @@
+.jemp-input { display: grid; min-width: 0; gap: var(--spacing-xs); color: var(--color-secondary); font-family: var(--font-family); }
+.jemp-input__label { display: flex; align-items: center; gap: var(--spacing-xs); color: var(--color-heading); font-size: var(--font-size-label); font-weight: 600; line-height: 1.4; }
+.jemp-input__required { color: var(--color-danger); }
+.jemp-input__control-wrap { display: flex; min-width: 0; align-items: center; gap: var(--spacing-sm); border: 1px solid color-mix(in srgb, var(--color-secondary) 20%, white); border-radius: .5rem; background: white; padding: 0 var(--spacing-sm); box-shadow: 0 1px 2px rgb(0 0 0 / 5%); transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease; }
+.jemp-input__control-wrap:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent); }
+.jemp-input--error .jemp-input__control-wrap { border-color: var(--color-danger); }
+.jemp-input--error .jemp-input__control-wrap:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 14%, transparent); }
+.jemp-input__control { display: block; width: 100%; min-width: 0; min-height: 2.625rem; border: 0; outline: 0; background: transparent; padding: .5rem 0; color: var(--color-secondary); font: inherit; font-size: var(--font-size-body); line-height: 1.5; }
+.jemp-input__control::placeholder { color: color-mix(in srgb, var(--color-caption) 68%, white); opacity: 1; }
+.jemp-input__control:disabled { cursor: not-allowed; }
+.jemp-input__control-wrap:has(.jemp-input__control:disabled) { background: var(--color-background); opacity: .72; }
+.jemp-input__control select, .jemp-input__control option { color: var(--color-secondary); }
+.jemp-input__addon { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; color: var(--color-caption); }
+.jemp-input__hint, .jemp-input__error { margin: 0; font-size: var(--font-size-caption); line-height: 1.4; }
+.jemp-input__hint { color: var(--color-caption); }
+.jemp-input__error { color: var(--color-danger); }
+.jemp-input__textarea { min-height: 7rem; resize: vertical; }
+.jemp-input--sm .jemp-input__control { min-height: 2.25rem; }
+.jemp-input--lg .jemp-input__control { min-height: 3rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .jemp-input__control-wrap { transition: none; }
+}
