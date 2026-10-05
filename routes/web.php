@@ -21,4 +21,10 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 // CRUD de Produtos
     Route::resource('produtos', \App\Http\Controllers\ProductController::class);
+    Route::resource('armazens', \App\Http\Controllers\WarehouseController::class);
+    Route::resource('inventarios', \App\Http\Controllers\InventoryController::class);
+    Route::resource('faturas', \App\Http\Controllers\InvoiceController::class);
+    Route::resource('itens-fatura', \App\Http\Controllers\InvoiceItemController::class);
+    Route::resource('movimentacoes', \App\Http\Controllers\StockMovementController::class);
+
 });

@@ -3,63 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\StockMovement;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreStockMovementRequest;
+use App\Http\Requests\UpdateStockMovementRequest;
 
 class StockMovementController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $movements = StockMovement::all();
+        return response()->json($movements);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        // return view('movements.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreStockMovementRequest $request)
     {
-        //
+        StockMovement::create($request->validated());
+        return redirect()->route('movimentacoes.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(StockMovement $stockMovement)
+    public function show(StockMovement $movement)
     {
-        //
+        // return view('movements.show', compact('movement'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(StockMovement $stockMovement)
+    public function edit(StockMovement $movement)
     {
-        //
+        // return view('movements.edit', compact('movement'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, StockMovement $stockMovement)
+    public function update(UpdateStockMovementRequest $request, StockMovement $movement)
     {
-        //
+        $movement->update($request->validated());
+        return redirect()->route('movimentacoes.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(StockMovement $stockMovement)
+    public function destroy(StockMovement $movement)
     {
-        //
+        $movement->delete();
+        return redirect()->route('movimentacoes.index');
     }
 }
