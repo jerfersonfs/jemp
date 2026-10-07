@@ -31,4 +31,4 @@ Colunas com `type="detail"` renderizam uma ação que abre um dialog. Informe `t
 </x-tables.table>
 ```
 
-Variantes de status disponíveis: `success`, `warning`, `danger`, `info` e `neutral`.
+Variantes de status disponíveis: `success`, `warning`, `danger`, `info` e `neutral`. O mesmo padrão está disponível como `<x-status.badge>` para outros componentes.

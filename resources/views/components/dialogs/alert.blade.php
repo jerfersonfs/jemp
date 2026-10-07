@@ -7,11 +7,12 @@
 ])
 
 @php
-    $icons = ['warning' => '!', 'error' => '⊘', 'success' => '✓', 'info' => 'i', 'bell' => '♧'];
+    $icons = ['warning' => 'warning', 'error' => 'x-circle', 'success' => 'check-circle', 'info' => 'info', 'bell' => 'bell'];
+    $iconName = $icon ?? ($icons[$variant] ?? 'info');
 @endphp
 
 <div {{ $attributes->class(['jemp-notice', "jemp-notice--{$variant}"]) }} role="{{ $variant === 'error' ? 'alert' : 'status' }}">
-    <span class="jemp-notice__icon" aria-hidden="true">{{ $icon ?? ($icons[$variant] ?? 'i') }}</span>
+    <span class="jemp-notice__icon" aria-hidden="true"><x-icons.icon :name="$iconName" size="sm" /></span>
     <div class="jemp-notice__content">
         @if ($title)<strong class="jemp-notice__title">{{ $title }}</strong>@endif
         <span class="jemp-notice__message">{{ $message }}</span>

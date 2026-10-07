@@ -71,6 +71,52 @@ document.querySelectorAll('.jemp-notice__close').forEach((button) => {
     button.addEventListener('click', () => button.closest('.jemp-notice')?.remove());
 });
 
-document.querySelectorAll('[data-preview-filter]').forEach((form) => {
+document.querySelectorAll('[data-preview-table]').forEach((tableRegion) => {
+    const rows = [...tableRegion.querySelectorAll('[data-table-row]')];
+    const filterForm = tableRegion.querySelector('[data-preview-filter]');
+    const pageSize = Number(tableRegion.dataset.pageSize) || 5;
+    const summary = tableRegion.querySelector('[data-pagination-summary]');
+    const previous = tableRegion.querySelector('[data-page-prev]');
+    const next = tableRegion.querySelector('[data-page-next]');
+    const current = tableRegion.querySelector('[data-page-current]');
+    let page = 1;
+    let filteredRows = rows;
+
+    function applyFilters() {
+        if (!filterForm) return;
+        const search = (filterForm.querySelector('[name="table-search"]')?.value || '').trim().toLowerCase();
+        const status = filterForm.querySelector('[name="table-status"]')?.value || 'all';
+        const statusText = { paid: 'pago', due: 'a vencer', overdue: 'vencido' }[status] || '';
+        filteredRows = rows.filter((row) => {
+            const matchesSearch = !search || row.textContent.toLowerCase().includes(search);
+            const matchesStatus = status === 'all' || row.textContent.toLowerCase().includes(statusText);
+            return matchesSearch && matchesStatus;
+        });
+        page = 1;
+    }
+
+    function render() {
+        const pages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+        page = Math.min(page, pages);
+        const start = (page - 1) * pageSize;
+        rows.forEach((row) => { row.hidden = true; });
+        filteredRows.slice(start, start + pageSize).forEach((row) => { row.hidden = false; });
+        if (summary) summary.textContent = filteredRows.length ? `Mostrando ${start + 1}–${Math.min(start + pageSize, filteredRows.length)} de ${filteredRows.length} registros` : 'Nenhum registro encontrado';
+        if (previous) previous.disabled = page <= 1;
+        if (next) next.disabled = page >= pages;
+        if (current) current.textContent = `${page} / ${pages}`;
+    }
+
+    filterForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        applyFilters();
+        render();
+    });
+    previous?.addEventListener('click', () => { page -= 1; render(); });
+    next?.addEventListener('click', () => { page += 1; render(); });
+    render();
+});
+
+document.querySelectorAll('[data-preview-filter]:not([data-preview-table-filter])').forEach((form) => {
     form.addEventListener('submit', (event) => event.preventDefault());
 });

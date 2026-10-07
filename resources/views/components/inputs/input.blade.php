@@ -47,12 +47,14 @@
                 @if ($errorText) aria-invalid="true" @endif
                 @required($required)
                 @disabled($disabled)
+                data-select-control
                 {{ $attributes->except(['id', 'class', 'aria-describedby', 'aria-invalid']) }}>
                 @if ($placeholder)<option value="">{{ $placeholder }}</option>@endif
                 @foreach ($options as $optionValue => $optionLabel)
                 <option value="{{ $optionValue }}" @selected((string) $fieldValue === (string) $optionValue)>{{ $optionLabel }}</option>
                 @endforeach
             </select>
+            <span class="jemp-input__select-icon" aria-hidden="true"><i class="ph ph-caret-down"></i></span>
         @elseif ($type === 'textarea')
             <textarea
                 id="{{ $fieldId }}"

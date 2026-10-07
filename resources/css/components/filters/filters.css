@@ -2,7 +2,7 @@
 .jemp-filter-bar__fields { display: grid; min-width: 0; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); align-items: end; gap: var(--spacing-md); }
 .jemp-filter-bar__actions { display: flex; flex-wrap: wrap; align-items: end; gap: var(--spacing-sm); }
 
-.jemp-vertical-filter { display: grid; align-content: start; gap: var(--spacing-md); border: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); border-radius: .75rem; background: white; padding: var(--spacing-md); box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.jemp-vertical-filter { display: grid; min-height: 15rem; align-content: start; gap: var(--spacing-md); border: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); border-radius: .75rem; background: white; padding: var(--spacing-md); box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
 .jemp-vertical-filter__options { display: grid; gap: var(--spacing-xs); margin: 0; border: 0; border-top: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); padding: var(--spacing-md) 0 0; }
 .jemp-vertical-filter__options legend { float: left; width: 100%; margin-bottom: var(--spacing-xs); color: var(--color-subheading); font-size: var(--font-size-caption); }
 .jemp-vertical-filter__option { position: relative; display: flex; min-height: 2.5rem; align-items: center; border: 1px solid transparent; border-radius: .5rem; background: var(--color-background); padding: .5rem var(--spacing-sm); color: var(--color-caption); font-size: var(--font-size-label); cursor: pointer; transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease; }

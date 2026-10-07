@@ -27,7 +27,7 @@
             </thead>
             <tbody>
                 @forelse ($rows as $row)
-                    <tr>
+                    <tr data-table-row>
                         @foreach ($columns as $column)
                             @php
                                 $cellValue = data_get($row, $column['key']);
@@ -38,7 +38,7 @@
                             @endphp
                             <td class="{{ $column['class'] ?? '' }}">
                                 @if (($column['type'] ?? null) === 'status')
-                                    <span class="jemp-table__status jemp-table__status--{{ $statusVariant }}">{{ $cellValue }}</span>
+                                    <x-status.badge :label="$cellValue" :variant="$statusVariant" />
                                 @elseif (($column['type'] ?? null) === 'detail')
                                     @php($dialogTarget = data_get($row, $column['targetKey'] ?? '') ?? ($column['target'] ?? null))
                                     @if ($dialogTarget)

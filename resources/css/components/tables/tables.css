@@ -10,12 +10,13 @@
 .jemp-table tbody tr:hover td { background: color-mix(in srgb, var(--color-surface) 70%, white); }
 .jemp-table tbody td:first-child { border-left: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); border-radius: .625rem 0 0 .625rem; padding-left: var(--spacing-md); }
 .jemp-table tbody td:last-child { border-right: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white); border-radius: 0 .625rem .625rem 0; padding-right: var(--spacing-md); }
-.jemp-table__status { display: inline-flex; min-height: 1.5rem; align-items: center; justify-content: center; border-radius: 999px; padding: .125rem .625rem; color: white; font-size: var(--font-size-caption); font-weight: 600; line-height: 1.2; }
-.jemp-table__status--success { background: var(--color-success); }
-.jemp-table__status--warning { background: var(--color-warning); }
-.jemp-table__status--danger { background: var(--color-danger); }
-.jemp-table__status--info { background: var(--color-info); }
-.jemp-table__status--neutral { background: var(--color-caption); }
+.jemp-table__status { display: inline-flex; min-height: 1.5rem; align-items: center; gap: .375rem; justify-content: center; border-radius: 999px; padding: .125rem .625rem; color: var(--status-foreground); background: var(--status-background); font-size: var(--font-size-caption); font-weight: 600; line-height: 1.2; }
+.jemp-table__status::before { width: .375rem; height: .375rem; flex: 0 0 .375rem; border-radius: 50%; background: var(--status-dot); content: ''; }
+.jemp-table__status--success { --status-background: color-mix(in srgb, var(--color-success) 11%, white); --status-foreground: color-mix(in srgb, var(--color-success) 80%, var(--color-secondary)); --status-dot: var(--color-success); }
+.jemp-table__status--warning { --status-background: color-mix(in srgb, var(--color-warning) 13%, white); --status-foreground: color-mix(in srgb, var(--color-warning) 80%, var(--color-secondary)); --status-dot: var(--color-warning); }
+.jemp-table__status--danger { --status-background: color-mix(in srgb, var(--color-danger) 10%, white); --status-foreground: color-mix(in srgb, var(--color-danger) 82%, var(--color-secondary)); --status-dot: var(--color-danger); }
+.jemp-table__status--info { --status-background: color-mix(in srgb, var(--color-info) 10%, white); --status-foreground: color-mix(in srgb, var(--color-info) 82%, var(--color-secondary)); --status-dot: var(--color-info); }
+.jemp-table__status--neutral { --status-background: color-mix(in srgb, var(--color-caption) 10%, white); --status-foreground: var(--color-secondary); --status-dot: var(--color-caption); }
 .jemp-table__detail { border: 0; border-radius: .375rem; background: transparent; padding: .25rem .375rem; color: var(--color-primary); font: inherit; font-size: var(--font-size-caption); font-weight: 600; cursor: pointer; }
 .jemp-table__detail:hover { background: var(--color-surface); }
 .jemp-table__detail:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 28%, transparent); outline-offset: 2px; }

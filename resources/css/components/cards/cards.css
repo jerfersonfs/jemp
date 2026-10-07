@@ -153,8 +153,13 @@ button.stat-card__link:hover { background: color-mix(in srgb, var(--stat-foregro
 }
 
 .stat-card--large {
-    min-height: 10rem;
+    min-height: clamp(15rem, 28vw, 18rem);
 }
+
+.stat-card--large .stat-card__content { padding: clamp(var(--spacing-md), 2.5vw, var(--spacing-xl)); }
+.stat-card--large .stat-card__label { font-size: clamp(var(--font-size-caption), 1.25vw, var(--font-size-body)); }
+.stat-card--large .stat-card__value { font-size: clamp(2.25rem, 4vw, 3.5rem); line-height: 1.05; }
+.stat-card--large .stat-card__link { padding: var(--spacing-md) clamp(var(--spacing-md), 2.5vw, var(--spacing-xl)); }
 
 .stat-card--compact {
     min-height: 4.5rem;
@@ -220,4 +225,9 @@ button.stat-card__link:hover { background: color-mix(in srgb, var(--stat-foregro
     .message-card { padding: var(--spacing-sm) var(--spacing-md); }
     .stat-card__content { padding-inline: var(--spacing-md); }
     .finance-card__title { font-size: var(--font-size-label); }
+}
+
+@media (max-width: 640px) {
+    .stat-card--large { min-height: 13rem; }
+    .stat-card--large .stat-card__value { font-size: clamp(2rem, 12vw, 2.75rem); }
 }

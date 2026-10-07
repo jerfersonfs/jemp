@@ -92,6 +92,8 @@
 .jemp-notice--info { --notice-color: var(--color-info); --notice-bg: color-mix(in srgb, var(--color-info) 7%, white); }
 .jemp-notice--bell { --notice-color: var(--color-primary); --notice-bg: var(--color-surface); }
 .jemp-notice__icon { display: grid; width: 1.75rem; height: 1.75rem; flex: 0 0 1.75rem; place-items: center; font-size: 1.25rem; font-weight: 700; }
+.jemp-notice__icon .jemp-icon { font-size: 1.25rem; }
+.jemp-notice__icon .jemp-icon--black { color: var(--notice-color); }
 .jemp-notice__content { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
 .jemp-notice__title { font-size: var(--font-size-label); font-weight: 600; }
 .jemp-notice__message { font-size: var(--font-size-body); line-height: 1.4; }
