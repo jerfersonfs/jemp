@@ -1,8 +1,54 @@
-.jemp-tooltip { position: relative; display: inline-flex; align-items: center; outline: 0; }
-.jemp-tooltip__content { position: absolute; z-index: 30; left: 50%; width: max-content; max-width: min(18rem, calc(100vw - 2rem)); border-radius: .375rem; background: var(--color-primary); padding: .4rem .75rem; color: white; font-family: var(--font-family); font-size: var(--font-size-caption); line-height: 1.4; text-align: center; box-shadow: 0 2px 4px rgb(0 0 0 / 12%); opacity: 0; pointer-events: none; transform: translate(-50%, .25rem); transition: opacity 120ms ease, transform 120ms ease; }
-.jemp-tooltip--top .jemp-tooltip__content { bottom: calc(100% + var(--spacing-sm)); }
-.jemp-tooltip--bottom .jemp-tooltip__content { top: calc(100% + var(--spacing-sm)); transform: translate(-50%, -.25rem); }
+.jemp-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    outline: 0;
+}
+
+.jemp-tooltip__content {
+    position: absolute;
+    z-index: 30;
+    left: 50%;
+    width: max-content;
+    max-width: min(18rem, calc(100vw - 2rem));
+    border-radius: .375rem;
+    background: var(--color-primary);
+    padding: .4rem .75rem;
+    color: white;
+    font-family: var(--font-family);
+    font-size: var(--font-size-caption);
+    line-height: 1.4;
+    text-align: center;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 12%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, .25rem);
+    transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.jemp-tooltip--top .jemp-tooltip__content {
+    bottom: calc(100% + var(--spacing-sm));
+}
+
+.jemp-tooltip--bottom .jemp-tooltip__content {
+    top: calc(100% + var(--spacing-sm));
+    transform: translate(-50%, -.25rem);
+}
+
 .jemp-tooltip:hover .jemp-tooltip__content,
-.jemp-tooltip:focus-visible .jemp-tooltip__content { opacity: 1; transform: translate(-50%, 0); }
-.jemp-tooltip:focus-visible { outline: 2px solid color-mix(in srgb, var(--color-primary) 38%, transparent); outline-offset: 3px; border-radius: .25rem; }
-@media (prefers-reduced-motion: reduce) { .jemp-tooltip__content { transition: none; } }
+.jemp-tooltip:focus-visible .jemp-tooltip__content {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.jemp-tooltip:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 38%, transparent);
+    outline-offset: 3px;
+    border-radius: .25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jemp-tooltip__content {
+        transition: none;
+    }
+}

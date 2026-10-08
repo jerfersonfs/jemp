@@ -1,8 +1,52 @@
-.btn { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: center; gap: var(--spacing-sm); border: 1px solid transparent; border-radius: .5rem; padding: .625rem 1rem; font-family: var(--font-family); font-size: var(--font-size-button); font-weight: 600; line-height: 1.25; cursor: pointer; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease; }
-.btn:hover { box-shadow: 0 2px 4px rgb(0 0 0 / 8%); }
-.btn:active { box-shadow: 0 0 0 transparent; }
-.btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent); outline-offset: 2px; }
-.btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; opacity: .6; box-shadow: none; }
-.btn-primary { background: var(--color-primary); color: white; }
-.btn-primary:hover { background: color-mix(in srgb, var(--color-primary) 88%, black); }
-.btn-secondary { border-color: color-mix(in srgb, var(--color-primary) 20%, white); background: var(--color-surface); color: var(--color-primary); }
+.btn {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    border: 1px solid transparent;
+    border-radius: .5rem;
+    padding: .625rem 1rem;
+    font-family: var(--font-family);
+    font-size: var(--font-size-button);
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
+}
+
+.btn:hover {
+    box-shadow: 0 2px 4px rgb(0 0 0 / 8%);
+}
+
+.btn:active {
+    box-shadow: 0 0 0 transparent;
+}
+
+.btn:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+    outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: .6;
+    box-shadow: none;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: color-mix(in srgb, var(--color-primary) 88%, black);
+}
+
+.btn-secondary {
+    border-color: color-mix(in srgb, var(--color-primary) 20%, white);
+    background: var(--color-surface);
+    color: var(--color-primary);
+}
