@@ -1,29 +1,6 @@
 <x-layouts.app
-    title="{{ ['home' => 'Visão geral', 'catalogo' => 'Catálogo', 'produto' => 'Novo produto', 'inventario' => 'Inventário', 'saidas' => 'Saídas e NF-e'][$page] }} · JEMP">
-    @php($labels = ['home' => 'Visão geral', 'catalogo' => 'Catálogo', 'produto' => 'Cadastrar produto', 'inventario' => 'Inventário', 'saidas' => 'Saídas e NF-e'])
-    @php($icons = ['home' => '⌂', 'catalogo' => '▦', 'produto' => '＋', 'inventario' => '◫', 'saidas' => '↗'])
-    <div class="app-shell">
-        <aside class="sidebar"><a href="{{ route('home') }}" class="brand"><span class="brand-mark">J</span>JEMP</a>
-            <div class="workspace"><span>JEMP Distribuidora<small>Operação principal</small></span><span>⌄</span></div>
-            <span class="nav-label">Menu principal</span>
-            <nav class="nav">@foreach($labels as $key => $label)<a
-                href="{{ route($key === 'produto' ? 'produtos.create' : $key) }}"
-                class="{{ $page === $key ? 'active' : '' }}"><span
-            style="font-size:20px;width:18px;text-align:center">{{ $icons[$key] }}</span>{{ $label }}</a>@endforeach
-            </nav>
-            <div class="sidebar-bottom">
-                <div class="account"><span class="avatar">MP</span><span><strong>Maria
-                            Paula</strong><span>Administrador</span></span></div>
-            </div>
-        </aside>
-        <div class="content">
-            <header class="topbar">
-                <div class="crumb">JEMP <span style="padding:0 7px;color:#b1b9b2">/</span> <b>{{ $labels[$page] }}</b>
-                </div>
-                <div class="top-actions"><button class="icon-button" aria-label="Notificações">♧</button><a
-                        href="{{ route('login') }}" class="icon-button" aria-label="Entrar">↪</a></div>
-            </header>
-            <main class="page">
+    title="{{ ['home' => 'Visão geral', 'catalogo' => 'Catálogo', 'produto' => 'Novo produto', 'inventario' => 'Inventário', 'saidas' => 'Saídas e NF-e'][$page] ?? 'JEMP' }} · JEMP"
+    :page="$page">
                 @if($page === 'home')
                     <div class="page-head">
                         <div>
@@ -303,7 +280,4 @@
                         </table>
                     </div>
                 @endif
-            </main>
-        </div>
-    </div>
 </x-layouts.app>

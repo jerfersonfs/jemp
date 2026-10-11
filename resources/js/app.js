@@ -1,1 +1,1 @@
-//
+import './components/layout.js';

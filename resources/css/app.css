@@ -1,16 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import './tokens.css';
+@import './components/layout.css';
 @import 'tailwindcss';
 
 :root {
-    --ink: #152617;
-    --muted: #718173;
-    --line: #e5e9e3;
-    --canvas: #f6f8f5;
-    --forest: #174c2e;
-    --lime: #b9df45;
-    --soft-lime: #f1f8dc;
-    --orange: #f6a949;
-    --red: #da5b52
+    --ink: var(--color-secondary);
+    --muted: var(--color-heading);
+    --line: var(--color-border);
+    --canvas: var(--color-background);
+    --forest: var(--color-primary);
+    --lime: var(--color-primary);
+    --soft-lime: var(--color-surface);
+    --orange: var(--color-warning);
+    --red: var(--color-error);
 }
 
 * {
@@ -21,7 +23,7 @@ body {
     margin: 0;
     color: var(--ink);
     background: var(--canvas);
-    font: 14px 'DM Sans', Arial, sans-serif
+    font: 14px var(--font-family-sans)
 }
 
 button,
@@ -241,7 +243,7 @@ a {
 }
 
 .page h1 {
-    font: 800 27px/1.15 'Manrope', sans-serif;
+    font: 800 27px/1.15 var(--font-family-sans);
     letter-spacing: -.8px;
     margin: 0
 }
@@ -311,7 +313,7 @@ a {
 }
 
 .stat strong {
-    font: 800 26px/1 'Manrope';
+    font: 800 26px/1 var(--font-family-sans);
     display: block;
     margin: 17px 0 7px;
     letter-spacing: -1px
@@ -341,7 +343,7 @@ a {
 
 .card-title {
     margin: 0;
-    font: 700 16px 'Manrope'
+    font: 700 16px var(--font-family-sans)
 }
 
 .link {
@@ -527,7 +529,7 @@ a {
 }
 
 .form-card h2 {
-    font: 700 17px 'Manrope';
+    font: 700 17px var(--font-family-sans);
     margin: 0 0 5px
 }
 
@@ -636,7 +638,7 @@ a {
 
 .inventory-card b {
     display: block;
-    font: 800 23px 'Manrope';
+    font: 800 23px var(--font-family-sans);
     margin-top: 10px
 }
 
@@ -682,7 +684,7 @@ a {
 }
 
 .login-card h1 {
-    font: 800 32px/1.15 'Manrope';
+    font: 800 32px/1.15 var(--font-family-sans);
     letter-spacing: -1px;
     margin: 0
 }
@@ -750,7 +752,7 @@ a {
 }
 
 .visual-copy h2 {
-    font: 800 42px/1.12 'Manrope';
+    font: 800 42px/1.12 var(--font-family-sans);
     letter-spacing: -1.7px;
     margin: 20px 0
 }
@@ -779,7 +781,7 @@ a {
 
 .visual-chart b {
     display: block;
-    font: 800 25px 'Manrope';
+    font: 800 25px var(--font-family-sans);
     margin-top: 4px
 }
 
