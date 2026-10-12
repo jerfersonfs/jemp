@@ -1,21 +1,26 @@
 # Ícones
 
-O projeto utiliza os ícones Phosphor Web por meio do CSS hospedado no jsDelivr. O arquivo carregado está fixado em `@phosphor-icons/web@2.1.2` e inclui somente o peso Regular; nenhum SVG ou pacote de ícones é baixado para o repositório.
+O projeto usa Phosphor Web Regular 2.1.2 via CDN. A folha é carregada em `resources/css/app.css`; a aplicação precisa de internet para buscar o CSS e o webfont.
 
-```blade
-<x-icons.icon name="magnifying-glass" color="black" label="Buscar" />
-<x-icons.icon name="plus-circle" color="white" />
-```
+## Ícones da navegação
 
-## Ícones usados atualmente
+`resources/views/components/layout/icon.blade.php` mapeia nomes semânticos para classes Phosphor. O `currentColor` herda a cor da sidebar, do header ou do controle em que o ícone aparece.
 
-| Ícone Phosphor | Uso no JEMP | Cor utilizada | Classe Phosphor |
-| --- | --- | --- | --- |
-| Magnifying Glass | Campo de busca da preview de componentes | Preta | `ph-magnifying-glass` |
-| Plus Circle | Ação de adicionar na preview de tabelas | Branca | `ph-plus-circle` |
+| Uso | Ícone | Classe |
+| --- | --- | --- |
+| Home | House | `ph-house` |
+| Produtos e saídas | Cube | `ph-cube` |
+| Clientes | Users Three | `ph-users-three` |
+| Consulta NF-e | Note Pencil | `ph-note-pencil` |
+| Vendas | Handshake | `ph-handshake` |
+| Entradas | Tray Arrow Down | `ph-tray-arrow-down` |
+| Movimentações internas | Arrows Left Right | `ph-arrows-left-right` |
+| Relatórios | Clipboard Text | `ph-clipboard-text` |
+| Recolher sidebar | Sidebar Simple | `ph-sidebar-simple` |
+| Menu mobile | List | `ph-list` |
+| Ajuda | Question | `ph-question` |
+| Login | User, Lock Key e Eye | `ph-user`, `ph-lock-key`, `ph-eye` |
 
-O componente aceita `color="black"` ou `color="white"` e tamanhos `sm`, `md`, `lg` e `xl`. A cor é aplicada pelo CSS do projeto; o ícone usa `currentColor` do webfont.
+## Ícones da preview
 
-## Integração externa
-
-O CSS da família Regular é referenciado em `resources/css/components/icons/icons.css`. A página precisa de conexão com a internet para carregar a folha de estilo e o webfont servidos pelo CDN. Caso a aplicação precise funcionar sem acesso externo, será necessário trocar essa integração por assets locais ou um pacote gerenciado pelo projeto.
+O componente `<x-icons.icon>` também está disponível para a página de preview. Exemplos documentados: `magnifying-glass` e `plus-circle`. Ele aceita `color="black"` ou `color="white"` e tamanhos `sm`, `md`, `lg` e `xl`.

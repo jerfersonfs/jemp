@@ -1,0 +1,1 @@
+<x-layouts.app title="Entradas · JEMP" page="entrance"></x-layouts.app>

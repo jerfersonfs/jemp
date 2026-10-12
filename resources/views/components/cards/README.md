@@ -33,6 +33,18 @@ Componentes Blade baseados nas referências de Cards do Figma.
 
 <x-cards.stat-card variant="dark" size="large"/>
 
+### Indicador vinculado a uma rota
+
+O texto “Ver dados” usa a rota definida em `href`. Na home, os indicadores levam ao módulo relacionado:
+
+```blade
+<x-cards.stat-card
+    label="Produtos em estoque"
+    value="1.248"
+    :href="route('inventario')"
+/>
+```
+
 ### Variantes
 
 - `default`

@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 @import url('https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css');
 @import './tokens.css';
-=======
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import './tokens.css';
 @import './components/layout.css';
->>>>>>> feature/layout
+@import './pages/home.css';
+@import './pages/login.css';
 @import 'tailwindcss';
 @import './components/buttons/buttons.css';
 @import './components/cards/cards.css';
@@ -13,29 +10,30 @@
 @import './components/filters/filters.css';
 @import './components/icons/icons.css';
 @import './components/inputs/inputs.css';
+@import './components/lists/lists.css';
 @import './components/popovers/popovers.css';
 @import './components/tables/tables.css';
 @import './components/tabs/tabs.css';
 @import './components/tooltips/tooltips.css';
 @import './components/status/status.css';
 
-<<<<<<< HEAD
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
     --font-sans: var(--font-family), ui-sans-serif, system-ui, sans-serif;
-=======
+}
+
 :root {
     --ink: var(--color-secondary);
     --muted: var(--color-heading);
-    --line: var(--color-border);
+    --line: color-mix(in srgb, var(--color-subheading) 55%, white);
     --canvas: var(--color-background);
     --forest: var(--color-primary);
     --lime: var(--color-primary);
     --soft-lime: var(--color-surface);
     --orange: var(--color-warning);
-    --red: var(--color-error);
+    --red: var(--color-danger);
 }
 
 * {
@@ -46,7 +44,7 @@ body {
     margin: 0;
     color: var(--ink);
     background: var(--canvas);
-    font: 14px var(--font-family-sans)
+    font: 14px var(--font-family)
 }
 
 button,
@@ -316,6 +314,18 @@ a {
 .stat {
     padding: 20px
 }
+
+.stats .stat-card { min-height: 9.25rem; }
+.home-panel { overflow: hidden; border-color: color-mix(in srgb, var(--color-subheading) 34%, white); box-shadow: 0 2px 5px rgb(27 64 65 / 4%); }
+.home-panel .card-header { align-items: center; gap: 16px; }
+.home-panel .card-header .eyebrow { margin-bottom: 5px; }
+.home-panel .card-title { color: var(--color-heading); font-size: var(--font-size-section); }
+.home-panel .select { min-width: 150px; height: 38px; border-color: color-mix(in srgb, var(--color-subheading) 48%, white); border-radius: var(--radius-control); font: inherit; font-size: var(--font-size-caption); }
+.home-panel .activity-item { border-color: color-mix(in srgb, var(--color-subheading) 24%, white); }
+.home-panel .activity-item p { line-height: 1.45; }
+.home-panel .activity-item time { color: var(--color-caption); }
+.activity-dot--warning { background: color-mix(in srgb, var(--color-warning) 75%, white); box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-warning) 10%, white); }
+.activity-dot--info { background: color-mix(in srgb, var(--color-info) 68%, white); box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-info) 9%, white); }
 
 .stat-top {
     display: flex;
@@ -685,129 +695,6 @@ a {
     background: var(--lime)
 }
 
-.login-page {
-    min-height: 100vh;
-    background: #f5f8f2;
-    display: grid;
-    grid-template-columns: 1.05fr .95fr
-}
-
-.login-panel {
-    display: grid;
-    place-items: center;
-    padding: 40px
-}
-
-.login-card {
-    width: min(390px, 100%)
-}
-
-.login-card .brand {
-    margin: 0 0 52px
-}
-
-.login-card h1 {
-    font: 800 32px/1.15 var(--font-family-sans);
-    letter-spacing: -1px;
-    margin: 0
-}
-
-.login-card p {
-    color: var(--muted);
-    margin: 10px 0 28px
-}
-
-.login-card .field {
-    margin-bottom: 17px
-}
-
-.login-card .button {
-    width: 100%;
-    justify-content: center;
-    margin-top: 8px;
-    height: 46px
-}
-
-.login-note {
-    text-align: center;
-    font-size: 12px;
-    color: #8a968b;
-    margin-top: 18px !important
-}
-
-.login-visual {
-    background: var(--forest);
-    padding: 50px;
-    display: flex;
-    align-items: flex-end;
-    position: relative;
-    overflow: hidden;
-    color: #fff
-}
-
-.login-visual:before {
-    content: '';
-    position: absolute;
-    width: 580px;
-    height: 580px;
-    border-radius: 50%;
-    border: 1px solid #ffffff1f;
-    top: -185px;
-    right: -165px;
-    box-shadow: 0 0 0 65px #ffffff0a, 0 0 0 130px #ffffff09
-}
-
-.visual-copy {
-    position: relative;
-    max-width: 430px;
-    margin: 0 auto 70px
-}
-
-.visual-copy .badge {
-    display: inline-block;
-    background: #b9df452b;
-    color: #d5ed88;
-    border: 1px solid #b9df454d;
-    border-radius: 20px;
-    padding: 6px 11px;
-    font-size: 12px;
-    font-weight: 700
-}
-
-.visual-copy h2 {
-    font: 800 42px/1.12 var(--font-family-sans);
-    letter-spacing: -1.7px;
-    margin: 20px 0
-}
-
-.visual-copy p {
-    color: #d0ddcf;
-    line-height: 1.7;
-    font-size: 16px
-}
-
-.visual-chart {
-    position: relative;
-    margin-top: 36px;
-    height: 142px;
-    border-radius: 14px;
-    background: #fff;
-    color: var(--ink);
-    padding: 18px;
-    box-shadow: 0 20px 45px #00000026
-}
-
-.visual-chart small {
-    color: var(--muted);
-    font-weight: 700
-}
-
-.visual-chart b {
-    display: block;
-    font: 800 25px var(--font-family-sans);
-    margin-top: 4px
-}
-
 .bars {
     position: absolute;
     right: 18px;
@@ -901,22 +788,6 @@ a {
         overflow: auto
     }
 
-    .login-page {
-        display: block
-    }
-
-    .login-visual {
-        display: none
-    }
-
-    .login-panel {
-        padding: 28px 22px
-    }
-
-    .login-card .brand {
-        margin-bottom: 44px
-    }
-
     .stats,
     .inventory-cards {
         grid-template-columns: 1fr
@@ -929,5 +800,4 @@ a {
     .field.full {
         grid-column: auto
     }
->>>>>>> feature/layout
 }

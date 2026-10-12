@@ -3,10 +3,14 @@
 @php
     $pageTitles = [
         'home' => 'Visão geral',
-        'catalogo' => 'Catálogo',
-        'produto' => 'Novo produto',
-        'inventario' => 'Inventário',
-        'saidas' => 'Saídas e NF-e',
+        'products' => 'Produtos',
+        'customers' => 'Clientes',
+        'invoice-consult' => 'Consulta NF-e',
+        'sales' => 'Vendas',
+        'entrance' => 'Entradas',
+        'exits' => 'Saídas',
+        'internal' => 'Internas',
+        'reports' => 'Relatórios',
     ];
 @endphp
 

@@ -1,6 +1,7 @@
 .jemp-shell {
+    --sidebar-width: 232px;
     display: grid;
-    grid-template-columns: 232px minmax(0, 1fr);
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
     grid-template-rows: minmax(100vh, 1fr);
     min-height: 100vh;
     background: var(--color-background);
@@ -14,7 +15,7 @@
     grid-column: 1;
     grid-row: 1;
     flex-direction: column;
-    width: 232px;
+    width: var(--sidebar-width);
     height: 100vh;
     min-height: 560px;
     padding: 20px 16px 18px;
@@ -23,14 +24,48 @@
     background: var(--color-secondary);
 }
 
+.jemp-shell.is-sidebar-collapsed { --sidebar-width: 76px; }
+
+.jemp-sidebar__brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
 .jemp-sidebar__brand {
     display: grid;
     width: 48px;
     height: 48px;
-    margin: 0 0 28px 22px;
+    margin: 0 auto;
     place-items: center;
     border-radius: var(--radius-control);
 }
+
+.jemp-sidebar__brand img {
+    display: block;
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
+.jemp-sidebar__collapse {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(238 255 253 / 18%);
+    border-radius: var(--radius-control);
+    color: var(--color-surface);
+    background: transparent;
+    cursor: pointer;
+}
+
+.jemp-sidebar__collapse:hover { background: rgb(238 255 253 / 10%); }
+.jemp-sidebar__collapse:focus-visible { outline: 2px solid var(--color-surface); outline-offset: 2px; }
+.jemp-sidebar__collapse .jemp-icon { width: 17px; height: 17px; }
 
 .jemp-sidebar__brand svg {
     width: 42px;
@@ -40,11 +75,21 @@
 .jemp-nav {
     display: grid;
     align-content: start;
-    gap: 4px;
+    gap: 2px;
 }
 
-.jemp-nav__link,
-.jemp-nav__group > summary {
+.jemp-icon {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.jemp-nav__link {
     display: flex;
     min-height: 40px;
     align-items: center;
@@ -54,7 +99,7 @@
     border-radius: 5px;
     color: var(--color-surface);
     background: transparent;
-    font-size: 0.875rem;
+    font-size: var(--font-size-label);
     font-weight: 600;
     line-height: 1.4;
     text-decoration: none;
@@ -62,23 +107,18 @@
     transition: color 140ms ease, background-color 140ms ease;
 }
 
-.jemp-nav__link .jemp-icon,
-.jemp-nav__group > summary > .jemp-icon:first-child {
+.jemp-nav__link .jemp-icon {
     width: 18px;
     height: 18px;
     flex: none;
 }
 
-.jemp-nav__link:hover,
-.jemp-nav__group > summary:hover,
-.jemp-nav__sublink:hover {
+.jemp-nav__link:hover {
     color: #fff;
     background: rgb(238 255 253 / 10%);
 }
 
 .jemp-nav__link:focus-visible,
-.jemp-nav__group > summary:focus-visible,
-.jemp-nav__sublink:focus-visible,
 .jemp-sidebar__brand:focus-visible,
 .jemp-user-menu__trigger:focus-visible,
 .jemp-user-menu__popover a:focus-visible,
@@ -92,56 +132,10 @@
     background: var(--color-primary);
 }
 
-.jemp-nav__link.is-current {
-    color: #fff;
-}
-
 .jemp-nav__divider {
     height: 1px;
-    margin: 8px 2px;
+    margin: 10px 2px;
     background: rgb(238 255 253 / 12%);
-}
-
-.jemp-nav__group > summary {
-    list-style: none;
-}
-
-.jemp-nav__group > summary::-webkit-details-marker {
-    display: none;
-}
-
-.jemp-nav__chevron {
-    width: 16px;
-    height: 16px;
-    margin-left: auto;
-    transition: transform 140ms ease;
-}
-
-.jemp-nav__group:not([open]) .jemp-nav__chevron {
-    transform: rotate(-90deg);
-}
-
-.jemp-nav__subnav {
-    display: grid;
-    gap: 3px;
-    margin: 3px 0 7px 20px;
-    padding-left: 12px;
-    border-left: 1px solid rgb(238 255 253 / 20%);
-}
-
-.jemp-nav__sublink {
-    min-height: 34px;
-    padding: 8px 10px;
-    border-radius: 5px;
-    color: rgb(238 255 253 / 78%);
-    font-size: 0.8125rem;
-    text-decoration: none;
-    transition: color 140ms ease, background-color 140ms ease;
-}
-
-.jemp-nav__sublink.is-active {
-    color: #fff;
-    background: rgb(4 139 128 / 34%);
 }
 
 .jemp-sidebar__footer {
@@ -167,6 +161,7 @@
     grid-column: 2;
     grid-row: 1;
     flex-direction: column;
+    background: var(--color-secondary);
 }
 
 .jemp-header {
@@ -248,12 +243,19 @@
     min-width: 190px;
     gap: 4px;
     padding: 8px;
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-subheading) 55%, white);
     border-radius: var(--radius-card);
     color: var(--color-secondary);
     background: #fff;
     box-shadow: 0 8px 20px rgb(27 64 65 / 12%);
 }
+
+.jemp-shell.is-sidebar-collapsed .jemp-sidebar__brand-row { flex-direction: column; gap: 14px; }
+.jemp-shell.is-sidebar-collapsed .jemp-sidebar__brand { width: 44px; }
+.jemp-shell.is-sidebar-collapsed .jemp-nav__link { justify-content: center; gap: 0; padding-inline: 0; }
+.jemp-shell.is-sidebar-collapsed .jemp-nav__link > span,
+.jemp-shell.is-sidebar-collapsed .jemp-sidebar__footer > span { display: none; }
+.jemp-shell.is-sidebar-collapsed .jemp-sidebar__footer { justify-content: center; padding-inline: 0; }
 
 .jemp-user-menu__caption {
     padding: 8px 10px 5px;
@@ -274,9 +276,12 @@
 }
 
 .jemp-shell .jemp-shell__page {
-    width: 100%;
+    width: calc(100% - 18px);
     max-width: none;
     flex: 1;
+    margin-left: 18px;
+    border-top-left-radius: 30px;
+    background: var(--color-background);
     padding: 24px 32px 40px;
 }
 
@@ -310,6 +315,9 @@
         transition: transform 180ms ease;
     }
 
+    .jemp-sidebar__collapse { display: none; }
+    .jemp-shell.is-sidebar-collapsed { --sidebar-width: 232px; }
+
     .jemp-shell.is-sidebar-open .jemp-sidebar {
         transform: translateX(0);
     }
@@ -333,6 +341,7 @@
         min-height: 72px;
         justify-content: space-between;
         padding: 0 22px;
+        border-bottom-left-radius: 0;
     }
 
     .jemp-header__menu {
@@ -356,6 +365,9 @@
     }
 
     .jemp-shell .jemp-shell__page {
+        width: 100%;
+        margin-left: 0;
+        border-top-left-radius: 24px;
         padding: 22px 24px 32px;
     }
 }
@@ -370,14 +382,13 @@
     }
 
     .jemp-shell .jemp-shell__page {
+        border-top-left-radius: 20px;
         padding: 20px 16px 28px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .jemp-nav__link,
-    .jemp-nav__chevron,
-    .jemp-nav__sublink,
     .jemp-sidebar {
         transition-duration: 0.01ms;
     }

@@ -1,0 +1,134 @@
+.notice-list {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--color-subheading) 34%, white);
+    border-radius: var(--radius-card);
+    background: white;
+    box-shadow: 0 1px 2px rgb(27 64 65 / 5%);
+}
+
+.notice-list__header {
+    display: flex;
+    min-height: 4.25rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.notice-list__title {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-section);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.notice-list__description {
+    margin: var(--spacing-xs) 0 0;
+    color: var(--color-caption);
+    font-size: var(--font-size-caption);
+}
+
+.notice-list__count {
+    flex: none;
+    border-radius: var(--radius-pill);
+    padding: .25rem .625rem;
+    color: var(--color-caption);
+    background: var(--color-background);
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.notice-list__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.notice-list__item {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid color-mix(in srgb, var(--color-subheading) 22%, white);
+}
+
+.notice-list__item-content {
+    display: grid;
+    min-width: 0;
+    gap: .3rem;
+}
+
+.notice-list__item-heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-heading);
+    font-size: var(--font-size-label);
+}
+
+.notice-list__item-heading strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notice-list__reference {
+    flex: none;
+    color: var(--color-caption);
+    font-size: .75rem;
+    font-weight: 500;
+}
+
+.notice-list__item-description {
+    margin: 0;
+    color: var(--color-caption);
+    font-size: var(--font-size-caption);
+    line-height: 1.4;
+}
+
+.notice-list__details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem var(--spacing-md);
+    color: var(--color-secondary);
+    font-size: .75rem;
+    line-height: 1.4;
+}
+
+.notice-list__details span {
+    display: inline-flex;
+    gap: .25rem;
+}
+
+.notice-list__details small {
+    color: var(--color-caption);
+    font-size: inherit;
+}
+
+.notice-list__empty {
+    padding: var(--spacing-lg);
+    border-top: 1px solid color-mix(in srgb, var(--color-subheading) 22%, white);
+    color: var(--color-caption);
+    font-size: var(--font-size-caption);
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .notice-list__header,
+    .notice-list__item {
+        padding-inline: var(--spacing-md);
+    }
+
+    .notice-list__item {
+        align-items: flex-start;
+    }
+
+    .notice-list__item > .jemp-status-badge {
+        margin-top: .125rem;
+    }
+}
