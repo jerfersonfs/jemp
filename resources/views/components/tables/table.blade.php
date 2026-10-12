@@ -27,7 +27,13 @@
             </thead>
             <tbody>
                 @forelse ($rows as $row)
-                    <tr data-table-row>
+                    @php
+                        $record = \Illuminate\Support\Arr::except($row, ['_data']);
+                        $rowDataAttributes = collect($row['_data'] ?? [])
+                            ->map(fn ($value, $key) => 'data-'.preg_replace('/[^a-z0-9-]/', '', strtolower((string) $key)).'="'.e($value).'"')
+                            ->implode(' ');
+                    @endphp
+                    <tr data-table-row data-record="{{ json_encode($record, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}" {!! $rowDataAttributes !!}>
                         @foreach ($columns as $column)
                             @php
                                 $cellValue = data_get($row, $column['key']);
@@ -36,14 +42,52 @@
                                     $statusVariant = 'neutral';
                                 }
                             @endphp
-                            <td class="{{ $column['class'] ?? '' }}">
+                            <td class="{{ $column['class'] ?? '' }}" data-column-key="{{ $column['key'] }}" data-column-type="{{ $column['type'] ?? 'text' }}">
                                 @if (($column['type'] ?? null) === 'status')
                                     <x-status.badge :label="$cellValue" :variant="$statusVariant" />
                                 @elseif (($column['type'] ?? null) === 'detail')
-                                    @php($dialogTarget = data_get($row, $column['targetKey'] ?? '') ?? ($column['target'] ?? null))
+                                    @php
+                                        $dialogTarget = data_get($row, $column['targetKey'] ?? '') ?? ($column['target'] ?? null);
+                                    @endphp
                                     @if ($dialogTarget)
                                         <button class="jemp-table__detail" type="button" data-dialog-open="{{ $dialogTarget }}">{{ $column['detailLabel'] ?? 'Ver detalhes' }}</button>
                                     @endif
+                                @elseif (($column['type'] ?? null) === 'actions')
+                                    <div class="jemp-table__actions">
+                                        @foreach (($column['actions'] ?? ['edit', 'delete']) as $action)
+                                            @php
+                                                $actionConfig = is_array($action) ? $action : ['name' => $action];
+                                                $actionName = $actionConfig['name'] ?? 'action';
+                                                $actionIcon = match ($actionName) {
+                                                    'edit' => 'pencil-simple',
+                                                    'delete' => 'trash',
+                                                    'view' => 'eye',
+                                                    default => 'dots-three',
+                                                };
+                                                $actionLabel = $actionConfig['label'] ?? match ($actionName) {
+                                                    'edit' => 'Editar',
+                                                    'delete' => 'Excluir',
+                                                    'view' => 'Visualizar',
+                                                    default => 'Ação',
+                                                };
+                                            @endphp
+                                            <button class="jemp-table__icon-action jemp-table__icon-action--{{ $actionName }}" type="button" data-movement-action="{{ $actionName }}" aria-label="{{ $actionLabel }}: {{ data_get($row, $column['labelKey'] ?? 'code') }}" title="{{ $actionLabel }}">
+                                                <i class="ph ph-{{ $actionIcon }}" aria-hidden="true"></i>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @elseif (($column['type'] ?? null) === 'input')
+                                    <input
+                                        class="jemp-table__inline-input"
+                                        type="{{ $column['inputType'] ?? 'text' }}"
+                                        @if (isset($column['name'])) name="{{ $column['name'] }}" @endif
+                                        value="{{ $cellValue }}"
+                                        aria-label="{{ $column['label'] }}"
+                                        @if (isset($column['min'])) min="{{ $column['min'] }}" @endif
+                                        @if (isset($column['step'])) step="{{ $column['step'] }}" @endif
+                                        data-line-input>
+                                @elseif (($column['type'] ?? null) === 'computed-stock')
+                                    <span data-stock-output>{{ $cellValue }}</span>
                                 @else
                                     {{ $cellValue }}
                                 @endif

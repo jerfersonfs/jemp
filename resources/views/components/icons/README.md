@@ -24,3 +24,16 @@ O projeto usa Phosphor Web Regular 2.1.2 via CDN. A folha é carregada em `resou
 ## Ícones da preview
 
 O componente `<x-icons.icon>` também está disponível para a página de preview. Exemplos documentados: `magnifying-glass` e `plus-circle`. Ele aceita `color="black"` ou `color="white"` e tamanhos `sm`, `md`, `lg` e `xl`.
+
+## Ícones das páginas de movimentações
+
+Os componentes reutilizam a folha Phosphor Web carregada por CDN em `resources/css/app.css`; não há arquivos de ícone duplicados no projeto.
+
+| Uso | Ícone | Classe |
+| --- | --- | --- |
+| Busca nas listagens | Magnifying Glass | `ph-magnifying-glass` |
+| Nova entrada/transferência e adicionar produto | Plus | `ph-plus` |
+| Ação de editar | Pencil Simple | `ph-pencil-simple` |
+| Ação de excluir/remover item | Trash | `ph-trash` |
+| Baixa de estoque | Tray Arrow Down | `ph-tray-arrow-down` |
+| Paginação | Caret Left / Caret Right | `ph-caret-left`, `ph-caret-right` |

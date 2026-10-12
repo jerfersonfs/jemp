@@ -11,6 +11,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1b4041">
     <title>{{ $title }}</title>
+    <script>
+        try {
+            if (localStorage.getItem('jemp-sidebar-collapsed') === 'true' && !matchMedia('(max-width: 900px)').matches) {
+                document.documentElement.classList.add('jemp-sidebar-precollapsed');
+            }
+        } catch (error) {
+            // Keep the default expanded layout when storage is unavailable.
+        }
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 

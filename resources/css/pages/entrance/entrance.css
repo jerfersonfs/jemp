@@ -1,0 +1,3 @@
+.movement-panel--entries { --panel-background: var(--color-surface); }
+.movement-panel--entries .content-panel__header { border-bottom: 1px solid color-mix(in srgb, var(--color-secondary) 9%, transparent); }
+.movement-panel--entries .movement-actions-column { width: 5.5rem; }

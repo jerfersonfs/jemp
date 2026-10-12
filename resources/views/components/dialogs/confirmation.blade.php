@@ -10,7 +10,7 @@
     <h2 class="jemp-confirmation__title">{{ $title }}</h2>
     <p class="jemp-confirmation__message">{{ $message }}</p>
     <div class="jemp-confirmation__actions">
-        <button class="jemp-confirmation__button jemp-confirmation__button--cancel" type="button">{{ $cancelLabel }}</button>
-        <button class="jemp-confirmation__button jemp-confirmation__button--confirm" type="button">{{ $confirmLabel }}</button>
+        <button class="jemp-confirmation__button jemp-confirmation__button--cancel" type="button" data-dialog-dismiss>{{ $cancelLabel }}</button>
+        <button class="jemp-confirmation__button jemp-confirmation__button--confirm" type="button" data-movement-confirm>{{ $confirmLabel }}</button>
     </div>
 </section>
