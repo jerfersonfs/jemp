@@ -14,7 +14,7 @@
     :status-variants="['A Vencer' => 'warning', 'Vencido' => 'danger', 'Pago' => 'success']" />
 ```
 
-Cada coluna aceita `key`, `label`, opcionalmente `type="status"` e `class`. As linhas devem ser arrays, objetos ou models fornecidos pela camada de aplicação. `empty-message` altera a mensagem quando não houver registros.
+Cada coluna aceita `key`, `label` e `class`; tipos adicionais incluem `status`, `detail`, `actions`, `input` e `computed-stock`. As linhas podem trazer uma chave `_data` para atributos `data-*` usados por filtros no navegador. A página define os dados; o componente não consulta banco de dados. `empty-message` altera a mensagem quando não houver registros.
 
 ### Variações
 
@@ -23,6 +23,8 @@ Cada coluna aceita `key`, `label`, opcionalmente `type="status"` e `class`. As l
 - `variant="spreadsheet"`: grade compacta com bordas entre todas as células.
 
 Colunas com `type="detail"` renderizam uma ação que abre um dialog. Informe `targetKey` com a chave da linha que contém o identificador `data-dialog-layer` (ou use `target` fixo).
+
+`type="actions"` exibe ações de editar/excluir/visualizar com ícones Phosphor e rótulos acessíveis; `type="input"` renderiza um campo editável inline; `type="computed-stock"` mostra um resultado calculado. A página deve implementar os comportamentos e informar quando os dados forem apenas demonstrativos.
 
 ```blade
 <x-tables.table variant="filtered" :columns="$columns" :rows="$rows">

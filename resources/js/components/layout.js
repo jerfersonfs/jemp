@@ -7,8 +7,14 @@ function initLayoutShell() {
 
         if (!openButton || !closeButton || !collapseButton || !sidebar) return;
 
-        const collapsedPreference = window.localStorage.getItem('jemp-sidebar-collapsed') === 'true';
+        let collapsedPreference = false;
+        try {
+            collapsedPreference = window.localStorage.getItem('jemp-sidebar-collapsed') === 'true';
+        } catch (error) {
+            // Keep the default expanded layout when storage is unavailable.
+        }
         shell.classList.toggle('is-sidebar-collapsed', collapsedPreference && !window.matchMedia('(max-width: 900px)').matches);
+        document.documentElement.classList.remove('jemp-sidebar-precollapsed');
 
         const updateCollapseButton = () => {
             const expanded = !shell.classList.contains('is-sidebar-collapsed');
@@ -20,7 +26,11 @@ function initLayoutShell() {
 
         collapseButton.addEventListener('click', () => {
             const collapsed = shell.classList.toggle('is-sidebar-collapsed');
-            window.localStorage.setItem('jemp-sidebar-collapsed', String(collapsed));
+            try {
+                window.localStorage.setItem('jemp-sidebar-collapsed', String(collapsed));
+            } catch (error) {
+                // The current page remains usable even when storage is unavailable.
+            }
             updateCollapseButton();
         });
 

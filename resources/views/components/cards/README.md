@@ -82,3 +82,16 @@ Para abrir um dialog de detalhamento no botão `Ver dados`, informe `details-tar
 ## Observação
 
 A área destinada ao ícone do `message-card` permanece vazia até que os ícones do projeto estejam disponíveis.
+
+## 4. Content Panel
+
+O painel de conteúdo reaproveita a superfície, cabeçalho, descrição, ação e áreas de filtro em páginas de listagem e formulários:
+
+```blade
+<x-cards.panel title="Histórico" description="Gerencie os registros." variant="mint">
+    <x-slot:actions><x-buttons.button>Nova movimentação</x-buttons.button></x-slot:actions>
+    Conteúdo do painel
+</x-cards.panel>
+```
+
+Slots disponíveis: `header` (ícone/cabeçalho auxiliar), `actions`, `filters` e `footer`. Variantes: `default`, `mint` e `subtle`. A estrutura visual usa os tokens globais, incluindo borda, raio e superfície.

@@ -12,7 +12,7 @@
         ],
         [
             ['page' => 'entrance', 'route' => 'entrance.index', 'label' => 'Entradas', 'icon' => 'tray-arrow-down'],
-            ['page' => 'exits', 'route' => 'exits.index', 'label' => 'Saídas', 'icon' => 'cube'],
+            ['page' => 'exits', 'route' => 'exits.index', 'label' => 'Saídas', 'icon' => 'tray-arrow-up'],
             ['page' => 'internal', 'route' => 'internal.index', 'label' => 'Internas', 'icon' => 'arrows-left-right'],
         ],
         [

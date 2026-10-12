@@ -13,7 +13,7 @@
             <h2 class="jemp-dialog__title">{{ $title }}</h2>
             @if ($description)<p class="jemp-dialog__description">{{ $description }}</p>@endif
         </div>
-        <button class="jemp-dialog__close" type="button" aria-label="Fechar">×</button>
+        <button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button>
     </header>
     <div class="jemp-dialog__body">{{ $slot }}</div>
     @if ($showActions)

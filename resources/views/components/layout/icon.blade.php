@@ -10,6 +10,7 @@
         'note-pencil' => 'ph-note-pencil',
         'handshake' => 'ph-handshake',
         'tray-arrow-down' => 'ph-tray-arrow-down',
+        'tray-arrow-up' => 'ph-tray-arrow-up',
         'arrows-left-right' => 'ph-arrows-left-right',
         'clipboard-text' => 'ph-clipboard-text',
         'question' => 'ph-question',

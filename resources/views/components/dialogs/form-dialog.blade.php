@@ -66,6 +66,7 @@
         @endforeach
 
         <footer class="jemp-form-dialog__footer">
+            <button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>Cancelar</button>
             <button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">{{ $submitText }}</button>
         </footer>
     </form>
