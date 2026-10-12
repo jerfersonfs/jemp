@@ -291,8 +291,9 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
 .jemp-shell .jemp-shell__page {
     width: calc(100% - 12px);
     max-width: none;
+    height: 100%;
     min-height: 0;
-    margin-left: 12px;
+    margin: 0 0 0 12px;
     border-top-left-radius: 30px;
     background: var(--color-background);
     padding: 24px 32px 40px;
@@ -388,7 +389,8 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
 
     .jemp-shell .jemp-shell__page {
         width: calc(100% - 8px);
-        margin-left: 0;
+        margin: 0;
+        height: 100%;
         border-top-left-radius: 28px;
         padding: 22px 24px 32px;
     }
@@ -425,6 +427,12 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
     .jemp-nav__link { min-height: 28px; }
     .jemp-nav__divider { margin-block: 2px; }
     .jemp-sidebar__footer { display: none; }
+}
+
+@media (min-width: 901px) and (max-width: 1440px) and (min-height: 641px) {
+    .jemp-nav__link { min-height: 40px; }
+    .jemp-nav__divider { margin-block: 8px; }
+    .jemp-sidebar__brand-row { margin-bottom: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
