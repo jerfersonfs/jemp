@@ -111,21 +111,36 @@
                 <x-tabs.tabs id="reports-tabs" label="Seções dos relatórios" variant="pills" :tabs="collect($reportSections)->map(fn ($section, $key) => ['id' => $key, 'label' => $section['label']])->values()->all()">
                     @foreach ($reportSections as $sectionKey => $section)
                         <section class="reports-panel" data-tab-panel="{{ $sectionKey }}" hidden>
-                            <header class="reports-panel__intro">
-                                <h2 data-report-heading>{{ $section['heading'] }}</h2>
-                                <p data-report-description>{{ $section['description'] }}</p>
-                            </header>
                             <div class="reports-panel__metrics" data-report-metrics>
                                 @foreach ($section['metrics'] as $metricIndex => $metric)
-                                    <x-cards.stat-card
-                                        :label="$metric['label']"
-                                        :value="$metric['value']"
-                                        :size="$metricIndex === 0 ? 'large' : 'regular'"
-                                        :variant="$metricIndex === 0 ? 'default' : 'mint'"
-                                        details-target="report-indicator-details"
-                                        data-report-metric="{{ $metricIndex }}"
-                                        data-metric-source="{{ $metric['source'] }}" />
+                                    @if ($metricIndex === 0)
+                                        <x-cards.stat-card
+                                            :label="$metric['label']"
+                                            :value="$metric['value']"
+                                            size="large"
+                                            variant="default"
+                                            details-target="report-indicator-details"
+                                            data-report-metric="{{ $metricIndex }}"
+                                            data-metric-source="{{ $metric['source'] }}" />
+                                    @endif
                                 @endforeach
+                                <div class="reports-panel__supporting-metrics">
+                                    <p class="reports-panel__description" data-report-description>{{ $section['description'] }}</p>
+                                    <div class="reports-panel__metric-grid">
+                                        @foreach ($section['metrics'] as $metricIndex => $metric)
+                                            @if ($metricIndex > 0)
+                                                <x-cards.stat-card
+                                                    :label="$metric['label']"
+                                                    :value="$metric['value']"
+                                                    size="regular"
+                                                    variant="mint"
+                                                    details-target="report-indicator-details"
+                                                    data-report-metric="{{ $metricIndex }}"
+                                                    data-metric-source="{{ $metric['source'] }}" />
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                             <div class="reports-panel__table">
                                 <x-tables.table
