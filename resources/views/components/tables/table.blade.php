@@ -37,7 +37,13 @@
                                 }
                             @endphp
                             <td class="{{ $column['class'] ?? '' }}">
-                                @if (($column['type'] ?? null) === 'status')
+                                @if (($column['type'] ?? null) === 'actions')
+                                    <div class="jemp-table__actions">
+                                        @foreach ($column['actions'] ?? [] as $action)
+                                            <button type="button" data-row-action="{{ $action['name'] }}" data-record-id="{{ data_get($row, $column['idKey'] ?? 'id') }}" aria-label="{{ $action['label'] }} #{{ data_get($row, $column['idKey'] ?? 'id') }}" title="{{ $action['label'] }}" class="jemp-table__action {{ $action['name'] === 'delete' ? 'jemp-table__action--danger' : '' }}"><x-icons.icon :name="$action['icon']" size="sm" /></button>
+                                        @endforeach
+                                    </div>
+                                @elseif (($column['type'] ?? null) === 'status')
                                     <x-status.badge :label="$cellValue" :variant="$statusVariant" />
                                 @elseif (($column['type'] ?? null) === 'detail')
                                     @php($dialogTarget = data_get($row, $column['targetKey'] ?? '') ?? ($column['target'] ?? null))

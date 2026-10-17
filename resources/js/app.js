@@ -3,3 +3,5 @@ import './components/popovers/popovers.js';
 import './components/inputs/select.js';
 import './components/layout.js';
 import './pages/login.js';
+import './pages/products.js';
+import './pages/entrance.js';

@@ -6,6 +6,8 @@
     'method' => 'POST',
     'fields' => [],
     'mode' => 'create',
+    'layout' => 'inline',
+    'cancelLabel' => null,
 ])
 
 @php
@@ -21,7 +23,7 @@
     :description="$description"
     :show-actions="false"
     {{ $attributes->class(['jemp-dialog--editing' => $editing]) }}>
-    <form class="jemp-form-dialog {{ $editing ? 'jemp-form-dialog--edit' : 'jemp-form-dialog--create' }}" action="{{ $action }}" method="{{ in_array($formMethod, ['GET', 'POST'], true) ? strtolower($formMethod) : 'POST' }}">
+    <form class="jemp-form-dialog {{ $editing ? 'jemp-form-dialog--edit' : 'jemp-form-dialog--create' }} {{ $layout === 'grid' ? 'jemp-form-dialog--grid' : '' }}" action="{{ $action }}" method="{{ in_array($formMethod, ['GET', 'POST'], true) ? strtolower($formMethod) : 'POST' }}">
         @if (!in_array($formMethod, ['GET', 'POST'], true))
             @method($formMethod)
         @endif
@@ -54,6 +56,8 @@
                         value="{{ $fieldValue }}"
                         placeholder="{{ $field['placeholder'] ?? '' }}"
                         autocomplete="{{ $field['autocomplete'] ?? 'off' }}"
+                        @if (isset($field['min'])) min="{{ $field['min'] }}" @endif
+                        @if (isset($field['step'])) step="{{ $field['step'] }}" @endif
                         @readonly($field['readonly'] ?? false)
                         @required($field['required'] ?? false)
                         @disabled($field['disabled'] ?? false)
@@ -66,6 +70,7 @@
         @endforeach
 
         <footer class="jemp-form-dialog__footer">
+            @if ($cancelLabel)<button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>{{ $cancelLabel }}</button>@endif
             <button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">{{ $submitText }}</button>
         </footer>
     </form>

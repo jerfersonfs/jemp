@@ -1,3 +1,23 @@
+.jemp-modal {
+    position: fixed;
+    inset: 0;
+    width: fit-content;
+    max-width: calc(100% - 32px);
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 0;
+    overflow-y: auto;
+    border: 0;
+    border-radius: .75rem;
+    background: transparent;
+}
+
+.jemp-modal::backdrop { background: rgb(16 43 43 / 48%); }
+.jemp-form-dialog--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.jemp-form-dialog--grid .jemp-form-dialog__field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.jemp-form-dialog--grid .jemp-form-dialog__footer { grid-column: 1 / -1; gap: 8px; }
+@media (max-width: 600px) { .jemp-form-dialog--grid { grid-template-columns: 1fr; } }
+
 .jemp-dialog,
 .jemp-confirmation {
     box-sizing: border-box;
