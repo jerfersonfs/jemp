@@ -24,23 +24,65 @@
 }
 
 .reports-workspace__filters {
-    padding-top: 3.25rem;
+    padding-top: 6rem;
+}
+
+.reports-workspace__filter-title {
+    margin: 0 0 var(--spacing-sm);
+    color: var(--color-caption);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    line-height: 1.4;
 }
 
 .reports-workspace__filters .jemp-vertical-filter {
     min-height: 0;
     position: static;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     padding: var(--spacing-sm);
 }
 
+.reports-workspace__filters .jemp-input__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.reports-workspace__filters .jemp-input__control {
+    min-height: 2rem;
+    padding-block: .25rem;
+}
+
 .reports-workspace__filters .jemp-vertical-filter__options {
-    padding-top: var(--spacing-sm);
+    padding-top: var(--spacing-xs);
+    gap: 3px;
 }
 
 .reports-workspace__filters .jemp-vertical-filter__option {
-    min-height: 2.25rem;
-    padding-block: .35rem;
+    min-height: 1.75rem;
+    padding: .2rem var(--spacing-sm);
+    font-size: .8125rem;
+}
+
+.reports-workspace__filters .jemp-vertical-filter__separator {
+    margin-block: 0;
+}
+
+.reports-workspace__content > .jemp-tabset .jemp-tabset__list {
+    width: calc(100% + 11rem + clamp(1rem, 2vw, 1.75rem));
+    margin-left: calc(-1 * (11rem + clamp(1rem, 2vw, 1.75rem)));
+    transform: translateX(-4%);
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.reports-workspace__content > .jemp-tabset .jemp-tabset__tab {
+    min-width: 9.5rem;
+    min-height: 3rem;
+    padding-inline: var(--spacing-lg);
 }
 
 .reports-workspace__content,
@@ -92,6 +134,16 @@
     min-height: 17rem;
 }
 
+.reports-panel__metrics > .stat-card--large .stat-card__content {
+    flex: 1;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.reports-panel__metrics > .stat-card--large .stat-card__value {
+    margin-block: auto;
+}
+
 .reports-panel__metrics .stat-card__value {
     overflow-wrap: anywhere;
 }
@@ -105,7 +157,7 @@
 }
 
 .reports-panel__metrics .stat-card--large .stat-card__value {
-    font-size: clamp(1.7rem, 2.5vw, 2.5rem);
+    font-size: var(--font-size-display);
 }
 
 .reports-panel__metrics .stat-card__link {
@@ -227,6 +279,17 @@ body.reports-dialog-open {
 
     .reports-workspace__filters .jemp-vertical-filter {
         position: static;
+    }
+
+    .reports-workspace__content > .jemp-tabset .jemp-tabset__list {
+        width: 100%;
+        margin-left: 0;
+        transform: none;
+        justify-content: flex-start;
+    }
+
+    .reports-workspace__content > .jemp-tabset .jemp-tabset__tab {
+        min-width: 7.5rem;
     }
 
     .reports-panel__table {

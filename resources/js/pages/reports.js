@@ -92,7 +92,7 @@ if (reportPage) {
     function updatePresets(section) {
         if (!filterOptions) return;
         const legend = filterOptions.querySelector('legend');
-        const options = section.presets.map((preset) => {
+        const options = section.presets.flatMap((preset, index) => {
             const label = document.createElement('label');
             label.className = 'jemp-vertical-filter__option';
             const input = document.createElement('input');
@@ -103,7 +103,12 @@ if (reportPage) {
             const text = document.createElement('span');
             text.textContent = preset.label;
             label.append(input, text);
-            return label;
+            if (index === section.presets.length - 1) return [label];
+
+            const separator = document.createElement('hr');
+            separator.className = 'jemp-vertical-filter__separator';
+            separator.setAttribute('aria-hidden', 'true');
+            return [label, separator];
         });
         filterOptions.replaceChildren(...(legend ? [legend, ...options] : options));
     }

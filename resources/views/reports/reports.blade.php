@@ -35,7 +35,7 @@
     $reportSections = [
         'overview' => [
             'label' => 'Visão Geral', 'heading' => 'Visão geral da operação', 'description' => 'Indicadores consolidados de estoque e movimentações.', 'rows' => $inventoryRows,
-            'presets' => [['value' => 'all', 'label' => 'Todos os produtos'], ['value' => 'low', 'label' => 'Estoque baixo'], ['value' => 'zero', 'label' => 'Zerados']],
+            'presets' => [['value' => 'all', 'label' => 'Todos os produtos'], ['value' => 'low', 'label' => 'Estoque baixo'], ['value' => 'zero', 'label' => 'Zerados'], ['value' => 'normal', 'label' => 'Normais']],
             'columns' => [['key' => 'code', 'label' => 'Código'], ['key' => 'product', 'label' => 'Produto'], ['key' => 'category', 'label' => 'Categoria'], ['key' => 'quantity', 'label' => 'Qtd. atual'], ['key' => 'minimum', 'label' => 'Qtd. mínima'], ['key' => 'unit', 'label' => 'Unidade'], ['key' => 'status', 'label' => 'Situação', 'type' => 'status'], ['key' => 'detailTarget', 'label' => 'Ações', 'type' => 'detail', 'target' => 'report-record-details', 'detailLabel' => 'Ver']],
             'statusVariants' => ['Normal' => 'success', 'Estoque baixo' => 'warning', 'Zerado' => 'danger'],
             'metrics' => [
@@ -95,15 +95,15 @@
 
         <div class="reports-workspace">
             <aside class="reports-workspace__filters" aria-label="Filtros dos relatórios">
+                <h2 class="reports-workspace__filter-title">Filtre as informações</h2>
                 <x-filters.vertical-filter
                     name="preset"
                     label="Filtros pré-gerados"
                     search-label="Buscar"
-                    search-placeholder="Buscar registros"
+                    search-placeholder="Buscar"
                     :filters="$reportSections['overview']['presets']"
                     selected="all"
                     data-report-filter-form>
-                    <x-buttons.button type="submit" variant="secondary">Aplicar filtros</x-buttons.button>
                 </x-filters.vertical-filter>
             </aside>
 
