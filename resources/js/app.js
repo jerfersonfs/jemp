@@ -4,3 +4,4 @@ import './components/inputs/select.js';
 import './components/layout.js';
 import './pages/login.js';
 import './pages/movements.js';
+import './pages/reports.js';

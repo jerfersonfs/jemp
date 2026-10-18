@@ -24,6 +24,9 @@
                     <input type="radio" name="{{ $name }}" value="{{ $filter['value'] }}" @checked((string) $filter['value'] === (string) $selected)>
                     <span>{{ $filter['label'] }}</span>
                 </label>
+                @unless ($loop->last)
+                    <hr class="jemp-vertical-filter__separator" aria-hidden="true">
+                @endunless
             @endforeach
         </fieldset>
     @endif
