@@ -10,7 +10,8 @@ class WarehouseController extends Controller
 {
     public function index()
     {
-        $warehouses = Warehouse::all();
+        $warehouses = Warehouse::with('inventories.product')->get();
+
         return response()->json($warehouses);
     }
 
@@ -27,7 +28,9 @@ class WarehouseController extends Controller
 
     public function show(Warehouse $warehouse)
     {
-        // return view('warehouses.show', compact('warehouse'));
+        $warehouse->load('inventories.product');
+
+        return response()->json($warehouse);
     }
 
     public function edit(Warehouse $warehouse)

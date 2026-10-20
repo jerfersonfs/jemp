@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
@@ -14,4 +15,9 @@ class Customer extends Model
         'default_payment_terms',
         'customer_email',
     ];
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'customer_id', 'customer_id');
+    }
 }

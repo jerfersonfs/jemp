@@ -15,7 +15,15 @@ class StockMovementController extends Controller
      */
     public function index()
     {
-        //
+        $stockMovements = StockMovement::with([
+            'product',
+            'originWarehouse',
+            'destinationWarehouse',
+            'user',
+            'invoice',
+        ])->get();
+
+        return response()->json($stockMovements);
     }
 
     /**
@@ -90,7 +98,15 @@ class StockMovementController extends Controller
      */
     public function show(StockMovement $stockMovement)
     {
-        //
+        $stockMovement->load([
+            'product',
+            'originWarehouse',
+            'destinationWarehouse',
+            'user',
+            'invoice',
+        ]);
+
+        return response()->json($stockMovement);
     }
 
     /**

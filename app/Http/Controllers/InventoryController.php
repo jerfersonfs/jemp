@@ -10,7 +10,8 @@ class InventoryController extends Controller
 {
     public function index()
     {
-        $inventories = Inventory::all();
+        $inventories = Inventory::with(['product', 'warehouse'])->get();
+
         return response()->json($inventories);
     }
 
@@ -27,7 +28,9 @@ class InventoryController extends Controller
 
     public function show(Inventory $inventory)
     {
-        // return view('inventories.show', compact('inventory'));
+        $inventory->load(['product', 'warehouse']);
+
+        return response()->json($inventory);
     }
 
     public function edit(Inventory $inventory)
