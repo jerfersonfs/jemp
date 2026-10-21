@@ -24,6 +24,7 @@
 @import './components/tabs/tabs.css';
 @import './components/tooltips/tooltips.css';
 @import './components/status/status.css';
+@import './pages/invoice_consult/invoice-consult.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
