@@ -8,6 +8,7 @@
 @import './pages/exits/exits.css';
 @import './pages/internal/internal.css';
 @import './pages/reports/reports.css';
+@import './pages/sales/sales.css';
 @import 'tailwindcss';
 @import './components/buttons/buttons.css';
 @import './components/cards/cards.css';
