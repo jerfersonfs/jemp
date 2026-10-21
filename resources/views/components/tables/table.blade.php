@@ -42,8 +42,28 @@
                                     $statusVariant = 'neutral';
                                 }
                             @endphp
-                            <td class="{{ $column['class'] ?? '' }}" data-column-key="{{ $column['key'] }}" data-column-type="{{ $column['type'] ?? 'text' }}">
-                                @if (($column['type'] ?? null) === 'status')
+
+<td class="{{ $column['class'] ?? '' }}"
+    data-column-key="{{ $column['key'] }}"
+    data-column-type="{{ $column['type'] ?? 'text' }}">
+@if (($column['type'] ?? null) === 'actions' && (
+    isset($column['idKey']) ||
+    isset($column['actions'][0]) && is_array($column['actions'][0])
+))        <div class="jemp-table__actions">
+            @foreach ($column['actions'] ?? [] as $action)
+                <button
+                    type="button"
+                    data-row-action="{{ $action['name'] }}"
+                    data-record-id="{{ data_get($row, $column['idKey']) }}"
+                    aria-label="{{ $action['label'] }} #{{ data_get($row, $column['idKey']) }}"
+                    title="{{ $action['label'] }}"
+                    class="jemp-table__action {{ $action['name'] === 'delete' ? 'jemp-table__action--danger' : '' }}">
+                    <x-icons.icon :name="$action['icon']" size="sm" />
+                </button>
+            @endforeach
+        </div>
+    @elseif (($column['type'] ?? null) === 'status')
+
                                     <x-status.badge :label="$cellValue" :variant="$statusVariant" />
                                 @elseif (($column['type'] ?? null) === 'detail')
                                     @php

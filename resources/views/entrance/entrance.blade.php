@@ -29,7 +29,7 @@
             ['name' => 'date', 'label' => 'Data e hora', 'type' => 'datetime-local', 'required' => true],
             ['name' => 'type', 'label' => 'Tipo', 'type' => 'select', 'required' => true, 'options' => ['Compra' => 'Compra', 'Transferência' => 'Transferência', 'Devolução' => 'Devolução']],
             ['name' => 'product', 'label' => 'Produto', 'required' => true],
-            ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'required' => true],
+            ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
             ['name' => 'origin', 'label' => 'Origem', 'required' => true],
             ['name' => 'destination', 'label' => 'Destino', 'required' => true],
             ['name' => 'justification', 'label' => 'Justificação', 'type' => 'textarea'],

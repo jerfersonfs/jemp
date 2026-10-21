@@ -60,6 +60,8 @@
         @endif
     </div>
 
+    {{ $slot }}
+
     <footer class="jemp-dialog__footer">
         <button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>{{ $closeLabel }}</button>
         @isset($footer){{ $footer }}@endisset

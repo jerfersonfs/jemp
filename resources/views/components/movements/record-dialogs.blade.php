@@ -11,6 +11,7 @@
         :title="$createTitle"
         :description="$description"
         :fields="$fields"
+        layout="grid"
         action="#"
         method="GET"
         size="large"
