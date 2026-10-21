@@ -27,7 +27,7 @@
             </thead>
             <tbody>
                 @forelse ($rows as $row)
-                    <tr data-table-row>
+                    <tr data-table-row @if (data_get($row, 'search_terms')) data-search-text="{{ data_get($row, 'search_terms') }}" @endif>
                         @foreach ($columns as $column)
                             @php
                                 $cellValue = data_get($row, $column['key']);
