@@ -2,13 +2,28 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ProductsPageTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_catalog_renders_product_data_and_shared_dialogs(): void
     {
-        $this->get('/produtos')
+        Product::factory()->create([
+            'code' => '001',
+            'name' => 'Palete',
+            'width' => '1.00',
+            'length' => '1.20',
+            'quantity' => 10,
+            'location' => 'Barracão 1',
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get('/produtos')
             ->assertOk()
             ->assertSee('Listagem de Produtos')
             ->assertSee('jemp-filter-bar')

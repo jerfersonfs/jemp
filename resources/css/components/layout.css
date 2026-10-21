@@ -127,6 +127,7 @@ html.jemp-sidebar-precollapsed .jemp-shell { --sidebar-width: 68px; }
 .jemp-sidebar__brand:focus-visible,
 .jemp-user-menu__trigger:focus-visible,
 .jemp-user-menu__popover a:focus-visible,
+.jemp-user-menu__logout:focus-visible,
 .jemp-header__menu:focus-visible {
     outline: 2px solid var(--color-surface);
     outline-offset: 2px;
@@ -276,15 +277,23 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
     font-size: var(--font-size-caption);
 }
 
-.jemp-user-menu__popover a {
+.jemp-user-menu__popover a,
+.jemp-user-menu__logout {
+    display: block;
+    width: 100%;
     padding: 9px 10px;
+    border: 0;
     border-radius: 6px;
     color: var(--color-secondary);
+    background: transparent;
     font-size: 0.875rem;
+    text-align: left;
     text-decoration: none;
+    cursor: pointer;
 }
 
-.jemp-user-menu__popover a:hover {
+.jemp-user-menu__popover a:hover,
+.jemp-user-menu__logout:hover {
     background: var(--color-background);
 }
 

@@ -1,7 +1,7 @@
 <x-layouts.app title="Entrar · JEMP">
     <main class="login-page">
         <section class="login-story" aria-label="Sobre a JEMP">
-            <a class="login-brand" href="{{ route('home') }}" aria-label="JEMP, página inicial">
+            <a class="login-brand" href="{{ route('login') }}" aria-label="JEMP, página de login">
                 <span class="login-brand__mark" aria-hidden="true">
                     <svg viewBox="0 0 48 48" focusable="false">
                         <path d="M5 14 22 5v36L5 32V14Z" fill="currentColor" />
@@ -26,7 +26,7 @@
         </section>
 
         <section class="login-card" aria-labelledby="login-title">
-            <a class="login-card__brand" href="{{ route('home') }}" aria-label="JEMP, página inicial">
+            <a class="login-card__brand" href="{{ route('login') }}" aria-label="JEMP, página de login">
                 <span class="login-card__logo" aria-hidden="true">
                     <svg viewBox="0 0 48 48" focusable="false">
                         <path d="M5 14 22 5v36L5 32V14Z" fill="currentColor" />
@@ -41,12 +41,13 @@
             <h2 id="login-title">Acesse sua conta</h2>
             <p class="login-card__intro">Entre para acompanhar a sua operação.</p>
 
-            <form class="login-form" data-demo-login>
+            <form class="login-form" method="POST" action="{{ route('login.store') }}">
+                @csrf
                 <div class="login-field">
-                    <label for="login-username">Usuário</label>
+                    <label for="login-username">E-mail</label>
                     <div class="login-field__control">
                         <span class="login-field__icon" aria-hidden="true"><x-layout.icon name="user" /></span>
-                        <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Digite seu usuário" required>
+                        <input id="login-username" name="email" type="email" value="{{ old('email') }}" autocomplete="username" placeholder="Digite seu e-mail" required>
                     </div>
                 </div>
                 <div class="login-field">
@@ -59,9 +60,14 @@
                         </button>
                     </div>
                 </div>
-                <div class="login-form__options"><span></span><button type="button" data-password-help>Esqueceu sua senha?</button></div>
+                <div class="login-form__options"><span></span><span>Recuperação de senha indisponível</span></div>
                 <x-buttons.button type="submit" class="login-form__submit">Entrar</x-buttons.button>
-                <p class="login-form__notice" data-login-notice role="status">Ambiente demonstrativo · sem autenticação ativa</p>
+                @error('email')
+                    <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
+                @enderror
+                @error('password')
+                    <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
+                @enderror
             </form>
         </section>
     </main>

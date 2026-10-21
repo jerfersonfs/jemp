@@ -18,7 +18,7 @@
         <div><h1>Clientes</h1><p>Gerencie e consulte os clientes cadastrados no sistema.</p></div>
     </div>
 
-    <section class="customers-card" aria-labelledby="customers-list-title" data-customers-list>
+    <section class="customers-card" aria-labelledby="customers-list-title" data-customers-list data-validation-errors="{{ $errors->any() ? 'true' : 'false' }}" data-old-record-id="{{ old('_record_id', '') }}">
         <header class="customers-card__header">
             <span class="customers-card__icon"><i class="ph ph-user" aria-hidden="true"></i></span>
             <div><h2 id="customers-list-title">Lista de Clientes</h2><p>Visualize, filtre e gerencie todos os clientes cadastrados.</p></div>
@@ -35,9 +35,9 @@
                 <thead><tr><th scope="col">Cliente <span>↕</span></th><th scope="col">CNPJ <span>↕</span></th><th scope="col">Cidade <span>↕</span></th><th scope="col">Telefone</th><th scope="col">E-mail</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
                 <tbody data-customer-rows>
                     @foreach ($customers as $customer)
-                        <tr data-customer-row data-status="{{ $customer['status'] }}" data-search="{{ strtolower(implode(' ', $customer)) }}">
-                            <td>{{ $customer['name'] }}</td><td>{{ $customer['document'] }}</td><td>{{ $customer['city'] }}</td><td>{{ $customer['phone'] }}</td><td>{{ $customer['email'] }}</td>
-                            <td><x-status.badge :label="$customer['status']" :variant="$customer['status'] === 'Ativo' ? 'success' : 'danger'" /></td>
+                        <tr data-customer-row data-status="{{ $customer->status }}" data-search="{{ strtolower(implode(' ', $customer->only(['name', 'document', 'city', 'phone', 'email']))) }}" data-update-url="{{ route('customers.update', $customer) }}" data-delete-url="{{ route('customers.destroy', $customer) }}" data-record="{{ $customer->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}">
+                            <td>{{ $customer->name }}</td><td>{{ $customer->document }}</td><td>{{ $customer->city }}</td><td>{{ $customer->phone }}</td><td>{{ $customer->email }}</td>
+                            <td><x-status.badge :label="$customer->status" :variant="$customer->status === 'Ativo' ? 'success' : 'danger'" /></td>
                             <td><div class="customers-table__actions">
                                 <button class="customers-table__action customers-table__action--view" type="button" data-customer-view aria-label="Ver detalhes de {{ $customer['name'] }}" title="Ver detalhes"><i class="ph ph-eye" aria-hidden="true"></i></button>
                                 <button class="customers-table__action customers-table__action--edit" type="button" data-customer-edit aria-label="Editar cliente {{ $customer['name'] }}" title="Editar cliente"><i class="ph ph-pencil-simple-line" aria-hidden="true"></i></button>
@@ -50,17 +50,21 @@
             </table>
         </div>
 
-        <footer class="customers-footer"><span data-customer-summary>Mostrando 1–10 de 10 clientes demonstrativos</span><nav class="customers-pagination" aria-label="Paginação de clientes"><button type="button" data-customer-previous disabled>Anterior</button><button class="is-current" type="button" aria-current="page">1</button><button type="button" disabled aria-label="Próxima página">Próximo</button></nav></footer>
-        <p class="customers-note">Dados ilustrativos para demonstração visual; ainda não são persistidos no sistema.</p>
+        <footer class="customers-footer"><span data-customer-summary>Mostrando {{ $customers->count() }} clientes</span><nav class="customers-pagination" aria-label="Paginação de clientes"><button type="button" data-customer-previous disabled>Anterior</button><span data-customer-pages></span><button type="button" data-customer-next disabled aria-label="Próxima página">Próximo</button></nav></footer>
     </section>
 
     <div class="customers-dialog-layer" data-customer-dialog hidden>
         <section class="jemp-dialog jemp-dialog--large" role="dialog" aria-modal="true" aria-labelledby="customer-dialog-title" data-customer-edit-dialog>
             <header class="jemp-dialog__header"><div><h2 class="jemp-dialog__title" id="customer-dialog-title">Adicionar Cliente</h2><p class="jemp-dialog__description">Preencha os dados cadastrais do cliente.</p></div><button class="jemp-dialog__close" type="button" data-customer-close aria-label="Fechar">×</button></header>
-            <form class="customers-dialog-form jemp-form-dialog--create" data-customer-form>
-                <label>Nome / Empresa<input name="name" required></label><label>CNPJ<input name="document" placeholder="00.000.000/0000-00" required></label>
-                <label>Cidade<input name="city" required></label><label>Telefone<input name="phone" type="tel"></label>
-                <label>E-mail<input name="email" type="email"></label><label>Status<select name="status"><option>Ativo</option><option>Inativo</option></select></label>
+            <form class="customers-dialog-form jemp-form-dialog--create" data-customer-form action="{{ route('customers.store') }}" method="POST" data-customer-store-url="{{ route('customers.store') }}">
+                @csrf
+                <input type="hidden" name="_record_id" value="{{ old('_record_id', '') }}">
+                @if ($errors->any())
+                    <p class="jemp-form-dialog__error" role="alert">{{ $errors->first() }}</p>
+                @endif
+                <label>Nome / Empresa<input name="name" value="{{ old('name') }}" required></label><label>CNPJ<input name="document" value="{{ old('document') }}" placeholder="00.000.000/0000-00" required></label>
+                <label>Cidade<input name="city" value="{{ old('city') }}" required></label><label>Telefone<input name="phone" type="tel" value="{{ old('phone') }}"></label>
+                <label>E-mail<input name="email" type="email" value="{{ old('email') }}"></label><label>Status<select name="status"><option value="Ativo" @selected(old('status', 'Ativo') === 'Ativo')>Ativo</option><option value="Inativo" @selected(old('status') === 'Inativo')>Inativo</option></select></label>
                 <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-customer-close>Cancelar</button><button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">Salvar Cliente</button></footer>
             </form>
         </section>
@@ -71,6 +75,13 @@
     </div>
 
     <div class="customers-dialog-layer" data-customer-confirm-layer hidden>
-        <x-dialogs.confirmation title="Excluir cliente?" message="Esta ação não poderá ser desfeita." confirm-label="Excluir cliente" cancel-label="Cancelar" data-customer-confirm-dialog />
+        <form method="POST" data-customer-delete-form>
+            @csrf
+            @method('DELETE')
+            <x-dialogs.confirmation title="Excluir cliente?" message="Esta ação não poderá ser desfeita." confirm-label="Excluir cliente" cancel-label="Cancelar" data-customer-confirm-dialog />
+        </form>
     </div>
+    @if (session('status'))
+        <p class="customers-note" role="status">{{ session('status') }}</p>
+    @endif
 </x-layouts.app>
