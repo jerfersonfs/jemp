@@ -8,3 +8,5 @@ import './pages/movements.js';
 import './pages/reports.js';
 import './pages/products.js';
 import './pages/entrance.js';
+import './pages/sales.js';
+import './pages/customers.js';

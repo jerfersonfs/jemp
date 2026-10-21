@@ -10,6 +10,7 @@
 @import './pages/reports/reports.css';
 @import './pages/products.css';
 @import './pages/entrance.css';
+@import './pages/sales/sales.css';
 @import 'tailwindcss';
 @import './components/buttons/buttons.css';
 @import './components/cards/cards.css';
