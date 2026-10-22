@@ -94,7 +94,7 @@
     background: transparent;
     color: var(--color-info);
     cursor: pointer;
-    transition: background-color 140ms ease, border-color 140ms ease;
+    transition: background-color var(--motion-fast) var(--motion-ease-standard), border-color var(--motion-fast) var(--motion-ease-standard), transform var(--motion-fast) var(--motion-ease-standard);
 }
 .movement-table-wrap .jemp-table__icon-action:hover { border-color: color-mix(in srgb, var(--color-info) 15%, white); background: color-mix(in srgb, var(--color-info) 8%, white); }
 .movement-table-wrap .jemp-table__icon-action--delete { color: var(--color-danger); }

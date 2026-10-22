@@ -12,6 +12,10 @@
     line-height: 1.2;
 }
 
+.jemp-notice:not([hidden]) {
+    animation: jemp-content-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
 .jemp-status-badge__dot {
     width: .375rem;
     height: .375rem;

@@ -28,7 +28,7 @@
     font-size: var(--font-size-label);
     font-weight: 600;
     cursor: pointer;
-    transition: border-color 140ms ease, color 140ms ease;
+    transition: border-color var(--motion-normal) var(--motion-ease-standard), color var(--motion-normal) var(--motion-ease-standard), background-color var(--motion-normal) var(--motion-ease-standard);
 }
 
 .jemp-tabset__tab:hover {
@@ -48,6 +48,10 @@
 
 .jemp-tabset__panels {
     padding-top: var(--spacing-md);
+}
+
+.jemp-tabset__panel:not([hidden]) {
+    animation: jemp-content-enter var(--motion-fast) var(--motion-ease-out) both;
 }
 
 .jemp-tabset__panel[hidden] {

@@ -66,7 +66,7 @@
     color: var(--color-caption);
     font-size: var(--font-size-label);
     cursor: pointer;
-    transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+    transition: border-color var(--motion-fast) var(--motion-ease-standard), background-color var(--motion-fast) var(--motion-ease-standard), color var(--motion-fast) var(--motion-ease-standard), transform var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-vertical-filter__separator {

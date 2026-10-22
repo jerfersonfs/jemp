@@ -20,7 +20,7 @@
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-    transition: background-color 140ms ease, box-shadow 140ms ease;
+    transition: background-color var(--motion-fast) var(--motion-ease-standard), box-shadow var(--motion-fast) var(--motion-ease-standard), transform var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-popover__trigger:hover {
@@ -52,7 +52,7 @@
     padding: var(--spacing-md);
     color: var(--color-caption);
     box-shadow: 0 4px 8px rgb(0 0 0 / 9%);
-    animation: jemp-popover-in 140ms ease both;
+    animation: jemp-popover-in var(--motion-normal) var(--motion-ease-out) both;
 }
 
 .jemp-popover--wide .jemp-popover__panel {

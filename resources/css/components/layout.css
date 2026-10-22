@@ -1,5 +1,6 @@
 .jemp-shell {
     --sidebar-width: 216px;
+    --sidebar-motion: var(--motion-slow) var(--motion-ease-standard);
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -9,6 +10,7 @@
     min-height: 0;
     overflow: hidden;
     background: var(--color-background);
+    transition: grid-template-columns var(--sidebar-motion);
 }
 
 .jemp-sidebar {
@@ -25,6 +27,7 @@
     overflow: hidden;
     color: var(--color-surface);
     background: var(--color-secondary);
+    transition: width var(--sidebar-motion);
 }
 
 .jemp-shell.is-sidebar-collapsed,
@@ -69,7 +72,11 @@ html.jemp-sidebar-precollapsed .jemp-shell { --sidebar-width: 68px; }
 
 .jemp-sidebar__collapse:hover { background: rgb(238 255 253 / 10%); }
 .jemp-sidebar__collapse:focus-visible { outline: 2px solid var(--color-surface); outline-offset: 2px; }
-.jemp-sidebar__collapse .jemp-icon { width: 17px; height: 17px; }
+.jemp-sidebar__collapse .jemp-icon {
+    width: 17px;
+    height: 17px;
+    transition: transform var(--sidebar-motion);
+}
 
 .jemp-sidebar__brand svg {
     width: 42px;
@@ -109,18 +116,23 @@ html.jemp-sidebar-precollapsed .jemp-shell { --sidebar-width: 68px; }
     line-height: 1.4;
     text-decoration: none;
     cursor: pointer;
-    transition: color 140ms ease, background-color 140ms ease;
+    transition: color var(--motion-fast) var(--motion-ease-standard), background-color var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-nav__link .jemp-icon {
     width: 18px;
     height: 18px;
     flex: none;
+    transition: transform var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-nav__link:hover {
     color: #fff;
     background: rgb(238 255 253 / 10%);
+}
+
+.jemp-nav__link:not(.is-active):hover .jemp-icon {
+    transform: translateX(2px);
 }
 
 .jemp-nav__link:focus-visible,
@@ -135,6 +147,25 @@ html.jemp-sidebar-precollapsed .jemp-shell { --sidebar-width: 68px; }
 .jemp-nav__link.is-active {
     color: #fff;
     background: var(--color-primary);
+}
+
+.jemp-nav__link > span,
+.jemp-sidebar__footer > span {
+    display: block;
+    flex: 0 1 160px;
+    max-width: 160px;
+    overflow: hidden;
+    opacity: 1;
+    text-overflow: ellipsis;
+    transform: translateX(0);
+    visibility: visible;
+    white-space: nowrap;
+    transition: max-width var(--sidebar-motion), flex-basis var(--sidebar-motion), opacity var(--motion-fast) var(--motion-ease-standard), transform var(--sidebar-motion), visibility 0s;
+}
+
+.jemp-shell.is-sidebar-collapsed .jemp-nav__link .jemp-icon,
+html.jemp-sidebar-precollapsed .jemp-nav__link .jemp-icon {
+    transform: translateX(0);
 }
 
 .jemp-nav__divider {
@@ -259,6 +290,8 @@ html.jemp-sidebar-precollapsed .jemp-shell { --sidebar-width: 68px; }
 
 .jemp-shell.is-sidebar-collapsed .jemp-sidebar__brand-row,
 html.jemp-sidebar-precollapsed .jemp-sidebar__brand-row { flex-direction: column; gap: 10px; }
+.jemp-shell.is-sidebar-collapsed .jemp-sidebar__collapse .jemp-icon,
+html.jemp-sidebar-precollapsed .jemp-sidebar__collapse .jemp-icon { transform: rotate(180deg); }
 .jemp-shell.is-sidebar-collapsed .jemp-sidebar__brand,
 html.jemp-sidebar-precollapsed .jemp-sidebar__brand { width: 40px; }
 .jemp-shell.is-sidebar-collapsed .jemp-nav__link,
@@ -266,7 +299,14 @@ html.jemp-sidebar-precollapsed .jemp-nav__link { justify-content: center; gap: 0
 .jemp-shell.is-sidebar-collapsed .jemp-nav__link > span,
 .jemp-shell.is-sidebar-collapsed .jemp-sidebar__footer > span,
 html.jemp-sidebar-precollapsed .jemp-nav__link > span,
-html.jemp-sidebar-precollapsed .jemp-sidebar__footer > span { display: none; }
+html.jemp-sidebar-precollapsed .jemp-sidebar__footer > span {
+    flex-basis: 0;
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-6px);
+    visibility: hidden;
+    transition: max-width var(--sidebar-motion), flex-basis var(--sidebar-motion), opacity var(--motion-fast) var(--motion-ease-standard), transform var(--sidebar-motion), visibility 0s linear 260ms;
+}
 .jemp-shell.is-sidebar-collapsed .jemp-sidebar__footer,
 html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; padding-inline: 0; }
 
@@ -300,6 +340,19 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
     overflow: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
+    animation: jemp-content-enter var(--motion-slow) var(--motion-ease-out) both;
+}
+
+@keyframes jemp-content-enter {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .jemp-shell__backdrop {
@@ -332,7 +385,7 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
         height: 100%;
         min-height: 0;
         transform: translateX(-100%);
-        transition: transform 180ms ease;
+        transition: transform var(--motion-slow) var(--motion-ease-standard);
     }
 
     .jemp-sidebar__collapse { display: none; }
@@ -342,14 +395,25 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
         transform: translateX(0);
     }
 
-    .jemp-shell.is-sidebar-open .jemp-shell__backdrop {
+    .jemp-shell__backdrop {
         position: fixed;
         z-index: 30;
         inset: 0;
         display: block;
         border: 0;
         background: rgb(19 44 45 / 46%);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
         cursor: pointer;
+        transition: opacity var(--motion-slow) var(--motion-ease-standard), visibility 0s linear var(--motion-slow);
+    }
+
+    .jemp-shell.is-sidebar-open .jemp-shell__backdrop {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition: opacity var(--motion-slow) var(--motion-ease-standard), visibility 0s;
     }
 
     .jemp-shell__main {
@@ -436,8 +500,16 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .jemp-shell,
+    .jemp-shell .jemp-shell__page,
     .jemp-nav__link,
-    .jemp-sidebar {
-        transition-duration: 0.01ms;
+    .jemp-nav__link .jemp-icon,
+    .jemp-nav__link > span,
+    .jemp-sidebar,
+    .jemp-sidebar__collapse .jemp-icon,
+    .jemp-sidebar__footer > span,
+    .jemp-shell__backdrop {
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
     }
 }

@@ -17,6 +17,7 @@
     padding: clamp(28px, 5vw, 72px);
     color: var(--color-surface);
     background: var(--color-secondary);
+    animation: jemp-content-enter var(--motion-slow) var(--motion-ease-out) both;
 }
 
 .login-brand,
@@ -60,6 +61,19 @@
     background: white;
     box-shadow: 0 24px 64px rgb(27 64 65 / 15%), 0 3px 10px rgb(27 64 65 / 5%);
     transform: translate(-50%, -50%);
+    animation: login-card-enter var(--motion-slow) var(--motion-ease-out) both;
+}
+
+@keyframes login-card-enter {
+    from {
+        opacity: 0;
+        transform: translate(-50%, calc(-50% + 8px));
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
 }
 
 .login-card__brand { flex-direction: column; gap: 5px; margin: 0 auto 30px; color: var(--color-primary); text-align: center; }
@@ -72,7 +86,7 @@
 .login-form { display: grid; gap: 16px; }
 .login-field { display: grid; gap: 6px; }
 .login-field label { color: var(--color-secondary); font-size: .75rem; font-weight: 600; }
-.login-field__control { display: flex; min-height: 42px; align-items: center; gap: 9px; padding: 0 11px; border: 1px solid color-mix(in srgb, var(--color-subheading) 58%, white); border-radius: var(--radius-control); background: white; transition: border-color 140ms ease, box-shadow 140ms ease; }
+.login-field__control { display: flex; min-height: 42px; align-items: center; gap: 9px; padding: 0 11px; border: 1px solid color-mix(in srgb, var(--color-subheading) 58%, white); border-radius: var(--radius-control); background: white; transition: border-color var(--motion-normal) var(--motion-ease-standard), box-shadow var(--motion-normal) var(--motion-ease-standard); }
 .login-field__control:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent); }
 .login-field__icon { display: grid; width: 17px; height: 17px; flex: none; place-items: center; color: var(--color-caption); }
 .login-field__icon .jemp-icon { width: 16px; height: 16px; }
@@ -84,7 +98,7 @@
 .login-form__options { display: flex; justify-content: flex-end; margin-top: -8px; font-size: .6875rem; }
 .login-form__options button { padding: 0; border: 0; color: var(--color-primary); background: transparent; font: inherit; font-size: inherit; font-weight: 600; cursor: pointer; }
 .login-form__options button:hover { text-decoration: underline; text-underline-offset: 3px; }
-.login-form__submit { width: 100%; min-height: 42px; border-radius: 5px; color: white; background: var(--color-primary); font-size: .8125rem; font-weight: 700; transition: background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease; }
+.login-form__submit { width: 100%; min-height: 42px; border-radius: 5px; color: white; background: var(--color-primary); font-size: .8125rem; font-weight: 700; transition: background-color var(--motion-fast) var(--motion-ease-standard), box-shadow var(--motion-fast) var(--motion-ease-standard), transform var(--motion-fast) var(--motion-ease-standard); }
 .login-form__submit:hover { background: color-mix(in srgb, var(--color-primary) 90%, var(--color-secondary)); box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 22%, transparent); }
 .login-form__submit:active { transform: translateY(1px); }
 .login-form__submit:focus-visible,
@@ -119,5 +133,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .login-field__control,
-    .login-form__submit { transition-duration: .01ms; }
+    .login-form__submit,
+    .login-story,
+    .login-card { transition-duration: .01ms; animation-duration: .01ms; }
 }

@@ -39,4 +39,11 @@
     --radius-control: 0.5rem;
     --radius-card: 0.75rem;
     --radius-pill: 999px;
+
+    /* Movimento */
+    --motion-fast: 140ms;
+    --motion-normal: 200ms;
+    --motion-slow: 260ms;
+    --motion-ease-standard: cubic-bezier(0.2, 0.75, 0.25, 1);
+    --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
 }

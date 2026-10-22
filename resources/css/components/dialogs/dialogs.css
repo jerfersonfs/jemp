@@ -12,7 +12,36 @@
     background: transparent;
 }
 
-.jemp-modal::backdrop { background: rgb(16 43 43 / 48%); }
+.jemp-modal[open] {
+    animation: jemp-dialog-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
+.jemp-modal::backdrop {
+    background: rgb(16 43 43 / 48%);
+    animation: jemp-backdrop-enter var(--motion-normal) ease-out both;
+}
+
+[data-dialog-layer]:not([hidden]) > :is(.jemp-dialog, .jemp-confirmation) {
+    animation: jemp-dialog-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
+@keyframes jemp-dialog-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes jemp-backdrop-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .jemp-form-dialog--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .jemp-form-dialog--grid .jemp-form-dialog__field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
 .jemp-form-dialog--grid .jemp-form-dialog__footer { grid-column: 1 / -1; gap: 8px; }
@@ -161,7 +190,7 @@
     line-height: 1.25;
     cursor: pointer;
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-    transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    transition: background-color var(--motion-fast) var(--motion-ease-standard), border-color var(--motion-fast) var(--motion-ease-standard), box-shadow var(--motion-fast) var(--motion-ease-standard), transform var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-dialog__button:active,
@@ -278,7 +307,7 @@
     color: var(--color-secondary);
     font: inherit;
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-    transition: border-color 140ms ease, box-shadow 140ms ease;
+    transition: border-color var(--motion-normal) var(--motion-ease-standard), box-shadow var(--motion-normal) var(--motion-ease-standard);
 }
 
 .jemp-form-dialog__field textarea {
@@ -360,7 +389,7 @@
     color: var(--color-secondary);
     font-size: var(--font-size-button);
     cursor: pointer;
-    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+    transition: background-color var(--motion-fast) var(--motion-ease-standard), border-color var(--motion-fast) var(--motion-ease-standard), color var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-tabs>input:checked+label {
@@ -380,6 +409,10 @@
     border-radius: 0 .5rem .5rem .5rem;
     background: var(--color-surface);
     padding: var(--spacing-md);
+}
+
+.jemp-tabs__panel {
+    animation: jemp-content-enter var(--motion-fast) var(--motion-ease-out) both;
 }
 
 .jemp-tabs__panel:nth-child(2) {

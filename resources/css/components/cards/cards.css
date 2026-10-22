@@ -9,7 +9,7 @@
     padding: var(--spacing-md) var(--spacing-lg);
     color: var(--color-secondary);
     font-family: var(--font-family);
-    transition: border-color 140ms ease, box-shadow 140ms ease;
+    transition: border-color var(--motion-normal) var(--motion-ease-standard), box-shadow var(--motion-normal) var(--motion-ease-standard), transform var(--motion-normal) var(--motion-ease-standard);
 }
 
 .message-card:hover {
@@ -84,11 +84,12 @@
     color: var(--stat-foreground);
     font-family: var(--font-family);
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-    transition: border-color 140ms ease, box-shadow 140ms ease;
+    transition: border-color var(--motion-normal) var(--motion-ease-standard), box-shadow var(--motion-normal) var(--motion-ease-standard), transform var(--motion-normal) var(--motion-ease-standard);
 }
 
 .stat-card:hover {
     box-shadow: 0 2px 4px rgb(0 0 0 / 8%);
+    transform: translateY(-2px);
 }
 
 .stat-card--mint {
@@ -200,7 +201,7 @@ button.stat-card__link:hover { background: color-mix(in srgb, var(--stat-foregro
     padding: var(--spacing-sm) var(--spacing-md);
     font-family: var(--font-family);
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-    transition: border-color 140ms ease, box-shadow 140ms ease;
+    transition: border-color var(--motion-normal) var(--motion-ease-standard), box-shadow var(--motion-normal) var(--motion-ease-standard), transform var(--motion-normal) var(--motion-ease-standard);
 }
 
 .finance-card:hover {

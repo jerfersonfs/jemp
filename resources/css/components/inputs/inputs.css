@@ -30,7 +30,7 @@
     background: white;
     padding: 0 var(--spacing-sm);
     box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-    transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+    transition: border-color var(--motion-normal) var(--motion-ease-standard), box-shadow var(--motion-normal) var(--motion-ease-standard), background-color var(--motion-normal) var(--motion-ease-standard);
 }
 
 .jemp-input__control-wrap:focus-within {
@@ -96,7 +96,7 @@
     display: inline-flex;
     pointer-events: none;
     color: var(--color-secondary);
-    transition: transform 140ms ease, color 140ms ease;
+    transition: transform var(--motion-fast) var(--motion-ease-standard), color var(--motion-fast) var(--motion-ease-standard);
 }
 
 .jemp-input__control-wrap:has(select[data-open="true"]) .jemp-input__select-icon {
