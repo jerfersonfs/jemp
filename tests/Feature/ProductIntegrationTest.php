@@ -24,9 +24,11 @@ class ProductIntegrationTest extends TestCase
         $this->patch(route('products.update', $product), array_merge($this->validProduct(), [
             'code' => 'P-002',
             'quantity' => 15,
+            'product_updated_at' => $product->updated_at->toIso8601String(),
         ]))->assertRedirect(route('products.index'));
 
         $this->assertDatabaseHas('products', ['id' => $product->id, 'code' => 'P-002', 'quantity' => 15]);
+        $this->assertDatabaseHas('product_stocks', ['product_id' => $product->id, 'location' => 'Barracão 1', 'quantity' => 15]);
 
         $this->delete(route('products.destroy', $product))
             ->assertRedirect(route('products.index'));

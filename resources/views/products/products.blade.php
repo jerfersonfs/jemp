@@ -19,8 +19,14 @@
             'type' => $product->type,
             'width' => $product->width,
             'length' => $product->length,
-            'quantity' => $product->quantity,
-            'location' => $product->location,
+            'quantity' => $product->stocks_sum_quantity ?? $product->quantity,
+            'location' => $product->stocks->where('quantity', '>', 0)->count() > 1
+                ? 'Vários locais'
+                : ($product->stocks->firstWhere('quantity', '>', 0)?->location ?? $product->location),
+            'edit_location' => $product->location,
+            'updated_at' => $product->updated_at,
+            'updated_at' => $product->updated_at,
+            'stocks' => $product->stocks->map(fn ($stock) => ['location' => $stock->location, 'quantity' => $stock->quantity])->values(),
             'material' => $product->material,
             'wood' => $product->wood,
             'measure' => number_format((float) $product->width, 2, ',', '.') . ' × ' . number_format((float) $product->length, 2, ',', '.') . ' m',
@@ -37,8 +43,8 @@
             ['name' => 'type', 'id' => 'product-type', 'label' => 'Tipo', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'FP' => 'FP'], 'required' => true],
             ['name' => 'width', 'id' => 'product-width', 'label' => 'Largura (m)', 'type' => 'number', 'min' => 0.01, 'step' => 0.01, 'required' => true],
             ['name' => 'length', 'id' => 'product-length', 'label' => 'Comprimento (m)', 'type' => 'number', 'min' => 0.01, 'step' => 0.01, 'required' => true],
-            ['name' => 'quantity', 'id' => 'product-quantity', 'label' => 'Saldo no local', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true],
-            ['name' => 'location', 'id' => 'product-location', 'label' => 'Local', 'type' => 'select', 'options' => ['Barracão 1' => 'Barracão 1', 'Barracão 2' => 'Barracão 2', 'Barracão 3' => 'Barracão 3'], 'required' => true],
+            ['name' => 'quantity', 'id' => 'product-quantity', 'label' => 'Estoque total', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true],
+            ['name' => 'location', 'id' => 'product-location', 'label' => 'Local', 'type' => 'select', 'options' => ['Barracão 1' => 'Barracão 1', 'Barracão 2' => 'Barracão 2', 'Barracão 3' => 'Barracão 3', 'Depósito principal' => 'Depósito principal'], 'required' => true],
             ['name' => 'material', 'id' => 'product-material', 'label' => 'Material', 'required' => true],
             ['name' => 'wood', 'id' => 'product-wood', 'label' => 'Madeira', 'required' => true],
         ];
@@ -53,6 +59,9 @@
 
     <div class="products-page" data-product-catalog data-validation-errors="{{ $errors->any() ? 'true' : 'false' }}" data-old-record-id="{{ old('_record_id', '') }}">
         <div class="page-head"><h1>Produtos</h1></div>
+        @if ($errors->any()) <p class="products-error" role="alert">{{ $errors->first() }}</p> @endif
+        @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
+        @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
         <section class="products-panel" aria-labelledby="products-list-title">
             <header class="products-panel__header">
                 <div><h2 id="products-list-title">Listagem de Produtos</h2><p>Gerencie todos os produtos do seu catálogo.</p></div>

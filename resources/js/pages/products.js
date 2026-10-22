@@ -45,6 +45,14 @@ if (catalog) {
             form.append(recordId);
         }
         recordId.value = product?.id ?? '';
+        let productVersion = form.elements.namedItem('product_updated_at');
+        if (!productVersion) {
+            productVersion = document.createElement('input');
+            productVersion.type = 'hidden';
+            productVersion.name = 'product_updated_at';
+            form.append(productVersion);
+        }
+        productVersion.value = product?.updated_at ?? '';
         const title = editing ? 'Editar produto' : 'Novo produto';
         const panel = formModal.querySelector('.jemp-dialog');
         formModal.setAttribute('aria-label', title);
@@ -58,7 +66,7 @@ if (catalog) {
             for (const [name, value] of Object.entries(product)) {
                 const field = form.elements.namedItem(name);
                 if (field) {
-                    field.value = value;
+                    field.value = name === 'location' ? (product.edit_location ?? value) : value;
                 }
             }
         }
@@ -78,8 +86,10 @@ if (catalog) {
         });
         const body = detailsModal.querySelector('tbody');
         body.replaceChildren();
-        for (const location of ['Barracão 1', 'Barracão 2', 'Barracão 3']) {
-            const balance = location === product.location ? Number(product.quantity) : 0;
+        const stockBalances = new Map((product.stocks ?? []).map((stock) => [stock.location, Number(stock.quantity)]));
+        const locations = [...new Set(['Barracão 1', 'Barracão 2', 'Barracão 3', 'Depósito principal', ...stockBalances.keys()])];
+        for (const location of locations) {
+            const balance = stockBalances.get(location) ?? 0;
             const row = document.createElement('tr');
             for (const value of [product.code, `${product.name} ${product.type}`, `${balance} un.`, location]) {
                 const cell = document.createElement('td');
