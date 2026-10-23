@@ -288,6 +288,23 @@ html.jemp-sidebar-precollapsed .jemp-nav__link .jemp-icon {
     box-shadow: 0 8px 20px rgb(27 64 65 / 12%);
 }
 
+.jemp-user-menu[open] .jemp-user-menu__popover {
+    transform-origin: top right;
+    animation: jemp-profile-card-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
+@keyframes jemp-profile-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 .jemp-shell.is-sidebar-collapsed .jemp-sidebar__brand-row,
 html.jemp-sidebar-precollapsed .jemp-sidebar__brand-row { flex-direction: column; gap: 10px; }
 .jemp-shell.is-sidebar-collapsed .jemp-sidebar__collapse .jemp-icon,
