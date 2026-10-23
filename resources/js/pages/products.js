@@ -14,7 +14,7 @@ if (catalog) {
     let returnFocus = null;
 
     const normalize = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
-    const formatMeasure = (value) => Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
 
     function setFormMethod(method) {
         let methodInput = form.querySelector('[name="_method"]');
@@ -44,15 +44,7 @@ if (catalog) {
             recordId.name = '_record_id';
             form.append(recordId);
         }
-        recordId.value = product?.id ?? '';
-        let productVersion = form.elements.namedItem('product_updated_at');
-        if (!productVersion) {
-            productVersion = document.createElement('input');
-            productVersion.type = 'hidden';
-            productVersion.name = 'product_updated_at';
-            form.append(productVersion);
-        }
-        productVersion.value = product?.updated_at ?? '';
+        recordId.value = product?.product_id ?? '';
         const title = editing ? 'Editar produto' : 'Novo produto';
         const panel = formModal.querySelector('.jemp-dialog');
         formModal.setAttribute('aria-label', title);
@@ -66,38 +58,36 @@ if (catalog) {
             for (const [name, value] of Object.entries(product)) {
                 const field = form.elements.namedItem(name);
                 if (field) {
-                    field.value = name === 'location' ? (product.edit_location ?? value) : value;
+                    field.value = value ?? '';
                 }
             }
         }
         formModal.showModal();
-        form.elements.namedItem('code').focus();
+        form.elements.namedItem('sku').focus();
     }
 
     function renderDetails(product, trigger) {
         returnFocus = trigger;
-        const title = `Detalhes do produto ${product.code}`;
+        const title = `Detalhes do produto ${product.sku}`;
         detailsModal.setAttribute('aria-label', title);
         detailsModal.querySelector('.jemp-details-dialog').setAttribute('aria-label', title);
         detailsModal.querySelector('.jemp-dialog__title').textContent = title;
-        const values = [product.code, product.name, product.category, product.type, `${formatMeasure(product.width)} m`, `${formatMeasure(product.length)} m`, `${product.quantity} un.`, product.location, product.material, product.wood];
+        const totalBalance = Number(product.theoretical_balance ?? 0);
+        const values = [product.sku, product.product_name, product.category, product.material, formatCurrency(product.cost_price), `${product.width_mm} mm`, `${product.length_mm} mm`, `${totalBalance} un.`];
         detailsModal.querySelectorAll('dd').forEach((element, index) => {
             element.textContent = values[index] ?? '—';
         });
         const body = detailsModal.querySelector('tbody');
         body.replaceChildren();
-        const stockBalances = new Map((product.stocks ?? []).map((stock) => [stock.location, Number(stock.quantity)]));
-        const locations = [...new Set(['Barracão 1', 'Barracão 2', 'Barracão 3', 'Depósito principal', ...stockBalances.keys()])];
-        for (const location of locations) {
-            const balance = stockBalances.get(location) ?? 0;
+        for (const stock of (product.inventory ?? [])) {
             const row = document.createElement('tr');
-            for (const value of [product.code, `${product.name} ${product.type}`, `${balance} un.`, location]) {
+            for (const value of [stock.warehouse ?? '—', stock.product_condition, `${stock.theoretical_balance} un.`]) {
                 const cell = document.createElement('td');
                 cell.textContent = value;
                 row.append(cell);
             }
             const statusCell = document.createElement('td');
-            const statusTemplate = find(balance > 0 ? 'stock-available' : 'stock-empty');
+            const statusTemplate = find(Number(stock.theoretical_balance) > 0 ? 'stock-available' : 'stock-empty');
             statusCell.append(statusTemplate.content.cloneNode(true));
             row.append(statusCell);
             body.append(row);
@@ -108,12 +98,10 @@ if (catalog) {
     function renderRows() {
         const query = normalize(find('search').value.trim());
         const category = find('category').value;
-        const type = find('type').value;
         const filtered = rows.filter((row) => {
             const product = JSON.parse(row.dataset.record);
             return normalize(row.dataset.search).includes(query)
-                && (!category || product.category === category)
-                && (!type || product.type === type);
+                && (!category || product.category === category);
         });
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
         currentPage = Math.min(currentPage, totalPages);
@@ -176,7 +164,7 @@ if (catalog) {
         } else if (button.dataset.rowAction === 'delete') {
             returnFocus = button;
             deleteForm.action = row.dataset.deleteUrl;
-            deleteModal.querySelector('.jemp-confirmation__message').textContent = `Tem certeza de que deseja excluir o produto ${product.code} — ${product.name} ${product.type}? Essa ação não poderá ser desfeita.`;
+            deleteModal.querySelector('.jemp-confirmation__message').textContent = `Tem certeza de que deseja excluir o produto ${product.sku} — ${product.product_name}? Essa ação não poderá ser desfeita.`;
             deleteModal.showModal();
             deleteModal.querySelector('.jemp-confirmation__button--cancel').focus();
         }
@@ -196,7 +184,7 @@ if (catalog) {
         });
     });
 
-    for (const name of ['search', 'category', 'type']) {
+    for (const name of ['search', 'category']) {
         find(name).addEventListener(name === 'search' ? 'input' : 'change', () => {
             currentPage = 1;
             renderRows();
@@ -224,7 +212,7 @@ if (catalog) {
 
     if (catalog.dataset.validationErrors === 'true') {
         const oldRecordId = catalog.dataset.oldRecordId;
-        const row = rows.find((item) => JSON.parse(item.dataset.record).id === Number(oldRecordId));
+        const row = rows.find((item) => JSON.parse(item.dataset.record).product_id === Number(oldRecordId));
         const trigger = row?.querySelector('[data-row-action="edit"]') ?? catalog.querySelector('[data-product-create]');
         openForm(row ? JSON.parse(row.dataset.record) : null, trigger, true);
     }

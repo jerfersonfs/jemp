@@ -1,28 +1,29 @@
 <x-layouts.app title="Movimentações internas · JEMP" page="internal">
     @php
         $transferRows = $movements->map(fn ($movement) => [
-            'id' => $movement->id,
-            'code' => $movement->code,
-            'date' => $movement->occurred_at->format('d/m/Y H:i'),
-            'product' => $movement->product->name,
+            'date' => \Illuminate\Support\Carbon::parse($movement->movement_date)->format('d/m/Y H:i'),
+            'product' => trim($movement->product_sku.' — '.$movement->product_name),
             'quantity' => $movement->quantity,
-            'origin' => $movement->origin,
-            'destination' => $movement->destination,
-            'condition' => $movement->condition,
-            '_data' => ['origin' => $movement->origin, 'destination' => $movement->destination],
+            'origin' => $movement->origin_warehouse_name,
+            'destination' => $movement->destination_warehouse_name,
+            'condition' => $movement->product_condition,
+            'justification' => $movement->movement_justification,
+            '_data' => ['origin' => $movement->origin_warehouse_id, 'destination' => $movement->dest_warehouse_id],
         ])->all();
         $transferColumns = [
-            ['key' => 'code', 'label' => 'Cód.'], ['key' => 'date', 'label' => 'Data'], ['key' => 'product', 'label' => 'Nome do Produto'],
+            ['key' => 'date', 'label' => 'Data'], ['key' => 'product', 'label' => 'Nome do Produto'],
             ['key' => 'quantity', 'label' => 'Qtd'], ['key' => 'origin', 'label' => 'Origem'], ['key' => 'destination', 'label' => 'Destino'],
-            ['key' => 'condition', 'label' => 'Condição'], ['key' => 'code', 'label' => 'Ações', 'type' => 'actions', 'actions' => ['view'], 'class' => 'movement-actions-column'],
+            ['key' => 'condition', 'label' => 'Condição'], ['key' => 'justification', 'label' => 'Justificação'],
+            ['key' => 'date', 'label' => 'Ações', 'type' => 'actions', 'actions' => ['view'], 'class' => 'movement-actions-column'],
         ];
-        $productOptions = $products->mapWithKeys(fn ($product) => [$product->id => $product->code.' — '.$product->name])->all();
+        $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $transferFormFields = [
             ['name' => 'product_id', 'label' => 'Produto', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um produto'] + $productOptions],
+            ['name' => 'product_condition', 'label' => 'Condição', 'type' => 'select', 'required' => true, 'options' => ['Novo' => 'Novo', 'Bom' => 'Bom', 'Revisado' => 'Revisado']],
             ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
-            ['name' => 'origin', 'label' => 'Origem', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione a origem'] + $locations],
-            ['name' => 'destination', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione o destino'] + $locations],
-            ['name' => 'condition', 'label' => 'Condição', 'type' => 'select', 'required' => true, 'options' => ['Novo' => 'Novo', 'Bom' => 'Bom', 'Revisado' => 'Revisado']],
+            ['name' => 'origin_warehouse_id', 'label' => 'Origem', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione a origem'] + $locations],
+            ['name' => 'dest_warehouse_id', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione o destino'] + $locations],
+            ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
         ];
     @endphp
 

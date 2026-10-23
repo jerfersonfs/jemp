@@ -1,10 +1,10 @@
 <x-layouts.app title="Produtos · JEMP" page="products">
     @php
         $columns = [
-            ['key' => 'code', 'label' => 'Cód.'], ['key' => 'name', 'label' => 'Nome do Produto'],
-            ['key' => 'category', 'label' => 'Categoria'], ['key' => 'type', 'label' => 'Tipo'],
-            ['key' => 'measure', 'label' => 'Medida'], ['key' => 'location', 'label' => 'Local'],
-            ['key' => 'material', 'label' => 'Material'], ['key' => 'wood', 'label' => 'Madeira'],
+            ['key' => 'sku', 'label' => 'SKU'], ['key' => 'product_name', 'label' => 'Nome do Produto'],
+            ['key' => 'category', 'label' => 'Categoria'], ['key' => 'material', 'label' => 'Material'],
+            ['key' => 'width_mm', 'label' => 'Largura (mm)'], ['key' => 'length_mm', 'label' => 'Comprimento (mm)'],
+            ['key' => 'cost_price', 'label' => 'Custo'], ['key' => 'theoretical_balance', 'label' => 'Saldo'],
             ['key' => 'actions', 'label' => 'Ações', 'type' => 'actions', 'idKey' => 'id', 'actions' => [
                 ['name' => 'view', 'label' => 'Ver detalhes', 'icon' => 'eye'],
                 ['name' => 'edit', 'label' => 'Editar produto', 'icon' => 'pencil-simple'],
@@ -12,48 +12,48 @@
             ]],
         ];
         $rows = $products->map(fn ($product) => [
-            'id' => $product->id,
-            'code' => $product->code,
-            'name' => $product->name,
+            'id' => $product->product_id,
+            'product_id' => $product->product_id,
+            'sku' => $product->sku,
+            'product_name' => $product->product_name,
             'category' => $product->category,
-            'type' => $product->type,
-            'width' => $product->width,
-            'length' => $product->length,
-            'quantity' => $product->stocks_sum_quantity ?? $product->quantity,
-            'location' => $product->stocks->where('quantity', '>', 0)->count() > 1
-                ? 'Vários locais'
-                : ($product->stocks->firstWhere('quantity', '>', 0)?->location ?? $product->location),
-            'edit_location' => $product->location,
-            'updated_at' => $product->updated_at,
-            'updated_at' => $product->updated_at,
-            'stocks' => $product->stocks->map(fn ($stock) => ['location' => $stock->location, 'quantity' => $stock->quantity])->values(),
             'material' => $product->material,
-            'wood' => $product->wood,
-            'measure' => number_format((float) $product->width, 2, ',', '.') . ' × ' . number_format((float) $product->length, 2, ',', '.') . ' m',
+            'cost_price' => $product->cost_price,
+            'width_mm' => $product->width_mm,
+            'length_mm' => $product->length_mm,
+            'theoretical_balance' => $product->inventory_sum_theoretical_balance ?? 0,
+            'warehouse_id' => $product->inventory->first()?->warehouse_id,
+            'product_condition' => $product->inventory->first()?->product_condition ?? 'Novo',
+            'updated_at' => $product->updated_at,
+            'inventory' => $product->inventory->map(fn ($stock) => [
+                'warehouse_id' => $stock->warehouse_id,
+                'warehouse' => $stock->warehouse?->warehouse_name,
+                'product_condition' => $stock->product_condition,
+                'theoretical_balance' => $stock->theoretical_balance,
+            ])->values(),
             '_data' => [
-                'search' => implode(' ', [$product->code, $product->name, $product->type, $product->location]),
+                'search' => implode(' ', [$product->sku, $product->product_name, $product->category, $product->material]),
                 'update-url' => route('products.update', $product),
                 'delete-url' => route('products.destroy', $product),
             ],
         ])->all();
         $fields = [
-            ['name' => 'code', 'id' => 'product-code', 'label' => 'Código', 'required' => true],
-            ['name' => 'name', 'id' => 'product-name', 'label' => 'Produto', 'required' => true],
-            ['name' => 'category', 'id' => 'product-category', 'label' => 'Categoria', 'type' => 'select', 'options' => ['Descartável' => 'Descartável', 'Retornável' => 'Retornável'], 'required' => true],
-            ['name' => 'type', 'id' => 'product-type', 'label' => 'Tipo', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'FP' => 'FP'], 'required' => true],
-            ['name' => 'width', 'id' => 'product-width', 'label' => 'Largura (m)', 'type' => 'number', 'min' => 0.01, 'step' => 0.01, 'required' => true],
-            ['name' => 'length', 'id' => 'product-length', 'label' => 'Comprimento (m)', 'type' => 'number', 'min' => 0.01, 'step' => 0.01, 'required' => true],
-            ['name' => 'quantity', 'id' => 'product-quantity', 'label' => 'Estoque total', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true],
-            ['name' => 'location', 'id' => 'product-location', 'label' => 'Local', 'type' => 'select', 'options' => ['Barracão 1' => 'Barracão 1', 'Barracão 2' => 'Barracão 2', 'Barracão 3' => 'Barracão 3', 'Depósito principal' => 'Depósito principal'], 'required' => true],
+            ['name' => 'sku', 'id' => 'product-sku', 'label' => 'SKU', 'required' => true],
+            ['name' => 'product_name', 'id' => 'product-name', 'label' => 'Produto', 'required' => true],
+            ['name' => 'category', 'id' => 'product-category', 'label' => 'Categoria', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'Descartável' => 'Descartável', 'Não Standard' => 'Não Standard'], 'required' => true],
             ['name' => 'material', 'id' => 'product-material', 'label' => 'Material', 'required' => true],
-            ['name' => 'wood', 'id' => 'product-wood', 'label' => 'Madeira', 'required' => true],
+            ['name' => 'cost_price', 'id' => 'product-cost-price', 'label' => 'Custo unitário', 'type' => 'number', 'min' => 0, 'step' => 0.01, 'required' => true],
+            ['name' => 'width_mm', 'id' => 'product-width', 'label' => 'Largura (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
+            ['name' => 'length_mm', 'id' => 'product-length', 'label' => 'Comprimento (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
+            ['name' => 'warehouse_id', 'id' => 'product-warehouse', 'label' => 'Armazém', 'type' => 'select', 'options' => $warehouses->mapWithKeys(fn ($warehouse) => [$warehouse->warehouse_id => $warehouse->warehouse_name])->all(), 'required' => true],
+            ['name' => 'product_condition', 'id' => 'product-condition', 'label' => 'Condição do estoque', 'type' => 'select', 'options' => ['Novo' => 'Novo', 'Bom' => 'Bom', 'Revisado' => 'Revisado'], 'required' => true],
+            ['name' => 'theoretical_balance', 'id' => 'product-balance', 'label' => 'Saldo inicial', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true],
         ];
         $inventoryColumns = [
-            ['key' => 'code', 'label' => 'Cód.'],
-            ['key' => 'item', 'label' => 'Item'],
-            ['key' => 'balance', 'label' => 'Saldo'],
-            ['key' => 'location', 'label' => 'Localização'],
-            ['key' => 'status', 'label' => 'Status', 'type' => 'status'],
+            ['key' => 'warehouse', 'label' => 'Armazém'],
+            ['key' => 'product_condition', 'label' => 'Condição'],
+            ['key' => 'theoretical_balance', 'label' => 'Saldo teórico'],
+            ['key' => 'status', 'label' => 'Situação', 'type' => 'status'],
         ];
     @endphp
 
@@ -70,8 +70,7 @@
             <div class="products-panel__body">
                 <x-filters.filter-bar class="products-filters" label="Filtrar produtos" data-product-filters>
                     <label class="products-search"><x-icons.icon name="magnifying-glass" size="sm" /><span class="sr-only">Buscar produto</span><input type="search" placeholder="Buscar produto..." data-product-search></label>
-                    <label>Categoria<select data-product-category><option value="">Todas as categorias</option><option>Descartável</option><option>Retornável</option></select></label>
-                    <label>Tipo<select data-product-type><option value="">Todos os tipos</option><option>PBR</option><option>FP</option></select></label>
+                    <label>Categoria<select data-product-category><option value="">Todas as categorias</option><option>PBR</option><option>Descartável</option><option>Não Standard</option></select></label>
                 </x-filters.filter-bar>
                 <x-tables.table :columns="$columns" :rows="$rows" variant="spreadsheet" caption="Listagem de produtos" />
                 <footer class="products-footer">
@@ -85,7 +84,7 @@
             <x-dialogs.form-dialog title="Novo produto" description="Informe os dados do produto para o catálogo." submit-label="Cadastrar produto" cancel-label="Cancelar" layout="grid" :fields="$fields" :action="route('products.store')" />
         </x-dialogs.modal>
         <x-dialogs.modal label="Detalhes do produto" class="products-modal products-modal--details" data-product-details-modal>
-            <x-dialogs.details-dialog title="Detalhes do produto" :details="collect(['Código', 'Produto', 'Categoria', 'Tipo', 'Largura', 'Comprimento', 'Saldo', 'Localização', 'Material', 'Madeira'])->map(fn ($label) => ['label' => $label, 'value' => '—'])->all()">
+            <x-dialogs.details-dialog title="Detalhes do produto" :details="collect(['SKU', 'Produto', 'Categoria', 'Material', 'Custo unitário', 'Largura (mm)', 'Comprimento (mm)', 'Saldo total'])->map(fn ($label) => ['label' => $label, 'value' => '—'])->all()">
                 <section class="products-inventory" aria-labelledby="products-inventory-title">
                     <h3 id="products-inventory-title">Inventário do produto</h3>
                     <x-tables.table :columns="$inventoryColumns" caption="Inventário por barracão" />

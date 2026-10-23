@@ -1,37 +1,31 @@
 <x-layouts.app title="Entradas · JEMP" page="entrance">
     @php
         $entryRows = $movements->map(fn ($movement) => [
-            'id' => $movement->id,
-            'code' => $movement->code,
-            'date' => $movement->occurred_at->format('d/m/Y H:i'),
-            'type' => $movement->type,
-            'product' => $movement->product->name,
+            'date' => \Illuminate\Support\Carbon::parse($movement->movement_date)->format('d/m/Y H:i'),
+            'product' => trim($movement->product_sku.' — '.$movement->product_name),
+            'condition' => $movement->product_condition,
             'quantity' => $movement->quantity,
-            'origin' => $movement->origin,
-            'destination' => $movement->destination,
-            'justification' => $movement->notes,
-            '_data' => ['type' => $movement->type, 'origin' => $movement->origin],
+            'destination' => $movement->destination_warehouse_name,
+            'justification' => $movement->movement_justification,
+            '_data' => ['destination' => $movement->dest_warehouse_id],
         ])->all();
         $entryColumns = [
-            ['key' => 'code', 'label' => 'Cód.'],
             ['key' => 'date', 'label' => 'Data'],
-            ['key' => 'type', 'label' => 'Tipo'],
             ['key' => 'product', 'label' => 'Produto'],
+            ['key' => 'condition', 'label' => 'Condição'],
             ['key' => 'quantity', 'label' => 'Qtd'],
-            ['key' => 'origin', 'label' => 'Origem'],
             ['key' => 'destination', 'label' => 'Destino'],
             ['key' => 'justification', 'label' => 'Justificação'],
-            ['key' => 'code', 'label' => 'Ações', 'type' => 'actions', 'actions' => ['view'], 'class' => 'movement-actions-column'],
+            ['key' => 'date', 'label' => 'Ações', 'type' => 'actions', 'actions' => ['view'], 'class' => 'movement-actions-column'],
         ];
-        $productOptions = $products->mapWithKeys(fn ($product) => [$product->id => $product->code.' — '.$product->name])->all();
+        $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $entryFormFields = [
             ['name' => 'date', 'label' => 'Data e hora', 'type' => 'datetime-local', 'required' => true],
-            ['name' => 'type', 'label' => 'Tipo', 'type' => 'select', 'required' => true, 'options' => ['Compra' => 'Compra', 'Transferência' => 'Transferência', 'Devolução' => 'Devolução']],
             ['name' => 'product_id', 'label' => 'Produto', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um produto'] + $productOptions],
+            ['name' => 'product_condition', 'label' => 'Condição', 'type' => 'select', 'required' => true, 'options' => ['Novo' => 'Novo', 'Bom' => 'Bom', 'Revisado' => 'Revisado']],
             ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
-            ['name' => 'origin', 'label' => 'Origem', 'required' => true],
-            ['name' => 'destination', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um local'] + $locations],
-            ['name' => 'justification', 'label' => 'Justificação', 'type' => 'textarea'],
+            ['name' => 'dest_warehouse_id', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um armazém'] + $locations],
+            ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
         ];
     @endphp
 
@@ -48,8 +42,7 @@
         <x-slot:filters>
             <x-filters.filter-bar class="movement-filter-bar" label="Filtrar entradas" data-movement-filter-form>
                 <div class="movement-search"><x-inputs.input name="search" type="search" size="sm" placeholder="Buscar produto ou documento..." aria-label="Buscar entradas" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input></div>
-                <x-inputs.input name="type" label="Tipo" type="select" size="sm" :options="['' => 'Todos os tipos', 'Compra' => 'Compra', 'Transferência' => 'Transferência', 'Devolução' => 'Devolução']" data-movement-filter="type" />
-                <x-inputs.input name="origin" label="Origem" type="select" size="sm" :options="['' => 'Todas as origens'] + $locations" data-movement-filter="origin" />
+                <x-inputs.input name="destination" label="Destino" type="select" size="sm" :options="['' => 'Todos os armazéns'] + $locations" data-movement-filter="destination" />
             </x-filters.filter-bar>
         </x-slot:filters>
         <div class="movement-table-wrap" data-movement-list data-page-size="10" data-resource-label="entradas">

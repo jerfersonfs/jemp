@@ -53,7 +53,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         }
         const recordId = form.elements.namedItem('_record_id');
         if (recordId) {
-            recordId.value = record?.id ?? '';
+            recordId.value = record?.customer_id ?? '';
         }
         title.textContent = editing ? 'Editar Cliente' : 'Adicionar Cliente';
         editDialog?.classList.toggle('jemp-dialog--editing', editing);
@@ -160,8 +160,8 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         const customer = JSON.parse(row.dataset.record);
         if (trigger.matches('[data-customer-view]') && detailsLayer && detailsDialog) {
             activeTrigger = trigger;
-            const detailLabels = ['Cliente / Empresa', 'CNPJ', 'Cidade', 'Telefone', 'E-mail', 'Status'];
-            const detailKeys = ['name', 'document', 'city', 'phone', 'email', 'status'];
+            const detailLabels = ['Cliente / Empresa', 'Documento', 'Contato', 'E-mail', 'Condição de pagamento'];
+            const detailKeys = ['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms'];
             const grid = detailsDialog.querySelector('.jemp-details-dialog__grid');
             grid.replaceChildren();
             detailLabels.forEach((label, index) => {
@@ -174,7 +174,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
                 item.append(term, description);
                 grid.append(item);
             });
-            detailsDialog.querySelector('.jemp-dialog__title').textContent = `Detalhes de ${customer.name}`;
+            detailsDialog.querySelector('.jemp-dialog__title').textContent = `Detalhes de ${customer.customer_name}`;
             detailsLayer.hidden = false;
             document.body.classList.add('customers-dialog-open');
             return;
@@ -184,7 +184,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
             deleteForm.action = row.dataset.deleteUrl;
             const message = confirmDialog.querySelector('.jemp-confirmation__message');
             if (message) {
-                message.textContent = `Confirma a exclusão do cliente ${customer.name}? Esta ação não pode ser desfeita.`;
+                message.textContent = `Confirma a exclusão do cliente ${customer.customer_name}? Esta ação não pode ser desfeita.`;
             }
             confirmLayer.hidden = false;
             document.body.classList.add('customers-dialog-open');
@@ -227,7 +227,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
 
     if (list.dataset.validationErrors === 'true') {
         const oldRecordId = list.dataset.oldRecordId;
-        const row = rows.find((item) => JSON.parse(item.dataset.record).id === Number(oldRecordId));
+        const row = rows.find((item) => JSON.parse(item.dataset.record).customer_id === Number(oldRecordId));
         setFormMode(row ?? null, row?.querySelector('[data-customer-edit]') ?? list.querySelector('[data-customer-open]'), true);
     }
 

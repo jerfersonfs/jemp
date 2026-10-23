@@ -1,33 +1,27 @@
 <x-layouts.app title="Saídas · JEMP" page="exits">
     @php
         $exitRows = $movements->map(fn ($movement) => [
-            'id' => $movement->id,
-            'code' => $movement->code,
-            'date' => $movement->occurred_at->format('d/m/Y'),
-            'type' => $movement->type,
-            'product' => $movement->product->name,
+            'date' => \Illuminate\Support\Carbon::parse($movement->movement_date)->format('d/m/Y H:i'),
+            'product' => trim($movement->product_sku.' — '.$movement->product_name),
+            'condition' => $movement->product_condition,
             'quantity' => $movement->quantity,
-            'warehouse' => $movement->origin,
-            'recipient' => $movement->recipient,
-            '_data' => ['type' => $movement->type, 'warehouse' => $movement->origin],
+            'warehouse' => $movement->origin_warehouse_name,
+            'justification' => $movement->movement_justification,
+            '_data' => ['warehouse' => $movement->origin_warehouse_id],
         ])->all();
         $exitColumns = [
-            ['key' => 'code', 'label' => 'Código'], ['key' => 'date', 'label' => 'Data'], ['key' => 'type', 'label' => 'Tipo'],
-            ['key' => 'product', 'label' => 'Produto'], ['key' => 'quantity', 'label' => 'Qtd. saída'], ['key' => 'warehouse', 'label' => 'Almoxarifado'],
-            ['key' => 'recipient', 'label' => 'Destinatário'], ['key' => 'code', 'label' => 'Ações', 'type' => 'actions', 'actions' => ['view'], 'class' => 'movement-actions-column'],
+            ['key' => 'date', 'label' => 'Data'], ['key' => 'product', 'label' => 'Produto'], ['key' => 'condition', 'label' => 'Condição'],
+            ['key' => 'quantity', 'label' => 'Qtd. saída'], ['key' => 'warehouse', 'label' => 'Armazém'], ['key' => 'justification', 'label' => 'Justificação'],
+            ['key' => 'date', 'label' => 'Ações', 'type' => 'actions', 'actions' => ['view'], 'class' => 'movement-actions-column'],
         ];
-        $productOptions = $products->mapWithKeys(fn ($product) => [$product->id => $product->code.' — '.$product->name])->all();
+        $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $exitFormFields = [
             ['name' => 'date', 'label' => 'Data da saída', 'type' => 'date', 'required' => true],
-            ['name' => 'type', 'label' => 'Tipo de saída', 'type' => 'select', 'required' => true, 'options' => ['Consumo interno' => 'Consumo interno', 'Avaria' => 'Avaria', 'Venda' => 'Venda', 'Ajuste de estoque' => 'Ajuste de estoque']],
             ['name' => 'product_id', 'label' => 'Produto', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um produto'] + $productOptions],
-            ['name' => 'lot', 'label' => 'Lote'],
+            ['name' => 'product_condition', 'label' => 'Condição', 'type' => 'select', 'required' => true, 'options' => ['Novo' => 'Novo', 'Bom' => 'Bom', 'Revisado' => 'Revisado']],
             ['name' => 'quantity', 'label' => 'Quantidade de saída', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
-            ['name' => 'warehouse', 'label' => 'Almoxarifado', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um local'] + $locations],
-            ['name' => 'recipient', 'label' => 'Destinatário'],
-            ['name' => 'reference', 'label' => 'Documento de referência'],
-            ['name' => 'responsible', 'label' => 'Responsável'],
-            ['name' => 'notes', 'label' => 'Observações', 'type' => 'textarea'],
+            ['name' => 'origin_warehouse_id', 'label' => 'Armazém', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um armazém'] + $locations],
+            ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
         ];
     @endphp
 
@@ -39,8 +33,7 @@
         <x-slot:filters>
             <x-filters.filter-bar class="movement-filter-bar" label="Filtrar saídas" data-movement-filter-form>
                 <div class="movement-search"><x-inputs.input name="search" type="search" size="sm" placeholder="Buscar produto ou documento..." aria-label="Buscar saídas" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input></div>
-                <x-inputs.input name="type" label="Tipo" type="select" size="sm" :options="['' => 'Todos os tipos', 'Consumo interno' => 'Consumo interno', 'Avaria' => 'Avaria', 'Venda' => 'Venda', 'Ajuste de estoque' => 'Ajuste de estoque']" data-movement-filter="type" />
-                <x-inputs.input name="warehouse" label="Almoxarifado" type="select" size="sm" :options="['' => 'Todos os locais'] + $locations" data-movement-filter="warehouse" />
+                <x-inputs.input name="warehouse" label="Armazém" type="select" size="sm" :options="['' => 'Todos os armazéns'] + $locations" data-movement-filter="warehouse" />
             </x-filters.filter-bar>
         </x-slot:filters>
         <div class="movement-table-wrap" data-movement-list data-page-size="10" data-resource-label="saídas">

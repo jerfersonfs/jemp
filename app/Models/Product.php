@@ -8,43 +8,35 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['code', 'name', 'category', 'type', 'width', 'length', 'quantity', 'location', 'material', 'wood'])]
+#[Fillable(['sku', 'category', 'product_name', 'material', 'cost_price', 'length_mm', 'width_mm'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
-    protected static function booted(): void
-    {
-        static::created(function (Product $product): void {
-            $product->stocks()->firstOrCreate(
-                ['location' => $product->location],
-                ['quantity' => $product->quantity],
-            );
-        });
-    }
+    protected $primaryKey = 'product_id';
 
     protected function casts(): array
     {
         return [
-            'width' => 'decimal:2',
-            'length' => 'decimal:2',
-            'quantity' => 'integer',
+            'cost_price' => 'decimal:2',
+            'length_mm' => 'integer',
+            'width_mm' => 'integer',
         ];
     }
 
-    public function stocks(): HasMany
+    public function inventory(): HasMany
     {
-        return $this->hasMany(ProductStock::class);
+        return $this->hasMany(Inventory::class, 'product_id', 'product_id');
     }
 
-    public function movements(): HasMany
+    public function stockMovements(): HasMany
     {
-        return $this->hasMany(Movement::class);
+        return $this->hasMany(StockMovement::class, 'product_id', 'product_id');
     }
 
-    public function saleItems(): HasMany
+    public function invoiceItems(): HasMany
     {
-        return $this->hasMany(SaleItem::class);
+        return $this->hasMany(InvoiceItem::class, 'product_id', 'product_id');
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Movement;
 use App\Models\Product;
-use App\Models\ProductStock;
+use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,165 +14,172 @@ class MovementController extends Controller
 {
     public function entries(): View
     {
-        return $this->page('entry', 'entrance.entrance');
+        return $this->page('Entrada', 'entrance.entrance', 'entrance');
     }
 
     public function exits(): View
     {
-        return $this->page('exit', 'exits.exits');
+        return $this->page('Saída', 'exits.exits', 'exits');
     }
 
     public function transfers(): View
     {
-        return $this->page('transfer', 'internal.internal');
+        return $this->page('Transferência', 'internal.internal', 'internal');
     }
 
     public function storeEntry(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'date' => ['required', 'date'],
-            'type' => ['required', 'in:Compra,Transferência,Devolução'],
-            'product_id' => ['required', 'exists:products,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'origin' => ['required', 'string', 'max:255'],
-            'destination' => ['required', 'string', 'max:255'],
-            'justification' => ['nullable', 'string', 'max:2000'],
+        $data = $request->validate($this->commonRules() + [
+            'dest_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
         ]);
+        $data['origin_warehouse_id'] = null;
 
-        $this->createMovement($data, 'entry');
+        $this->createMovement($data, 'Entrada');
 
         return redirect()->route('entrance.index')->with('status', 'Entrada registrada com sucesso.');
     }
 
     public function storeExit(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'date' => ['required', 'date'],
-            'type' => ['required', 'in:Consumo interno,Avaria,Venda,Ajuste de estoque'],
-            'product_id' => ['required', 'exists:products,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'warehouse' => ['required', 'string', 'max:255'],
-            'lot' => ['nullable', 'string', 'max:100'],
-            'recipient' => ['nullable', 'string', 'max:255'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'responsible' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+        $data = $request->validate($this->commonRules() + [
+            'origin_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
         ]);
+        $data['dest_warehouse_id'] = null;
 
-        $data['origin'] = $data['warehouse'];
-        $this->createMovement($data, 'exit');
+        $this->createMovement($data, 'Saída');
 
         return redirect()->route('exits.index')->with('status', 'Saída registrada com sucesso.');
     }
 
     public function storeTransfer(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'product_id' => ['required', 'exists:products,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'origin' => ['required', 'string', 'max:255', 'different:destination'],
-            'destination' => ['required', 'string', 'max:255', 'different:origin'],
-            'condition' => ['required', 'in:Novo,Bom,Revisado'],
+        $data = $request->validate($this->commonRules() + [
+            'origin_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id', 'different:dest_warehouse_id'],
+            'dest_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id', 'different:origin_warehouse_id'],
         ]);
-        $data['date'] = now();
-        $data['type'] = 'Transferência';
 
-        $this->createMovement($data, 'transfer');
+        $this->createMovement($data, 'Transferência');
 
         return redirect()->route('internal.index')->with('status', 'Transferência registrada com sucesso.');
     }
 
-    private function page(string $direction, string $view): View
+    private function page(string $direction, string $view, string $page): View
     {
-        $movements = Movement::query()
-            ->with('product:id,code,name')
-            ->where('direction', $direction)
-            ->latest('occurred_at')
+        $movements = DB::table('stock_movements as movement')
+            ->join('products', 'products.product_id', '=', 'movement.product_id')
+            ->leftJoin('warehouses as origin', 'origin.warehouse_id', '=', 'movement.origin_warehouse_id')
+            ->leftJoin('warehouses as destination', 'destination.warehouse_id', '=', 'movement.dest_warehouse_id')
+            ->where('movement.movement_type', $direction)
+            ->orderByDesc('movement.movement_date')
+            ->select([
+                'movement.*',
+                'products.sku as product_sku',
+                'products.product_name',
+                'origin.warehouse_name as origin_warehouse_name',
+                'destination.warehouse_name as destination_warehouse_name',
+            ])
             ->get();
 
         return view($view, [
-            'page' => match ($direction) {
-                'entry' => 'entrance',
-                'exit' => 'exits',
-                default => 'internal',
-            },
-            'products' => Product::query()->orderBy('name')->get(['id', 'code', 'name']),
+            'page' => $page,
+            'products' => Product::query()->orderBy('sku')->get(['product_id', 'sku', 'product_name']),
             'movements' => $movements,
-            'locations' => [
-                'Barracão 1' => 'Barracão 1',
-                'Barracão 2' => 'Barracão 2',
-                'Barracão 3' => 'Barracão 3',
-                'Depósito principal' => 'Depósito principal',
-            ],
+            'locations' => Warehouse::query()->orderBy('warehouse_name')->get()->mapWithKeys(
+                fn (Warehouse $warehouse): array => [(string) $warehouse->warehouse_id => $warehouse->warehouse_name],
+            )->all(),
         ]);
+    }
+
+    /** @return array<string, array<int, mixed>> */
+    private function commonRules(): array
+    {
+        return [
+            'date' => ['required', 'date'],
+            'product_id' => ['required', 'integer', 'exists:products,product_id'],
+            'product_condition' => ['required', 'string', 'max:30'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'movement_justification' => ['nullable', 'string', 'max:255'],
+        ];
     }
 
     /** @param array<string, mixed> $data */
     private function createMovement(array $data, string $direction): void
     {
         DB::transaction(function () use ($data, $direction): void {
-            $product = Product::query()->lockForUpdate()->findOrFail($data['product_id']);
+            $productId = (int) $data['product_id'];
             $quantity = (int) $data['quantity'];
-            $origin = $data['origin'] ?? null;
-            $destination = $data['destination'] ?? null;
+            $condition = (string) $data['product_condition'];
+            $originWarehouseId = isset($data['origin_warehouse_id']) ? (int) $data['origin_warehouse_id'] : null;
+            $destinationWarehouseId = isset($data['dest_warehouse_id']) ? (int) $data['dest_warehouse_id'] : null;
 
-            if ($direction === 'entry') {
-                $this->changeStock($product, $destination, $quantity);
-                $product->increment('quantity', $quantity);
-            } elseif ($direction === 'exit') {
-                $this->changeStock($product, $origin, -$quantity);
-                $product->decrement('quantity', $quantity);
+            Product::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
+
+            if ($direction === 'Entrada') {
+                $this->changeInventory($productId, $destinationWarehouseId, $condition, $quantity);
+            } elseif ($direction === 'Saída') {
+                $this->changeInventory($productId, $originWarehouseId, $condition, -$quantity);
             } else {
-                $this->changeStock($product, $origin, -$quantity);
-                $this->changeStock($product, $destination, $quantity);
+                $this->changeInventory($productId, $originWarehouseId, $condition, -$quantity);
+                $this->changeInventory($productId, $destinationWarehouseId, $condition, $quantity);
             }
 
-            Movement::query()->create([
-                'code' => 'MOV-'.str()->ulid(),
-                'product_id' => $product->id,
-                'direction' => $direction,
-                'type' => $data['type'],
-                'quantity' => $quantity,
-                'occurred_at' => $data['date'] ?? now(),
-                'origin' => $origin,
-                'destination' => $destination,
-                'lot' => $data['lot'] ?? null,
-                'recipient' => $data['recipient'] ?? null,
-                'reference' => $data['reference'] ?? null,
-                'responsible' => $data['responsible'] ?? null,
-                'condition' => $data['condition'] ?? null,
-                'notes' => $data['notes'] ?? $data['justification'] ?? null,
+            DB::table('stock_movements')->insert([
+                'origin_warehouse_id' => $originWarehouseId,
+                'dest_warehouse_id' => $destinationWarehouseId,
+                'product_id' => $productId,
+                'product_condition' => $condition,
                 'user_id' => auth()->id(),
+                'invoice_id' => null,
+                'quantity' => $quantity,
+                'movement_type' => $direction,
+                'movement_justification' => $data['movement_justification'] ?? null,
+                'movement_date' => $data['date'],
+                'is_fiscal' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         });
     }
 
-    private function changeStock(Product $product, ?string $location, int $change): void
+    private function changeInventory(int $productId, ?int $warehouseId, string $condition, int $change): void
     {
-        if ($location === null || $location === '') {
-            throw ValidationException::withMessages(['location' => 'Informe o local da movimentação.']);
+        if ($warehouseId === null) {
+            throw ValidationException::withMessages(['warehouse_id' => 'Selecione um armazém.']);
         }
 
-        $stock = ProductStock::query()
-            ->whereBelongsTo($product)
-            ->where('location', $location)
+        $inventory = DB::table('inventory')
+            ->where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->where('product_condition', $condition)
             ->lockForUpdate()
             ->first();
 
-        if ($stock === null && $change < 0) {
-            throw ValidationException::withMessages(['quantity' => 'Não há estoque deste produto no local selecionado.']);
+        if ($inventory === null && $change < 0) {
+            throw ValidationException::withMessages(['quantity' => 'Não há saldo deste produto e condição no armazém selecionado.']);
         }
 
-        if ($stock === null) {
-            $product->stocks()->create(['location' => $location, 'quantity' => $change]);
+        if ($inventory === null) {
+            DB::table('inventory')->insert([
+                'warehouse_id' => $warehouseId,
+                'product_id' => $productId,
+                'product_condition' => $condition,
+                'theoretical_balance' => $change,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             return;
         }
 
-        if ($stock->quantity + $change < 0) {
-            throw ValidationException::withMessages(['quantity' => 'A quantidade informada excede o estoque disponível neste local.']);
+        $newBalance = (int) $inventory->theoretical_balance + $change;
+        if ($newBalance < 0) {
+            throw ValidationException::withMessages(['quantity' => 'A quantidade informada excede o saldo disponível no armazém.']);
         }
 
-        $stock->increment('quantity', $change);
+        DB::table('inventory')
+            ->where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->where('product_condition', $condition)
+            ->update(['theoretical_balance' => $newBalance, 'updated_at' => now()]);
     }
 }

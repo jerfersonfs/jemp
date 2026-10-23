@@ -106,7 +106,7 @@ function initializeMovementList(list) {
             const control = field.querySelector('[name]');
             if (label && control) labels.set(control.name, label.textContent.trim());
         });
-        if (title) title.textContent = `Detalhes do registro ${record.code ?? ''}`.trim();
+        if (title) title.textContent = `Detalhes do registro ${record.code ?? record.date ?? ''}`.trim();
         if (grid) {
             grid.replaceChildren();
             Object.entries(record).forEach(([key, value]) => {

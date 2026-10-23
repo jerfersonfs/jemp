@@ -14,7 +14,7 @@ class CustomerController extends Controller
     {
         return view('customers.customers', [
             'page' => 'customers',
-            'customers' => Customer::query()->orderBy('name')->get(),
+            'customers' => Customer::query()->orderBy('customer_name')->get(),
         ]);
     }
 
@@ -34,6 +34,10 @@ class CustomerController extends Controller
 
     public function destroy(Customer $cliente): RedirectResponse
     {
+        if ($cliente->invoices()->exists()) {
+            return redirect()->route('customers.index')->with('error', 'Clientes vinculados a notas fiscais não podem ser excluídos.');
+        }
+
         $cliente->delete();
 
         return redirect()->route('customers.index')->with('status', 'Cliente excluído com sucesso.');
@@ -43,12 +47,11 @@ class CustomerController extends Controller
     private function rules(?Customer $cliente = null): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'document' => ['required', 'string', 'max:30', Rule::unique('customers', 'document')->ignore($cliente)],
-            'city' => ['required', 'string', 'max:120'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'status' => ['required', Rule::in(['Ativo', 'Inativo'])],
+            'customer_name' => ['required', 'string', 'max:150'],
+            'customer_document' => ['required', 'string', 'max:20', Rule::unique('customers', 'customer_document')->ignore($cliente?->customer_id, 'customer_id')],
+            'customer_contact' => ['nullable', 'string', 'max:30'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
+            'customer_payment_terms' => ['required', 'string', 'max:255'],
         ];
     }
 }
