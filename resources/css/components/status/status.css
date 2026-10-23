@@ -1,0 +1,88 @@
+.jemp-status-badge {
+    display: inline-flex;
+    min-height: 1.5rem;
+    align-items: center;
+    gap: .375rem;
+    border-radius: 999px;
+    padding: .125rem .625rem;
+    color: var(--status-foreground);
+    background: var(--status-background);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.jemp-notice:not([hidden]) {
+    animation: jemp-content-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
+.jemp-toast-region {
+    position: fixed;
+    z-index: 1000;
+    inset: 1rem 1rem auto auto;
+    display: grid;
+    width: min(26rem, calc(100vw - 2rem));
+    gap: .625rem;
+    pointer-events: none;
+}
+
+.jemp-toast {
+    min-height: 3.5rem;
+    background: white;
+    box-shadow: 0 8px 24px rgb(16 43 43 / 14%);
+    pointer-events: auto;
+    animation: jemp-toast-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
+.jemp-toast--leaving { animation: jemp-toast-leave var(--motion-fast) ease-in both; }
+
+@keyframes jemp-toast-enter {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes jemp-toast-leave {
+    to { opacity: 0; transform: translateY(-6px); }
+}
+
+@media (max-width: 520px) {
+    .jemp-toast-region { inset: .75rem .75rem auto; width: auto; }
+}
+
+.jemp-status-badge__dot {
+    width: .375rem;
+    height: .375rem;
+    flex: 0 0 .375rem;
+    border-radius: 50%;
+    background: var(--status-dot);
+}
+
+.jemp-status-badge--success {
+    --status-background: color-mix(in srgb, var(--color-success) 11%, white);
+    --status-foreground: color-mix(in srgb, var(--color-success) 80%, var(--color-secondary));
+    --status-dot: var(--color-success);
+}
+
+.jemp-status-badge--warning {
+    --status-background: color-mix(in srgb, var(--color-warning) 13%, white);
+    --status-foreground: color-mix(in srgb, var(--color-warning) 80%, var(--color-secondary));
+    --status-dot: var(--color-warning);
+}
+
+.jemp-status-badge--danger {
+    --status-background: color-mix(in srgb, var(--color-danger) 10%, white);
+    --status-foreground: color-mix(in srgb, var(--color-danger) 82%, var(--color-secondary));
+    --status-dot: var(--color-danger);
+}
+
+.jemp-status-badge--info {
+    --status-background: color-mix(in srgb, var(--color-info) 10%, white);
+    --status-foreground: color-mix(in srgb, var(--color-info) 82%, var(--color-secondary));
+    --status-dot: var(--color-info);
+}
+
+.jemp-status-badge--neutral {
+    --status-background: color-mix(in srgb, var(--color-caption) 10%, white);
+    --status-foreground: var(--color-secondary);
+    --status-dot: var(--color-caption);
+}

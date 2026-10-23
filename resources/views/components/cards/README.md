@@ -1,0 +1,97 @@
+# Componentes Blade — Cards
+
+Componentes Blade baseados nas referências de Cards do Figma.
+
+## 1. Message Card
+
+### Uso básico
+
+<x-cards.message-card />
+
+### Com variação
+
+<x-cards.message-card variant="outlined" trend="3,46%"/>
+
+### Variantes
+
+- `filled`
+- `outlined`
+
+---
+
+## 2. Stat Card
+
+### Uso básico
+
+<x-cards.stat-card />
+
+### Com propriedades
+
+<x-cards.stat-card variant="mint" size="compact" label="Total customers" value="2,420"/>
+
+### Card grande
+
+<x-cards.stat-card variant="dark" size="large"/>
+
+### Indicador vinculado a uma rota
+
+O texto “Ver dados” usa a rota definida em `href`. Na home, os indicadores levam ao módulo relacionado:
+
+```blade
+<x-cards.stat-card
+    label="Produtos em estoque"
+    value="1.248"
+    :href="route('inventario')"
+/>
+```
+
+### Variantes
+
+- `default`
+- `mint`
+- `dark`
+
+### Tamanhos
+
+- `regular`
+- `large`
+- `compact`
+
+Para abrir um dialog de detalhamento no botão `Ver dados`, informe `details-target` com o id da camada `data-dialog-layer` correspondente.
+
+---
+
+## 3. Finance Card
+
+### Total a vencer
+
+<x-cards.finance-card variant="overdue" title="Total a Vencer" value="R$12.300,00"/>
+
+### Faturas pendentes
+
+<x-cards.finance-card variant="pending" title="Faturas Pendentes" value="14" />
+
+### Variantes
+
+- `receivable`
+- `overdue`
+- `pending`
+
+---
+
+## Observação
+
+A área destinada ao ícone do `message-card` permanece vazia até que os ícones do projeto estejam disponíveis.
+
+## 4. Content Panel
+
+O painel de conteúdo reaproveita a superfície, cabeçalho, descrição, ação e áreas de filtro em páginas de listagem e formulários:
+
+```blade
+<x-cards.panel title="Histórico" description="Gerencie os registros." variant="mint">
+    <x-slot:actions><x-buttons.button>Nova movimentação</x-buttons.button></x-slot:actions>
+    Conteúdo do painel
+</x-cards.panel>
+```
+
+Slots disponíveis: `header` (ícone/cabeçalho auxiliar), `actions`, `filters` e `footer`. Variantes: `default`, `mint` e `subtle`. A estrutura visual usa os tokens globais, incluindo borda, raio e superfície.
