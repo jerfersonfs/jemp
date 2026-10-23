@@ -12,4 +12,5 @@
     </div>
 
     <button class="jemp-shell__backdrop" type="button" data-sidebar-close aria-label="Fechar menu"></button>
+    <div class="jemp-toast-region" data-toast-region aria-live="polite" aria-relevant="additions"></div>
 </div>

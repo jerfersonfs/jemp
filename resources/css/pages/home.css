@@ -6,6 +6,10 @@
     margin-top: var(--spacing-xl);
 }
 
+.stats [data-count-up] {
+    font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 1000px) {
     .home-notice-grid {
         grid-template-columns: minmax(0, 1fr);

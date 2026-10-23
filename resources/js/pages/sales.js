@@ -1,3 +1,5 @@
+import { showFeedback } from '../components/feedback.js';
+
 const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 document.querySelectorAll('[data-sales-form]').forEach((form) => {
@@ -83,6 +85,7 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
         event.preventDefault();
         if (!form.reportValidity()) return;
         if (feedback) feedback.hidden = false;
+        showFeedback('Venda validada na demonstração. Nenhum dado foi salvo no banco.', 'info');
     });
     form.addEventListener('reset', () => {
         if (feedback) feedback.hidden = true;
@@ -132,6 +135,7 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
         itemList.append(row);
         updateTotals();
         closeAddDialog();
+        showFeedback('Item adicionado à venda demonstrativa. A alteração não foi salva no banco.');
     });
     const closeConfirm = (returnFocus = pendingDeleteTrigger) => {
         if (!confirmLayer) return;
@@ -151,6 +155,7 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
             pendingDeleteRow.remove();
             updateTotals();
             closeConfirm(returnFocus);
+            showFeedback('Item removido da venda demonstrativa. A alteração não foi salva no banco.');
         }
     });
     document.addEventListener('keydown', (event) => {
@@ -173,5 +178,6 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
         activeRow.querySelector('[data-item-total]').textContent = formatCurrency(quantity * price - discount);
         updateTotals();
         closeDialog();
+        showFeedback('Item atualizado na venda demonstrativa. A alteração não foi salva no banco.');
     });
 });

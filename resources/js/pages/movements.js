@@ -1,3 +1,5 @@
+import { showFeedback } from '../components/feedback.js';
+
 function initializeMovementList(list) {
     const panel = list.closest('.content-panel');
     const pageRoot = list.closest('.jemp-shell__page') ?? document;
@@ -215,6 +217,7 @@ function initializeMovementList(list) {
         if (!recordForm || !rowTemplate || !tbody) return;
         const formData = Object.fromEntries(new FormData(recordForm).entries());
         if (formData.date) formData.date = displayValue('date', formData.date);
+        const wasEditing = editMode && Boolean(activeRow);
         const previousRecord = editMode && activeRow ? parseRecord(activeRow) : {};
         const record = { ...previousRecord, ...formData };
         if ('quantity' in formData && !('unit' in formData)) {
@@ -238,6 +241,7 @@ function initializeMovementList(list) {
         page = 1;
         update();
         closeDialog();
+        showFeedback(`Movimentação ${wasEditing ? 'atualizada' : 'adicionada'} na demonstração. A alteração não foi salva no banco.`);
     };
 
     pageRoot.addEventListener('click', (event) => {
@@ -277,16 +281,19 @@ function initializeMovementList(list) {
         }
 
         if (event.target.closest('[data-movement-confirm]') && activeRow) {
+            const removedCode = parseRecord(activeRow).code ?? '';
             activeRow.remove();
             rows = rows.filter((row) => row !== activeRow);
             activeRow = null;
             update();
             closeDialog();
+            showFeedback(`Movimentação ${removedCode} removida da demonstração. A alteração não foi salva no banco.`);
         }
     });
 
     recordForm?.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (!recordForm.reportValidity()) return;
         saveRecord();
     });
     search?.addEventListener('input', () => { page = 1; update(); });

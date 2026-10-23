@@ -46,7 +46,7 @@
         </div>
     </div>
 
-    <section class="stats" aria-label="Indicadores da operação">
+    <section class="stats" aria-label="Indicadores da operação" data-count-up-group>
         <x-cards.stat-card label="Total Recebido" value="R$ 14.250,00" variant="mint" :href="route('sales.index')" />
         <x-cards.stat-card label="Total a Receber" value="R$ 38.900,00" :href="route('sales.index')" />
         <x-cards.stat-card label="Notas Emitidas" value="28 NF-e" variant="mint" :href="route('invoice-consult.index')" />

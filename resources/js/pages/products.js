@@ -1,3 +1,5 @@
+import { showFeedback } from '../components/feedback.js';
+
 const catalog = document.querySelector('[data-product-catalog]');
 
 if (catalog) {
@@ -7,7 +9,6 @@ if (catalog) {
     let selectedId = null;
     let currentPage = 1;
     let returnFocus = null;
-    let noticeTimeout;
     const pageSize = 10;
     const find = (name) => catalog.querySelector(`[data-product-${name}]`);
     const formModal = find('form-modal');
@@ -46,10 +47,7 @@ if (catalog) {
     }
 
     function notify(message) {
-        clearTimeout(noticeTimeout);
-        find('notice').querySelector('.jemp-notice__message').textContent = message;
-        find('notice').hidden = false;
-        noticeTimeout = setTimeout(() => { find('notice').hidden = true; }, 5000);
+        showFeedback(`${message} Alteração demonstrativa, não salva no banco.`);
     }
 
     function renderProducts() {
@@ -213,6 +211,5 @@ if (catalog) {
         const button = event.target.closest('[data-page]');
         if (button) { currentPage = Number(button.dataset.page); renderProducts(); }
     });
-    find('notice').querySelector('.jemp-notice__close').addEventListener('click', () => { find('notice').hidden = true; });
     renderProducts();
 }

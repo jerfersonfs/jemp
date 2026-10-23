@@ -3,6 +3,8 @@ import './components/tabs/tabs.js';
 import './components/popovers/popovers.js';
 import './components/inputs/select.js';
 import './components/layout.js';
+import './components/feedback.js';
+import './pages/home.js';
 import './pages/login.js';
 import './pages/movements.js';
 import './pages/reports.js';

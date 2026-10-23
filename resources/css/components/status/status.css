@@ -16,6 +16,39 @@
     animation: jemp-content-enter var(--motion-normal) var(--motion-ease-out) both;
 }
 
+.jemp-toast-region {
+    position: fixed;
+    z-index: 1000;
+    inset: 1rem 1rem auto auto;
+    display: grid;
+    width: min(26rem, calc(100vw - 2rem));
+    gap: .625rem;
+    pointer-events: none;
+}
+
+.jemp-toast {
+    min-height: 3.5rem;
+    background: white;
+    box-shadow: 0 8px 24px rgb(16 43 43 / 14%);
+    pointer-events: auto;
+    animation: jemp-toast-enter var(--motion-normal) var(--motion-ease-out) both;
+}
+
+.jemp-toast--leaving { animation: jemp-toast-leave var(--motion-fast) ease-in both; }
+
+@keyframes jemp-toast-enter {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes jemp-toast-leave {
+    to { opacity: 0; transform: translateY(-6px); }
+}
+
+@media (max-width: 520px) {
+    .jemp-toast-region { inset: .75rem .75rem auto; width: auto; }
+}
+
 .jemp-status-badge__dot {
     width: .375rem;
     height: .375rem;

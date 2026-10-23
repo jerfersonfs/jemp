@@ -1,3 +1,5 @@
+import { showFeedback } from '../components/feedback.js';
+
 document.querySelectorAll('[data-customers-list]').forEach((list) => {
     const queryInput = list.querySelector('[data-customer-search]');
     const statusFilter = list.querySelector('[data-customer-status]');
@@ -125,12 +127,14 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
             return;
         }
         if (event.target.closest('[data-movement-confirm]') && pendingDeleteRow) {
+            const deletedName = pendingDeleteRow.cells[0].textContent.trim();
             pendingDeleteRow.remove();
             rows.splice(rows.indexOf(pendingDeleteRow), 1);
             pendingDeleteRow = null;
             filterRows();
             closeLayer(confirmLayer, list.querySelector('[data-customer-open]'));
             pendingDeleteTrigger = null;
+            showFeedback(`Cliente ${deletedName} removido da demonstração. A alteração não foi salva no banco.`);
         }
     });
     document.addEventListener('keydown', (event) => {
@@ -147,6 +151,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         if (!form.reportValidity()) return;
         const data = new FormData(form);
         const values = ['name', 'document', 'city', 'phone', 'email', 'status'].map((key) => String(data.get(key) ?? ''));
+        const wasEditing = Boolean(editingRow);
         let row = editingRow;
         if (!row) {
             row = document.createElement('tr');
@@ -163,5 +168,6 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         row.dataset.search = values.join(' ').toLocaleLowerCase('pt-BR');
         filterRows();
         closeDialog();
+        showFeedback(`Cliente ${wasEditing ? 'atualizado' : 'adicionado'} na demonstração. A alteração não foi salva no banco.`);
     });
 });

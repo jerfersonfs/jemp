@@ -1,3 +1,5 @@
+import { showFeedback } from '../components/feedback.js';
+
 const page = document.querySelector('[data-invoice-page]');
 
 if (page) {
@@ -119,6 +121,7 @@ if (page) {
                 if (feedback) feedback.hidden = false;
                 if (message) message.textContent = 'Campos validados. Os dados serão persistidos quando o backend estiver integrado.';
                 closeDialog();
+                showFeedback('Campos validados. Nenhuma nota foi salva no banco; o backend ainda será integrado.', 'info');
             });
             form.querySelectorAll('input[type="number"]').forEach((input) => {
                 input.min = '0.01';
