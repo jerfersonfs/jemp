@@ -1,6 +1,6 @@
 document.querySelectorAll('[data-customers-list]').forEach((list) => {
     const queryInput = list.querySelector('[data-customer-search]');
-    const statusFilter = list.querySelector('[data-customer-status]');
+    const paymentFilter = list.querySelector('[data-customer-payment]');
     const rows = [...list.querySelectorAll('[data-customer-row]')];
     const emptyRow = list.querySelector('[data-customer-empty]');
     const summary = list.querySelector('[data-customer-summary]');
@@ -83,9 +83,9 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
 
     const renderRows = () => {
         const query = queryInput?.value.trim().toLocaleLowerCase('pt-BR') ?? '';
-        const status = statusFilter?.value ?? '';
+        const paymentTerms = paymentFilter?.value ?? '';
         const filteredRows = rows.filter((row) => row.dataset.search.toLocaleLowerCase('pt-BR').includes(query)
-            && (!status || row.dataset.status === status));
+            && (!paymentTerms || row.dataset.payment === paymentTerms));
         const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
         currentPage = Math.min(currentPage, totalPages);
         filteredRows.forEach((row, index) => {
@@ -127,7 +127,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         currentPage = 1;
         renderRows();
     });
-    statusFilter?.addEventListener('change', () => {
+    paymentFilter?.addEventListener('change', () => {
         currentPage = 1;
         renderRows();
     });

@@ -60,7 +60,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="login-form__options"><span></span><span>Recuperação de senha indisponível</span></div>
+                <div class="login-form__options"><span></span><button type="button" data-password-help>Esqueceu sua senha?</button></div>
                 <x-buttons.button type="submit" class="login-form__submit">Entrar</x-buttons.button>
                 @error('email')
                     <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>

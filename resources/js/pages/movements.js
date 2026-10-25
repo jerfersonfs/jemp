@@ -97,7 +97,7 @@ function initializeMovementList(list) {
         const grid = detailDialog.querySelector('.jemp-details-dialog__grid');
         const headers = [...(table?.querySelectorAll('thead th') ?? [])];
         const labels = new Map();
-        const fallbackLabels = { code: 'Código', date: 'Data', type: 'Tipo', product: 'Produto', quantity: 'Quantidade', origin: 'Origem', destination: 'Destino', warehouse: 'Almoxarifado', recipient: 'Destinatário', justification: 'Justificação', condition: 'Condição' };
+        const fallbackLabels = { code: 'Código', date: 'Data', type: 'Tipo', product: 'Produto', quantity: 'Quantidade', origin: 'Origem', destination: 'Destino', warehouse: 'Almoxarifado', recipient: 'Destinatário', justification: 'Justificação', condition: 'Condição', fiscal: 'Fiscal', invoice: 'ID da nota fiscal', responsible: 'ID do usuário' };
         row.querySelectorAll('td[data-column-key]').forEach((cell, index) => {
             if (cell.dataset.columnType !== 'actions') labels.set(cell.dataset.columnKey, headers[index]?.textContent.trim() || cell.dataset.columnKey);
         });

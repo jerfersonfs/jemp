@@ -1,10 +1,10 @@
 <x-layouts.app title="Produtos · JEMP" page="products">
     @php
         $columns = [
-            ['key' => 'sku', 'label' => 'SKU'], ['key' => 'product_name', 'label' => 'Nome do Produto'],
-            ['key' => 'category', 'label' => 'Categoria'], ['key' => 'material', 'label' => 'Material'],
-            ['key' => 'width_mm', 'label' => 'Largura (mm)'], ['key' => 'length_mm', 'label' => 'Comprimento (mm)'],
-            ['key' => 'cost_price', 'label' => 'Custo'], ['key' => 'theoretical_balance', 'label' => 'Saldo'],
+            ['key' => 'code', 'label' => 'Cód.'], ['key' => 'name', 'label' => 'Nome do Produto'],
+            ['key' => 'category', 'label' => 'Categoria'], ['key' => 'type', 'label' => 'Condição'],
+            ['key' => 'measure', 'label' => 'Medida'], ['key' => 'location', 'label' => 'Local'],
+            ['key' => 'material', 'label' => 'Material'], ['key' => 'cost_price', 'label' => 'Custo'],
             ['key' => 'actions', 'label' => 'Ações', 'type' => 'actions', 'idKey' => 'id', 'actions' => [
                 ['name' => 'view', 'label' => 'Ver detalhes', 'icon' => 'eye'],
                 ['name' => 'edit', 'label' => 'Editar produto', 'icon' => 'pencil-simple'],
@@ -14,9 +14,14 @@
         $rows = $products->map(fn ($product) => [
             'id' => $product->product_id,
             'product_id' => $product->product_id,
+            'code' => $product->sku,
+            'name' => $product->product_name,
             'sku' => $product->sku,
             'product_name' => $product->product_name,
             'category' => $product->category,
+            'type' => $product->inventory->pluck('product_condition')->unique()->implode(', ') ?: '—',
+            'measure' => $product->width_mm.' × '.$product->length_mm.' mm',
+            'location' => $product->inventory->first()?->warehouse?->warehouse_name ?? '—',
             'material' => $product->material,
             'cost_price' => $product->cost_price,
             'width_mm' => $product->width_mm,
@@ -71,6 +76,7 @@
                 <x-filters.filter-bar class="products-filters" label="Filtrar produtos" data-product-filters>
                     <label class="products-search"><x-icons.icon name="magnifying-glass" size="sm" /><span class="sr-only">Buscar produto</span><input type="search" placeholder="Buscar produto..." data-product-search></label>
                     <label>Categoria<select data-product-category><option value="">Todas as categorias</option><option>PBR</option><option>Descartável</option><option>Não Standard</option></select></label>
+                    <label>Condição<select data-product-type><option value="">Todas as condições</option>@foreach ($products->flatMap(fn ($product) => $product->inventory->pluck('product_condition'))->unique()->sort() as $condition)<option>{{ $condition }}</option>@endforeach</select></label>
                 </x-filters.filter-bar>
                 <x-tables.table :columns="$columns" :rows="$rows" variant="spreadsheet" caption="Listagem de produtos" />
                 <footer class="products-footer">
