@@ -62,13 +62,13 @@ return new class extends Migration
                     sm.dest_warehouse_id,
                     wd.warehouse_name AS destination_warehouse_name,
                     sm.user_id,
-                    u.username,
+                    u.name AS username,
                     sm.invoice_id,
                     sm.is_fiscal,
                     sm.movement_justification
                 FROM stock_movements AS sm
                 INNER JOIN products AS p ON p.product_id = sm.product_id
-                INNER JOIN users AS u ON u.user_id = sm.user_id
+                INNER JOIN users AS u ON u.id = sm.user_id
                 LEFT JOIN warehouses AS wo ON wo.warehouse_id = sm.origin_warehouse_id
                 LEFT JOIN warehouses AS wd ON wd.warehouse_id = sm.dest_warehouse_id
                 SQL,
@@ -179,7 +179,7 @@ return new class extends Migration
                     sm.dest_warehouse_id,
                     wd.warehouse_name AS destination_warehouse_name,
                     sm.user_id,
-                    u.username,
+                    u.name AS username,
                     sm.invoice_id,
                     CASE
                         WHEN i.invoice_id IS NULL THEN NULL
@@ -189,7 +189,7 @@ return new class extends Migration
                     sm.movement_justification
                 FROM stock_movements AS sm
                 INNER JOIN products AS p ON p.product_id = sm.product_id
-                INNER JOIN users AS u ON u.user_id = sm.user_id
+                INNER JOIN users AS u ON u.id = sm.user_id
                 LEFT JOIN warehouses AS wo ON wo.warehouse_id = sm.origin_warehouse_id
                 LEFT JOIN warehouses AS wd ON wd.warehouse_id = sm.dest_warehouse_id
                 LEFT JOIN invoices AS i ON i.invoice_id = sm.invoice_id
@@ -200,7 +200,7 @@ return new class extends Migration
                     sm.sm_id AS record_id,
                     sm.user_id,
                     sm.movement_type,
-                    u.username,
+                    u.name AS username,
                     CASE sm.movement_type
                         WHEN 'Entrada' THEN 'Entrada registrada'
                         WHEN 'Saída' THEN 'Saída registrada'
@@ -226,7 +226,7 @@ return new class extends Migration
                     ) AS description
                 FROM stock_movements AS sm
                 INNER JOIN products AS p ON p.product_id = sm.product_id
-                INNER JOIN users AS u ON u.user_id = sm.user_id
+                INNER JOIN users AS u ON u.id = sm.user_id
                 LEFT JOIN warehouses AS wo ON wo.warehouse_id = sm.origin_warehouse_id
                 LEFT JOIN warehouses AS wd ON wd.warehouse_id = sm.dest_warehouse_id
                 SQL,
