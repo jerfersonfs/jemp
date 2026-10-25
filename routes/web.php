@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,5 +29,5 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/saidas', [MovementController::class, 'storeExit'])->name('exits.store');
     Route::get('/internas', [MovementController::class, 'transfers'])->name('internal.index');
     Route::post('/internas', [MovementController::class, 'storeTransfer'])->name('internal.store');
-    Route::view('/relatorios', 'reports.reports', ['page' => 'reports'])->name('reports.index');
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
 });
