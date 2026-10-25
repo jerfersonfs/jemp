@@ -1,6 +1,7 @@
 <x-layouts.app title="Entradas · JEMP" page="entrance">
     @php
         $entryRows = $movements->map(fn ($movement) => [
+            'sm_id' => $movement->sm_id,
             'date' => \Illuminate\Support\Carbon::parse($movement->movement_date)->format('d/m/Y H:i'),
             'type' => $movement->movement_type,
             'product' => trim($movement->product_sku.' — '.$movement->product_name.' ('.$movement->product_condition.')'),
@@ -14,6 +15,7 @@
             '_data' => ['type' => $movement->movement_type, 'origin' => 'Externo', 'destination' => $movement->dest_warehouse_id],
         ])->all();
         $entryColumns = [
+            ['key' => 'sm_id', 'label' => 'ID'],
             ['key' => 'date', 'label' => 'Data'],
             ['key' => 'type', 'label' => 'Tipo'],
             ['key' => 'product', 'label' => 'Entrada'],

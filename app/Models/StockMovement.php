@@ -9,9 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['origin_warehouse_id', 'dest_warehouse_id', 'product_id', 'product_condition', 'user_id', 'invoice_id', 'quantity', 'movement_type', 'movement_justification', 'movement_date', 'is_fiscal'])]
 class StockMovement extends Model
 {
-    protected $primaryKey = null;
-
-    public $incrementing = false;
+    protected $primaryKey = 'sm_id';
 
     public function product(): BelongsTo
     {

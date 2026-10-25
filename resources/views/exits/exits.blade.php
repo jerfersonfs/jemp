@@ -1,6 +1,7 @@
 <x-layouts.app title="Saídas · JEMP" page="exits">
     @php
         $exitRows = $movements->map(fn ($movement) => [
+            'sm_id' => $movement->sm_id,
             'date' => \Illuminate\Support\Carbon::parse($movement->movement_date)->format('d/m/Y H:i'),
             'type' => $movement->movement_type,
             'product' => trim($movement->product_sku.' — '.$movement->product_name),
@@ -15,6 +16,7 @@
             '_data' => ['type' => $movement->movement_type, 'warehouse' => $movement->origin_warehouse_id],
         ])->all();
         $exitColumns = [
+            ['key' => 'sm_id', 'label' => 'ID'],
             ['key' => 'date', 'label' => 'Data'], ['key' => 'type', 'label' => 'Tipo'],
             ['key' => 'product', 'label' => 'Produto'], ['key' => 'condition', 'label' => 'Condição'], ['key' => 'fiscal', 'label' => 'Fiscal'],
             ['key' => 'quantity', 'label' => 'Qtd. saída'], ['key' => 'warehouse', 'label' => 'Armazém'], ['key' => 'destination', 'label' => 'Destino'],

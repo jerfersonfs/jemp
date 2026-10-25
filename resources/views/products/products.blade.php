@@ -4,7 +4,7 @@
             ['key' => 'code', 'label' => 'Cód.'], ['key' => 'name', 'label' => 'Nome do Produto'],
             ['key' => 'category', 'label' => 'Categoria'], ['key' => 'type', 'label' => 'Condição'],
             ['key' => 'measure', 'label' => 'Medida'], ['key' => 'location', 'label' => 'Local'],
-            ['key' => 'material', 'label' => 'Material'], ['key' => 'cost_price', 'label' => 'Custo'],
+            ['key' => 'material', 'label' => 'Material'], ['key' => 'cost_price_display', 'label' => 'Custo'],
             ['key' => 'actions', 'label' => 'Ações', 'type' => 'actions', 'idKey' => 'id', 'actions' => [
                 ['name' => 'view', 'label' => 'Ver detalhes', 'icon' => 'eye'],
                 ['name' => 'edit', 'label' => 'Editar produto', 'icon' => 'pencil-simple'],
@@ -24,6 +24,7 @@
             'location' => $product->inventory->first()?->warehouse?->warehouse_name ?? '—',
             'material' => $product->material,
             'cost_price' => $product->cost_price,
+            'cost_price_display' => 'R$ '.number_format((float) $product->cost_price, 2, ',', '.'),
             'width_mm' => $product->width_mm,
             'length_mm' => $product->length_mm,
             'theoretical_balance' => $product->inventory_sum_theoretical_balance ?? 0,
@@ -43,16 +44,16 @@
             ],
         ])->all();
         $fields = [
-            ['name' => 'sku', 'id' => 'product-sku', 'label' => 'SKU', 'required' => true],
+            ['name' => 'sku', 'id' => 'product-sku', 'label' => 'SKU gerado pelo sistema', 'readonly' => true, 'value' => 'Gerado ao cadastrar'],
             ['name' => 'product_name', 'id' => 'product-name', 'label' => 'Produto', 'required' => true],
             ['name' => 'category', 'id' => 'product-category', 'label' => 'Categoria', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'Descartável' => 'Descartável', 'Não Standard' => 'Não Standard'], 'required' => true],
             ['name' => 'material', 'id' => 'product-material', 'label' => 'Material', 'required' => true],
-            ['name' => 'cost_price', 'id' => 'product-cost-price', 'label' => 'Custo unitário', 'type' => 'number', 'min' => 0, 'step' => 0.01, 'required' => true],
+            ['name' => 'cost_price', 'id' => 'product-cost-price', 'label' => 'Custo unitário', 'type' => 'number', 'prefix' => 'R$', 'min' => 0, 'step' => 0.01, 'required' => true],
             ['name' => 'width_mm', 'id' => 'product-width', 'label' => 'Largura (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
             ['name' => 'length_mm', 'id' => 'product-length', 'label' => 'Comprimento (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
-            ['name' => 'warehouse_id', 'id' => 'product-warehouse', 'label' => 'Armazém', 'type' => 'select', 'options' => $warehouses->mapWithKeys(fn ($warehouse) => [$warehouse->warehouse_id => $warehouse->warehouse_name])->all(), 'required' => true],
-            ['name' => 'product_condition', 'id' => 'product-condition', 'label' => 'Condição do estoque', 'type' => 'select', 'options' => ['Novo' => 'Novo', 'Bom' => 'Bom', 'Revisado' => 'Revisado'], 'required' => true],
-            ['name' => 'theoretical_balance', 'id' => 'product-balance', 'label' => 'Saldo inicial', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true],
+            ['name' => 'warehouse_id', 'id' => 'product-warehouse', 'label' => 'Armazém inicial', 'type' => 'select', 'options' => $warehouses->mapWithKeys(fn ($warehouse) => [$warehouse->warehouse_id => $warehouse->warehouse_name])->all(), 'required' => true, 'createOnly' => true],
+            ['name' => 'product_condition', 'id' => 'product-condition', 'label' => 'Condição do estoque', 'type' => 'select', 'options' => ['Novo' => 'Novo', 'Reforma' => 'Reforma', 'Descarte' => 'Descarte'], 'required' => true, 'createOnly' => true],
+            ['name' => 'theoretical_balance', 'id' => 'product-balance', 'label' => 'Saldo inicial', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true, 'createOnly' => true],
         ];
         $inventoryColumns = [
             ['key' => 'warehouse', 'label' => 'Armazém'],
@@ -92,7 +93,43 @@
         <x-dialogs.modal label="Detalhes do produto" class="products-modal products-modal--details" data-product-details-modal>
             <x-dialogs.details-dialog title="Detalhes do produto" :details="collect(['SKU', 'Produto', 'Categoria', 'Material', 'Custo unitário', 'Largura (mm)', 'Comprimento (mm)', 'Saldo total'])->map(fn ($label) => ['label' => $label, 'value' => '—'])->all()">
                 <section class="products-inventory" aria-labelledby="products-inventory-title">
-                    <h3 id="products-inventory-title">Inventário do produto</h3>
+                    <div class="products-inventory__header">
+                        <h3 id="products-inventory-title">Inventário do produto</h3>
+                        <button class="products-stock-add" type="button" data-product-stock-open>Adicionar estoque</button>
+                    </div>
+                    <form class="products-stock-form" action="{{ route('entrance.store') }}" method="POST" data-product-stock-form hidden>
+                        @csrf
+                        <input type="hidden" name="product_id" data-product-stock-id>
+                        <p class="products-stock-form__product">Entrada para <strong data-product-stock-name></strong></p>
+                        <label>Condição
+                            <select name="product_condition" required>
+                                <option value="Novo">Novo</option>
+                                <option value="Reforma">Reforma</option>
+                                <option value="Descarte">Descarte</option>
+                            </select>
+                        </label>
+                        <label>Armazém de destino
+                            <select name="dest_warehouse_id" required>
+                                <option value="">Selecione um armazém</option>
+                                @foreach ($warehouses as $warehouse)
+                                    <option value="{{ $warehouse->warehouse_id }}">{{ $warehouse->warehouse_name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>Data e hora
+                            <input name="date" type="datetime-local" value="{{ now()->format('Y-m-d\\TH:i') }}" required>
+                        </label>
+                        <label>Quantidade
+                            <input name="quantity" type="number" min="1" step="1" required>
+                        </label>
+                        <label>Justificativa
+                            <textarea name="movement_justification" maxlength="255" rows="2"></textarea>
+                        </label>
+                        <div class="products-stock-form__actions">
+                            <button type="button" class="btn btn-secondary" data-product-stock-cancel>Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Registrar entrada</button>
+                        </div>
+                    </form>
                     <x-tables.table :columns="$inventoryColumns" caption="Inventário por barracão" />
                 </section>
             </x-dialogs.details-dialog>

@@ -7,6 +7,7 @@ use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -28,11 +29,24 @@ class ProductController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate($this->rules());
+        $data = $request->validate($this->rules(includeInitialInventory: true));
         $this->assertSpecificationIsAvailable($data);
 
         DB::transaction(function () use ($data): void {
-            $product = Product::query()->create($this->productData($data));
+            $temporarySku = 'TMP-'.Str::random(8);
+            $product = Product::query()->create([
+                ...$this->productData($data),
+                'sku' => $temporarySku,
+            ]);
+            $product->update([
+                'sku' => $this->generateSku(
+                    $data['category'],
+                    (int) $data['length_mm'],
+                    (int) $data['width_mm'],
+                    $product->product_id,
+                ),
+            ]);
+
             DB::table('inventory')->insert([
                 'warehouse_id' => $data['warehouse_id'],
                 'product_id' => $product->product_id,
@@ -48,38 +62,12 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $produto): RedirectResponse
     {
-        $data = $request->validate($this->rules($produto));
+        $data = $request->validate($this->rules());
         $this->assertSpecificationIsAvailable($data, $produto);
 
         DB::transaction(function () use ($produto, $data): void {
             $lockedProduct = Product::query()->whereKey($produto->product_id)->lockForUpdate()->firstOrFail();
             $lockedProduct->update($this->productData($data));
-
-            $inventory = DB::table('inventory')
-                ->where('warehouse_id', $data['warehouse_id'])
-                ->where('product_id', $lockedProduct->product_id)
-                ->where('product_condition', $data['product_condition'])
-                ->lockForUpdate()
-                ->first();
-
-            if ($inventory === null) {
-                DB::table('inventory')->insert([
-                    'warehouse_id' => $data['warehouse_id'],
-                    'product_id' => $lockedProduct->product_id,
-                    'product_condition' => $data['product_condition'],
-                    'theoretical_balance' => $data['theoretical_balance'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                return;
-            }
-
-            DB::table('inventory')
-                ->where('warehouse_id', $data['warehouse_id'])
-                ->where('product_id', $lockedProduct->product_id)
-                ->where('product_condition', $data['product_condition'])
-                ->update(['theoretical_balance' => $data['theoretical_balance'], 'updated_at' => now()]);
         });
 
         return redirect()->route('products.index')->with('status', 'Produto atualizado com sucesso.');
@@ -103,7 +91,6 @@ class ProductController extends Controller
     private function productData(array $data): array
     {
         return [
-            'sku' => $data['sku'],
             'category' => $data['category'],
             'product_name' => $data['product_name'],
             'material' => $data['material'],
@@ -111,6 +98,17 @@ class ProductController extends Controller
             'length_mm' => $data['length_mm'],
             'width_mm' => $data['width_mm'],
         ];
+    }
+
+    private function generateSku(string $category, int $lengthMm, int $widthMm, int $sequence): string
+    {
+        $categoryCode = match ($category) {
+            'PBR' => 'PBR',
+            'Descartável' => 'DESC',
+            'Não Standard' => 'NS',
+        };
+
+        return sprintf('%s-%dX%d-%03d', $categoryCode, $lengthMm, $widthMm, $sequence);
     }
 
     /** @param array<string, mixed> $data */
@@ -133,19 +131,25 @@ class ProductController extends Controller
     }
 
     /** @return array<string, array<int, mixed>> */
-    private function rules(?Product $produto = null): array
+    private function rules(bool $includeInitialInventory = false): array
     {
-        return [
-            'sku' => ['required', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($produto?->product_id, 'product_id')],
+        $rules = [
             'product_name' => ['required', 'string', 'max:150'],
             'category' => ['required', Rule::in(['PBR', 'Descartável', 'Não Standard'])],
             'material' => ['required', 'string', 'max:100'],
             'cost_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'length_mm' => ['required', 'integer', 'min:1', 'max:2147483647'],
             'width_mm' => ['required', 'integer', 'min:1', 'max:2147483647'],
-            'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
-            'product_condition' => ['required', 'string', 'max:30'],
-            'theoretical_balance' => ['required', 'integer', 'min:0', 'max:2147483647'],
         ];
+
+        if ($includeInitialInventory) {
+            $rules += [
+                'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+                'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
+                'theoretical_balance' => ['required', 'integer', 'min:0', 'max:2147483647'],
+            ];
+        }
+
+        return $rules;
     }
 }

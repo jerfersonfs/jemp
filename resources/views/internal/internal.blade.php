@@ -1,6 +1,7 @@
 <x-layouts.app title="Movimentações internas · JEMP" page="internal">
     @php
         $transferRows = $movements->map(fn ($movement) => [
+            'sm_id' => $movement->sm_id,
             'date' => \Illuminate\Support\Carbon::parse($movement->movement_date)->format('d/m/Y H:i'),
             'type' => $movement->movement_type,
             'product' => trim($movement->product_sku.' — '.$movement->product_name),
@@ -15,6 +16,7 @@
             '_data' => ['origin' => $movement->origin_warehouse_id, 'destination' => $movement->dest_warehouse_id],
         ])->all();
         $transferColumns = [
+            ['key' => 'sm_id', 'label' => 'ID'],
             ['key' => 'date', 'label' => 'Data'], ['key' => 'product', 'label' => 'Nome do Produto'],
             ['key' => 'quantity', 'label' => 'Qtd'], ['key' => 'origin', 'label' => 'Origem'], ['key' => 'destination', 'label' => 'Destino'],
             ['key' => 'condition', 'label' => 'Condição'],

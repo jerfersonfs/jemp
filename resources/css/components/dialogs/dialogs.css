@@ -281,6 +281,36 @@
     transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
+.jemp-form-dialog__input-wrap {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    border: 1px solid color-mix(in srgb, var(--form-accent, var(--color-primary)) 32%, white);
+    border-radius: .5rem;
+    background: white;
+}
+
+.jemp-form-dialog__input-prefix {
+    flex: 0 0 auto;
+    padding-inline: .875rem .25rem;
+    color: var(--color-caption);
+}
+
+.jemp-form-dialog__input-wrap input {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.jemp-form-dialog__input-wrap:focus-within {
+    border-color: var(--form-accent, var(--color-primary));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--form-accent, var(--color-primary)) 17%, transparent);
+}
+
+.jemp-form-dialog__input-wrap:has([aria-invalid="true"]) {
+    border-color: var(--color-danger);
+}
+
 .jemp-form-dialog__field textarea {
     min-height: 6rem;
     resize: vertical;

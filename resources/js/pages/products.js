@@ -4,6 +4,9 @@ if (catalog) {
     const formModal = catalog.querySelector('[data-product-form-modal]');
     const detailsModal = catalog.querySelector('[data-product-details-modal]');
     const deleteModal = catalog.querySelector('[data-product-delete-modal]');
+    const stockForm = detailsModal.querySelector('[data-product-stock-form]');
+    const stockOpen = detailsModal.querySelector('[data-product-stock-open]');
+    const stockCancel = detailsModal.querySelector('[data-product-stock-cancel]');
     const form = formModal.querySelector('form');
     const deleteForm = deleteModal.querySelector('[data-product-delete-form]');
     const tableBody = catalog.querySelector('tbody');
@@ -54,6 +57,12 @@ if (catalog) {
         form.classList.toggle('jemp-form-dialog--edit', editing);
         form.classList.toggle('jemp-form-dialog--create', !editing);
         form.querySelector('[type="submit"]').textContent = editing ? 'Salvar alterações' : 'Cadastrar produto';
+        form.querySelectorAll('[data-form-create-only]').forEach((fieldGroup) => {
+            fieldGroup.hidden = editing;
+            fieldGroup.querySelectorAll('input, select, textarea').forEach((field) => {
+                field.disabled = editing;
+            });
+        });
         if (product && !preserveOldInput) {
             for (const [name, value] of Object.entries(product)) {
                 const field = form.elements.namedItem(name);
@@ -79,6 +88,10 @@ if (catalog) {
         });
         const body = detailsModal.querySelector('tbody');
         body.replaceChildren();
+        stockForm.reset();
+        stockForm.hidden = true;
+        stockForm.elements.namedItem('product_id').value = product.product_id;
+        stockForm.querySelector('[data-product-stock-name]').textContent = product.product_name;
         for (const stock of (product.inventory ?? [])) {
             const row = document.createElement('tr');
             for (const value of [stock.warehouse ?? '—', stock.product_condition, `${stock.theoretical_balance} un.`]) {
@@ -94,6 +107,15 @@ if (catalog) {
         }
         detailsModal.showModal();
     }
+
+    stockOpen.addEventListener('click', () => {
+        stockForm.hidden = false;
+        stockForm.querySelector('[name="quantity"]').focus();
+    });
+    stockCancel.addEventListener('click', () => {
+        stockForm.hidden = true;
+        stockOpen.focus();
+    });
 
     function renderRows() {
         const query = normalize(find('search').value.trim());

@@ -17,11 +17,11 @@
 
         <div class="customers-table-scroll" role="region" aria-label="Lista de clientes" tabindex="0">
             <table class="customers-table">
-                <thead><tr><th scope="col">Cliente <span>↕</span></th><th scope="col">Documento <span>↕</span></th><th scope="col">Cidade <span>↕</span></th><th scope="col">Contato</th><th scope="col">E-mail</th><th scope="col">Condição de pagamento</th><th scope="col">Ações</th></tr></thead>
+                <thead><tr><th scope="col">ID</th><th scope="col">Cliente <span>↕</span></th><th scope="col">Documento <span>↕</span></th><th scope="col">Cidade <span>↕</span></th><th scope="col">Contato</th><th scope="col">E-mail</th><th scope="col">Condição de pagamento</th><th scope="col">Ações</th></tr></thead>
                 <tbody data-customer-rows>
                     @foreach ($customers as $customer)
                         <tr data-customer-row data-payment="{{ $customer->customer_payment_terms }}" data-search="{{ strtolower(implode(' ', $customer->only(['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms']))) }}" data-update-url="{{ route('customers.update', $customer) }}" data-delete-url="{{ route('customers.destroy', $customer) }}" data-record="{{ $customer->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}">
-                            <td>{{ $customer->customer_name }}</td><td>{{ $customer->customer_document }}</td><td>—</td><td>{{ $customer->customer_contact }}</td><td>{{ $customer->customer_email }}</td><td>{{ $customer->customer_payment_terms }}</td>
+                            <td>{{ $customer->customer_id }}</td><td>{{ $customer->customer_name }}</td><td>{{ $customer->customer_document }}</td><td>—</td><td>{{ $customer->customer_contact }}</td><td>{{ $customer->customer_email }}</td><td>{{ $customer->customer_payment_terms }}</td>
                             <td><div class="customers-table__actions">
                                 <button class="customers-table__action customers-table__action--view" type="button" data-customer-view aria-label="Ver detalhes de {{ $customer->customer_name }}" title="Ver detalhes"><i class="ph ph-eye" aria-hidden="true"></i></button>
                                 <button class="customers-table__action customers-table__action--edit" type="button" data-customer-edit aria-label="Editar cliente {{ $customer->customer_name }}" title="Editar cliente"><i class="ph ph-pencil-simple-line" aria-hidden="true"></i></button>
@@ -29,7 +29,7 @@
                             </div></td>
                         </tr>
                     @endforeach
-                    <tr data-customer-empty hidden><td colspan="7">Nenhum cliente corresponde aos filtros selecionados.</td></tr>
+                    <tr data-customer-empty hidden><td colspan="8">Nenhum cliente corresponde aos filtros selecionados.</td></tr>
                 </tbody>
             </table>
         </div>
