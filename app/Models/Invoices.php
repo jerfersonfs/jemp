@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Invoices extends Model
 {
-     public $timestamps = false;
+    public $timestamps = false;
 
     protected $primaryKey = 'invoice_id';
 
@@ -21,18 +21,19 @@ class Invoices extends Model
         'payment_terms_days',
         'payment_status',
         'payment_date',
+        'amount',
     ];
 
-     protected function casts(): array
-        {
-            return [
-                'invoice_number' => 'integer',
-                'invoice_serie' => 'integer',
-                'issue_date' => 'date',
-                'due_date' => 'date',
-                'payment_date' => 'date',
-                'payment_terms_days' => 'integer',
-                'amount' => 'decimal:2',
-            ];
-        }
+    protected function casts(): array
+    {
+        return [
+            'invoice_number' => 'integer',
+            'invoice_serie' => 'integer',
+            'issue_date' => 'date',
+            'due_date' => 'date',
+            'payment_date' => 'date',
+            'payment_terms_days' => 'integer',
+            'amount' => 'decimal:2',
+        ];
+    }
 }

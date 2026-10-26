@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoices;
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
+use App\Models\Invoices;
 
 class InvoiceController extends Controller
 {
     public function index()
     {
         $invoices = Invoices::all();
+
         return InvoiceResource::collection($invoices);
     }
 
@@ -21,25 +21,13 @@ class InvoiceController extends Controller
         // return view('invoices.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreInvoiceRequest $request)
     {
-        $dados = $request->validate([
-        'customer_id' => ['required', 'exists:customers,customer_id'],
-        'invoice_number' => ['required', 'integer', 'min:1'],
-        'invoice_serie' => ['required', 'integer', 'min:1'],
-        'issue_date' => ['required', 'date'],
-        'due_date' => ['required', 'date', 'after_or_equal:issue_date'],
-        'payment_method' => ['required', 'string', 'max:50'],
-        'delivery_driver' => ['nullable', 'string', 'max:100'],
-        'payment_terms_days' => ['required', 'integer', 'min:0'],
-        'payment_status' => ['sometimes', 'in:A vencer,Vencida,Paga,Cancelada'],
-        'payment_date' => ['nullable', 'required_if:payment_status,Paga', 'date'],
-        // 'amount' => $request->amount
-    ]);
+        $dados = $request->validated();
 
-    $invoice = Invoices::create($dados);
+        $invoice = Invoices::create($dados);
 
-    return response()->json($invoice, 201);
+        return response()->json($invoice, 201);
 
     }
 
@@ -55,15 +43,24 @@ class InvoiceController extends Controller
         // return view('invoices.edit', compact('invoice'));
     }
 
-    public function update(UpdateInvoiceRequest $request, Invoices $invoice)
+    public function update(UpdateInvoiceRequest $request, string $id)
     {
-        $invoice->update($request->validated());
-        return redirect()->route('faturas.index');
+        $invoice = Invoices::findOrFail($id);
+
+        $dados = $request->validated();
+
+        $invoice->update($dados);
+
+        return new InvoiceResource($invoice->fresh());
     }
 
-    public function destroy(Invoices $invoice)
+    public function destroy(Invoices $invoice, string $id)
     {
-        $invoice->delete();
-        return redirect()->route('faturas.index');
+        $invoices = Invoices::findOrFail($id);
+        $invoices->delete();
+
+        return response()->json([
+            'message' => 'Nota fiscal excluída com sucesso.',
+        ], 200);
     }
 }
