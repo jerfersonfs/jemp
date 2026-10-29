@@ -25,4 +25,6 @@ class Product extends Model
                     ->withPivot('product_condition', 'theoretical_balance')
                     ->withTimestamps();
     }
+        'width_mm',
+    ];
 }
