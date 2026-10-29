@@ -22,4 +22,7 @@ class Customer extends Model
     {
         return $this->hasMany(Invoice::class, 'customer_id', 'customer_id');
     }
+        'default_payment_terms',
+        'customer_email',
+    ];
 }

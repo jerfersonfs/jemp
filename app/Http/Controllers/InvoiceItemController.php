@@ -3,63 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvoiceItem;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreInvoiceItemRequest;
+use App\Http\Requests\UpdateInvoiceItemRequest;
 
 class InvoiceItemController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $items = InvoiceItem::all();
+        return response()->json($items);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        // return view('invoice_items.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreInvoiceItemRequest $request)
     {
-        //
+        InvoiceItem::create($request->validated());
+        return redirect()->route('itens-fatura.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(InvoiceItem $invoiceItem)
     {
-        //
+        // return view('invoice_items.show', compact('invoiceItem'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(InvoiceItem $invoiceItem)
     {
-        //
+        // return view('invoice_items.edit', compact('invoiceItem'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, InvoiceItem $invoiceItem)
+    public function update(UpdateInvoiceItemRequest $request, InvoiceItem $invoiceItem)
     {
-        //
+        $invoiceItem->update($request->validated());
+        return redirect()->route('itens-fatura.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(InvoiceItem $invoiceItem)
     {
-        //
+        $invoiceItem->delete();
+        return redirect()->route('itens-fatura.index');
     }
 }

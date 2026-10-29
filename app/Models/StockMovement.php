@@ -1,4 +1,4 @@
-<?php
+<?php<?php
 
 namespace App\Models;
 
@@ -7,11 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockMovement extends Model
 {
-    use HasFactory;
-
-    protected $primaryKey = null;
-    public $incrementing = false;
-
+    protected $primaryKey = 'sm_id';
     protected $fillable = [
         'origin_warehouse_id',
         'dest_warehouse_id',

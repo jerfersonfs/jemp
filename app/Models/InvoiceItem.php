@@ -7,9 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class InvoiceItem extends Model
 {
-    use HasFactory;
-
-    protected $primaryKey = 'item_id';
     protected $fillable = [
         'invoice_id',
         'product_id',
