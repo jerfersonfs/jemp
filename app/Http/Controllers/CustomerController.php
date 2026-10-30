@@ -12,8 +12,9 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::all();
-        return CustomerResource::collection($customers);
+        $customers = Customer::with('invoices')->get();
+
+        return response()->json($customers);
     }
 
     /**
@@ -37,7 +38,9 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
-        //
+        $customer->load('invoices');
+
+        return response()->json($customer);
     }
 
     /**

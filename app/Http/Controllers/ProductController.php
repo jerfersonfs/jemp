@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function index()
     {
         // Busca todos os produtos na base de dados
-        $products = Product::all();
+        $products = Product::with('inventories.warehouse')->get();
 
         // Retorna para a vista do Frontend (que a equipa vai criar depois)
         // return view('products.index', compact('products'));
@@ -51,7 +51,9 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        // return view('products.show', compact('product'));
+        $product->load('inventories.warehouse');
+
+        return response()->json($product);
     }
 
     /**

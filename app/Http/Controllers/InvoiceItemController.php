@@ -10,8 +10,9 @@ class InvoiceItemController extends Controller
 {
     public function index()
     {
-        $invoiceItems = InvoiceItem::all();
-        return InvoiceItemResource::collection($invoiceItems);
+        $items = InvoiceItem::with(['invoice', 'product'])->get();
+
+        return response()->json($items);
     }
 
     public function create()
@@ -27,7 +28,9 @@ class InvoiceItemController extends Controller
 
     public function show(InvoiceItem $invoiceItem)
     {
-        // return view('invoice_items.show', compact('invoiceItem'));
+        $invoiceItem->load(['invoice', 'product']);
+
+        return response()->json($invoiceItem);
     }
 
     public function edit(InvoiceItem $invoiceItem)

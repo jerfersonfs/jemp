@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id('product_id');
+            $table->string('sku')->unique();
             $table->enum('category', ['PBR', 'Descartável', 'Não Standard']);
             $table->string('product_name', 150)->nullable();
             $table->string('material', 100);
