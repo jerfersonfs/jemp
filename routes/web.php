@@ -1,19 +1,31 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-/*
-Route::get('/', function () {
-    return view('welcome');
-});*/
 
-// Home e páginas existentes do protótipo.
-Route::view('/', 'jemp', ['page' => 'home'])->name('home');
-Route::view('/login', 'login')->name('login');
-Route::view('/produtos', 'products.products', ['page' => 'products'])->name('products.index');
-Route::view('/clientes', 'customers.customers', ['page' => 'customers'])->name('customers.index');
-Route::view('/consulta-nfe', 'invoice_consult.invoice-consult', ['page' => 'invoice-consult'])->name('invoice-consult.index');
-Route::view('/vendas', 'sales.sales', ['page' => 'sales'])->name('sales.index');
-Route::view('/entradas', 'entrance.entrance', ['page' => 'entrance'])->name('entrance.index');
-Route::view('/saidas', 'exits.exits', ['page' => 'exits'])->name('exits.index');
-Route::view('/internas', 'internal.internal', ['page' => 'internal'])->name('internal.index');
-Route::view('/relatorios', 'reports.reports', ['page' => 'reports'])->name('reports.index');
+// Rota inicial
+Route::get('/', function () {
+
+    return redirect('/login');
+});
+
+// Rotas de Autenticação
+Route::get('/login', [\App\Http\Controllers\AuthController::class, 'index'])->name('login');
+Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login'])->name('login.post');
+
+// Rotas Protegidas
+Route::middleware('auth')->group(function () {
+
+    Route::post('/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/dashboard', function () {
+        return 'Bem-vindo ao JEMP! Você está logado.';
+    })->name('dashboard');
+// CRUD de Produtos
+    Route::resource('produtos', \App\Http\Controllers\ProductController::class);
+    Route::resource('armazens', \App\Http\Controllers\WarehouseController::class);
+    Route::resource('inventarios', \App\Http\Controllers\InventoryController::class);
+    Route::resource('faturas', \App\Http\Controllers\InvoiceController::class);
+    Route::resource('itens-fatura', \App\Http\Controllers\InvoiceItemController::class);
+    Route::resource('movimentacoes', \App\Http\Controllers\StockMovementController::class);
+
+});
