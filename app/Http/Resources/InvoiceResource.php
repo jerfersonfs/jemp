@@ -22,10 +22,11 @@ class InvoiceResource extends JsonResource
             'issue_date' => $this->issue_date->format('d/m/Y'),
             'due_date' => $this->due_date->format('d/m/Y'),
             'payment_method' => (string) $this->payment_method,
-            'delivery_driver' => (string) $this->delivery_driver,
+            'delivery_driver' => $this->delivery_driver,
             'payment_terms_days' => (int) $this->payment_terms_days,
             'payment_status' => (string) $this->payment_status,
-            'payment_date' => $this->payment_date ->format('d/m/Y'),
+            'payment_date' => $this->payment_date?->format('d/m/Y'),
+            'amount' => $this->amount,
         ];
     }
 }

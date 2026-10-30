@@ -26,11 +26,19 @@ Route::get('/inventories', [InventoryController::class, 'index'])
 Route::get('/invoice-items', [InvoiceItemController::class, 'index'])
     ->name('invoice-items.index');
 
-Route::get('/invoices', [InvoiceController::class, 'index'])
-    ->name('invoices.index');
-
 Route::get('/stock-movements', [StockMovementController::class, 'index'])
     ->name('stock-movements.index');
 
 Route::get('/warehouses', [WarehouseController::class, 'index'])
     ->name('warehouses.index');
+
+Route::get('/invoices', [InvoiceController::class, 'index'])
+    ->name('invoices.index');
+Route::post('/invoices', [InvoiceController::class, 'store'])
+    ->name('invoices.store');
+Route::get('/invoices/{id}', [InvoiceController::class, 'show'])
+    ->name('invoices.show');
+Route::put('/invoices/{id}', [InvoiceController::class, 'update'])
+    ->name('invoices.update');
+Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])
+    ->name('invoices.destroy');

@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
+use App\Http\Resources\InvoiceResource;
+use App\Models\Invoices;
 
 class InvoiceController extends Controller
 {
     public function index()
     {
-        $invoices = Invoice::with(['customer', 'items.product'])->get();
+        $invoices = Invoices::all();
 
-        return response()->json($invoices);
+        return InvoiceResource::collection($invoices);
     }
 
     public function create()
@@ -22,31 +23,44 @@ class InvoiceController extends Controller
 
     public function store(StoreInvoiceRequest $request)
     {
-        Invoice::create($request->validated());
-        return redirect()->route('faturas.index');
+        $dados = $request->validated();
+
+        $invoice = Invoices::create($dados);
+
+        return response()->json($invoice, 201);
+
     }
 
-    public function show(Invoice $invoice)
+    public function show(string $id)
     {
-        $invoice->load(['customer', 'items.product', 'stockMovements.product']);
+        $invoice = Invoices::findOrFail($id);
 
-        return response()->json($invoice);
+        return new InvoiceResource($invoice);
     }
 
-    public function edit(Invoice $invoice)
+    public function edit(Invoices $invoice)
     {
         // return view('invoices.edit', compact('invoice'));
     }
 
-    public function update(UpdateInvoiceRequest $request, Invoice $invoice)
+    public function update(UpdateInvoiceRequest $request, string $id)
     {
-        $invoice->update($request->validated());
-        return redirect()->route('faturas.index');
+        $invoice = Invoices::findOrFail($id);
+
+        $dados = $request->validated();
+
+        $invoice->update($dados);
+
+        return new InvoiceResource($invoice->fresh());
     }
 
-    public function destroy(Invoice $invoice)
+    public function destroy(Invoices $invoice, string $id)
     {
-        $invoice->delete();
-        return redirect()->route('faturas.index');
+        $invoices = Invoices::findOrFail($id);
+        $invoices->delete();
+
+        return response()->json([
+            'message' => 'Nota fiscal excluída com sucesso.',
+        ], 200);
     }
 }
