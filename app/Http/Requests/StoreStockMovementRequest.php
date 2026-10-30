@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreStockMovementRequest extends FormRequest
 {
@@ -33,7 +34,12 @@ class StoreStockMovementRequest extends FormRequest
             'movement_date'       => 'required|date',
             'is_fiscal'           => 'required|boolean',
             'movement_justification' => 'nullable|string',
-            'invoice_id'          => 'nullable|integer'
+            'invoice_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('invoices', 'invoice_id'),
+                Rule::requiredIf(fn (): bool => $this->boolean('is_fiscal')),
+            ],
         ];
     }
 }

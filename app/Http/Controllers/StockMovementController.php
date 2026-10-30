@@ -85,6 +85,13 @@ class StockMovementController extends Controller
 
             // Agora sim, grava o recibo da movimentação
             $movement = StockMovement::create($data);
+            $movement->load([
+                'product',
+                'originWarehouse',
+                'destinationWarehouse',
+                'user',
+                'invoice',
+            ]);
 
             return response()->json([
                 'message' => 'Movimentação registrada e saldo atualizado com sucesso.',
