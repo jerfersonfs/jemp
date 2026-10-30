@@ -15,35 +15,22 @@ class ProductController extends Controller
      */
     public function index()
     {
-        // Busca todos os produtos na base de dados
         $products = Product::with('inventories.warehouse')->get();
 
-        // Retorna para a vista do Frontend (que a equipa vai criar depois)
-        // return view('products.index', compact('products'));
-
-        // Por agora, vamos retornar como JSON para testarmos se funciona!
         return ProductResource::collection($products);
     }
 
     /**
-     * Mostra o formulário para criar um novo produto
-     */
-    public function create()
-    {
-        return view('products.create');
-    }
-
-    /**
      * Guarda o novo produto na base de dados (Create)
-     * O 'StoreProductRequest' faz a validação de segurança antes de chegar aqui!
      */
     public function store(StoreProductRequest $request)
     {
-        // Grava no MariaDB de forma segura
-        Product::create($request->validated());
+        $product = Product::create($request->validated());
 
-        // Em vez de JSON bruto, redireciona o utilizador para a página principal de produtos!
-        return redirect()->route('produtos.index');
+        return response()->json([
+            'message' => 'Produto criado com sucesso.',
+            'data' => new ProductResource($product)
+        ], 201);
     }
 
     /**
@@ -53,15 +40,7 @@ class ProductController extends Controller
     {
         $product->load('inventories.warehouse');
 
-        return response()->json($product);
-    }
-
-    /**
-     * Mostra o formulário para editar um produto existente
-     */
-    public function edit(Product $product)
-    {
-        // return view('products.edit', compact('product'));
+        return new ProductResource($product);
     }
 
     /**
@@ -70,7 +49,11 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product)
     {
         $product->update($request->validated());
-        return redirect()->route('produtos.index');
+
+        return response()->json([
+            'message' => 'Produto atualizado com sucesso.',
+            'data' => new ProductResource($product)
+        ], 200);
     }
 
     /**
@@ -79,7 +62,9 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
-        return redirect()->route('produtos.index');
 
+        return response()->json([
+            'message' => 'Produto excluído com sucesso.'
+        ], 200);
     }
 }

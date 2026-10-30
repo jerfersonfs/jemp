@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 // Rota inicial
 Route::get('/', function () {
-
     return redirect('/login');
 });
 
@@ -20,12 +19,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return 'Bem-vindo ao JEMP! Você está logado.';
     })->name('dashboard');
-// CRUD de Produtos
-    Route::resource('produtos', \App\Http\Controllers\ProductController::class);
-    Route::resource('armazens', \App\Http\Controllers\WarehouseController::class);
-    Route::resource('inventarios', \App\Http\Controllers\InventoryController::class);
-    Route::resource('faturas', \App\Http\Controllers\InvoiceController::class);
-    Route::resource('itens-fatura', \App\Http\Controllers\InvoiceItemController::class);
-    Route::resource('movimentacoes', \App\Http\Controllers\StockMovementController::class);
 
+    // CRUDs removidos! Uma API não deve servir dados através do web.php.
 });

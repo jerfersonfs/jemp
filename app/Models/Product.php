@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
     protected $primaryKey = 'product_id';
+
     protected $fillable = [
         'sku',
         'category',
@@ -18,14 +20,12 @@ class Product extends Model
         'width_mm'
     ];
 
-    public function warehouses()
+    public function warehouses(): BelongsToMany
     {
         return $this->belongsToMany(Warehouse::class, 'inventory', 'product_id', 'warehouse_id')
-                    ->withPivot('product_condition', 'theoretical_balance')
-                    ->withTimestamps();
+        ->withPivot('product_condition', 'theoretical_balance')
+        ->withTimestamps();
     }
-        'width_mm',
-    ];
 
     public function inventories(): HasMany
     {

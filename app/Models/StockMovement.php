@@ -2,26 +2,35 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovement extends Model
 {
     protected $primaryKey = 'sm_id';
+
     protected $fillable = [
         'origin_warehouse_id',
         'dest_warehouse_id',
-        'product_id',
-        'product_condition',
-        'user_id',
         'invoice_id',
-        'quantity',
+        'product_id',
+        'user_id',
+        'product_condition',
         'movement_type',
-        'movement_justification',
+        'quantity',
         'movement_date',
+        'movement_justification',
         'is_fiscal'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'movement_date' => 'datetime',
+            'is_fiscal' => 'boolean',
+            'quantity' => 'integer',
+        ];
+    }
 
     public function product(): BelongsTo
     {

@@ -8,6 +8,9 @@ use App\Http\Requests\UpdateInvoiceItemRequest;
 
 class InvoiceItemController extends Controller
 {
+    /**
+     * Lista todos os itens de fatura
+     */
     public function index()
     {
         $items = InvoiceItem::with(['invoice', 'product'])->get();
@@ -15,17 +18,25 @@ class InvoiceItemController extends Controller
         return response()->json($items);
     }
 
-    public function create()
-    {
-        // return view('invoice_items.create');
-    }
-
+    /**
+     * Guarda um novo item de fatura
+     */
     public function store(StoreInvoiceItemRequest $request)
     {
-        InvoiceItem::create($request->validated());
-        return redirect()->route('itens-fatura.index');
+        $invoiceItem = InvoiceItem::create($request->validated());
+
+        // Carrega os relacionamentos para devolver o objeto completo ao frontend
+        $invoiceItem->load(['invoice', 'product']);
+
+        return response()->json([
+            'message' => 'Item de nota fiscal criado com sucesso.',
+            'data' => $invoiceItem
+        ], 201);
     }
 
+    /**
+     * Mostra os detalhes de um item específico
+     */
     public function show(InvoiceItem $invoiceItem)
     {
         $invoiceItem->load(['invoice', 'product']);
@@ -33,20 +44,30 @@ class InvoiceItemController extends Controller
         return response()->json($invoiceItem);
     }
 
-    public function edit(InvoiceItem $invoiceItem)
-    {
-        // return view('invoice_items.edit', compact('invoiceItem'));
-    }
-
+    /**
+     * Atualiza um item de fatura existente
+     */
     public function update(UpdateInvoiceItemRequest $request, InvoiceItem $invoiceItem)
     {
         $invoiceItem->update($request->validated());
-        return redirect()->route('itens-fatura.index');
+
+        $invoiceItem->load(['invoice', 'product']);
+
+        return response()->json([
+            'message' => 'Item de nota fiscal atualizado com sucesso.',
+            'data' => $invoiceItem
+        ], 200);
     }
 
+    /**
+     * Remove um item de fatura
+     */
     public function destroy(InvoiceItem $invoiceItem)
     {
         $invoiceItem->delete();
-        return redirect()->route('itens-fatura.index');
+
+        return response()->json([
+            'message' => 'Item de nota fiscal excluído com sucesso.'
+        ], 200);
     }
 }

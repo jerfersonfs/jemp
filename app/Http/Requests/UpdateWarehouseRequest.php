@@ -19,8 +19,7 @@ class UpdateWarehouseRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                // O Laravel tira o "s" de "armazens" na rota, gerando o parâmetro "armazen"
-                Rule::unique('warehouses', 'warehouse_name')->ignore($this->route('armazen'), 'warehouse_id')
+                Rule::unique('warehouses', 'warehouse_name')->ignore($this->route('warehouse'), 'warehouse_id')
             ],
             'warehouse_description' => ['required', 'string'],
         ];

@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Invoices extends Model
+class Invoice extends Model
 {
+    use HasFactory;
+
+    // Garante que o Laravel não tenta procurar 'created_at' e 'updated_at'
     public $timestamps = false;
 
     protected $primaryKey = 'invoice_id';
@@ -35,5 +41,20 @@ class Invoices extends Model
             'payment_terms_days' => 'integer',
             'amount' => 'decimal:2',
         ];
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(InvoiceItem::class, 'invoice_id', 'invoice_id');
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'invoice_id', 'invoice_id');
     }
 }

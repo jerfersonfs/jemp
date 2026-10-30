@@ -14,31 +14,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/products', [ProductController::class, 'index'])
-    ->name('products.index');
-
-Route::get('/customers', [CustomerController::class, 'index'])
-    ->name('customers.index');
-
-Route::get('/inventories', [InventoryController::class, 'index'])
-    ->name('inventories.index');
-
-Route::get('/invoice-items', [InvoiceItemController::class, 'index'])
-    ->name('invoice-items.index');
-
-Route::get('/stock-movements', [StockMovementController::class, 'index'])
-    ->name('stock-movements.index');
-
-Route::get('/warehouses', [WarehouseController::class, 'index'])
-    ->name('warehouses.index');
-
-Route::get('/invoices', [InvoiceController::class, 'index'])
-    ->name('invoices.index');
-Route::post('/invoices', [InvoiceController::class, 'store'])
-    ->name('invoices.store');
-Route::get('/invoices/{id}', [InvoiceController::class, 'show'])
-    ->name('invoices.show');
-Route::put('/invoices/{id}', [InvoiceController::class, 'update'])
-    ->name('invoices.update');
-Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])
-    ->name('invoices.destroy');
+// Rotas da API RESTful (Gera automaticamente GET, POST, PUT/PATCH e DELETE)
+Route::apiResource('products', ProductController::class);
+Route::apiResource('customers', CustomerController::class);
+Route::apiResource('inventories', InventoryController::class);
+Route::apiResource('invoice-items', InvoiceItemController::class);
+Route::apiResource('stock-movements', StockMovementController::class);
+Route::apiResource('warehouses', WarehouseController::class);
+Route::apiResource('invoices', InvoiceController::class);

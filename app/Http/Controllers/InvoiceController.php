@@ -9,6 +9,9 @@ use App\Models\Invoices;
 
 class InvoiceController extends Controller
 {
+    /**
+     * Lista todas as notas fiscais
+     */
     public function index()
     {
         $invoices = Invoices::all();
@@ -16,11 +19,9 @@ class InvoiceController extends Controller
         return InvoiceResource::collection($invoices);
     }
 
-    public function create()
-    {
-        // return view('invoices.create');
-    }
-
+    /**
+     * Guarda uma nova nota fiscal
+     */
     public function store(StoreInvoiceRequest $request)
     {
         $dados = $request->validated();
@@ -28,36 +29,35 @@ class InvoiceController extends Controller
         $invoice = Invoices::create($dados);
 
         return response()->json($invoice, 201);
-
     }
 
-    public function show(string $id)
+    /**
+     * Mostra os detalhes de uma nota fiscal específica
+     */
+    public function show(Invoices $invoice)
     {
-        $invoice = Invoices::findOrFail($id);
-
         return new InvoiceResource($invoice);
     }
 
-    public function edit(Invoices $invoice)
+    /**
+     * Atualiza uma nota fiscal existente
+     */
+    public function update(UpdateInvoiceRequest $request, Invoices $invoice)
     {
-        // return view('invoices.edit', compact('invoice'));
-    }
-
-    public function update(UpdateInvoiceRequest $request, string $id)
-    {
-        $invoice = Invoices::findOrFail($id);
-
         $dados = $request->validated();
 
         $invoice->update($dados);
 
+        // O fresh() garante que devolvemos os dados mais atualizados diretamente do banco
         return new InvoiceResource($invoice->fresh());
     }
 
-    public function destroy(Invoices $invoice, string $id)
+    /**
+     * Remove uma nota fiscal
+     */
+    public function destroy(Invoices $invoice)
     {
-        $invoices = Invoices::findOrFail($id);
-        $invoices->delete();
+        $invoice->delete();
 
         return response()->json([
             'message' => 'Nota fiscal excluída com sucesso.',

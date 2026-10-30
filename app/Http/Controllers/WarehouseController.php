@@ -8,6 +8,9 @@ use App\Http\Requests\UpdateWarehouseRequest;
 
 class WarehouseController extends Controller
 {
+    /**
+     * Lista todos os armazéns
+     */
     public function index()
     {
         $warehouses = Warehouse::with('inventories.product')->get();
@@ -15,17 +18,22 @@ class WarehouseController extends Controller
         return response()->json($warehouses);
     }
 
-    public function create()
-    {
-        // return view('warehouses.create');
-    }
-
+    /**
+     * Guarda um novo armazém
+     */
     public function store(StoreWarehouseRequest $request)
     {
-        Warehouse::create($request->validated());
-        return redirect()->route('armazens.index');
+        $warehouse = Warehouse::create($request->validated());
+
+        return response()->json([
+            'message' => 'Armazém criado com sucesso.',
+            'data' => $warehouse
+        ], 201);
     }
 
+    /**
+     * Mostra os detalhes de um armazém específico
+     */
     public function show(Warehouse $warehouse)
     {
         $warehouse->load('inventories.product');
@@ -33,20 +41,28 @@ class WarehouseController extends Controller
         return response()->json($warehouse);
     }
 
-    public function edit(Warehouse $warehouse)
-    {
-        // return view('warehouses.edit', compact('warehouse'));
-    }
-
+    /**
+     * Atualiza um armazém existente
+     */
     public function update(UpdateWarehouseRequest $request, Warehouse $warehouse)
     {
         $warehouse->update($request->validated());
-        return redirect()->route('armazens.index');
+
+        return response()->json([
+            'message' => 'Armazém atualizado com sucesso.',
+            'data' => $warehouse
+        ], 200);
     }
 
+    /**
+     * Remove um armazém
+     */
     public function destroy(Warehouse $warehouse)
     {
         $warehouse->delete();
-        return redirect()->route('armazens.index');
+
+        return response()->json([
+            'message' => 'Armazém excluído com sucesso.'
+        ], 200);
     }
 }

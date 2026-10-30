@@ -14,15 +14,13 @@ class CustomerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return[
+        return [
             'customer_id' => (int) $this->customer_id,
-            'customer_name' => ucwords(
-                strtolower($this->customer_name)
-            ),
-            'customer_document' => $this->customer_document,
-            'customer_contact' => $this->customer_contact  ?? 'Não informado',
+            'customer_name' => ucwords(strtolower($this->customer_name)),
+            'customer_document' => (string) $this->customer_document,
+            'customer_contact' => $this->customer_contact ?? 'Não informado',
             'customer_email' => $this->customer_email ?? 'Não informado',
-            'default_payment_terms' => $this->default_payment_terms,
+            'default_payment_terms' => (int) $this->default_payment_terms,
         ];
     }
 }
