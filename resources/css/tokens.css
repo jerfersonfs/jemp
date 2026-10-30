@@ -1,0 +1,37 @@
+:root {
+    /* Cores */
+    --color-primary: #0A9680;
+    --color-secondary: #1B4041;
+    --color-background: #F3F7F8;
+    --color-surface: #EEFFFD;
+    --color-heading: #294E4E;
+    --color-subheading: #8CB7B8;
+    --color-border: #000000;
+    --color-success: #2E7D32;
+    --color-warning: #E17C00;
+    --color-danger: #CC2929;
+    --color-caption: #365352;
+    --color-info:#2563EB;
+
+    /* Tipografia */
+    --font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+    --font-size-display: clamp(2.25rem, 4vw, 3rem);
+    --font-size-h1: clamp(2rem, 3vw, 2.5rem);
+    --font-size-h2: clamp(1.5rem, 2.25vw, 2rem);
+    --font-size-h3: 1.25rem;
+    --font-size-body: 1rem;
+    --font-size-caption: 0.875rem;
+    --font-size-label: 0.9375rem;
+    --font-size-button: 0.9375rem;
+    --font-size-section: 1.125rem;
+
+    /* Espaçamento */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+    --spacing-3xl: 64px;
+}

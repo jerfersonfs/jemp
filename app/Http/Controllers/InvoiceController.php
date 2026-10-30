@@ -11,7 +11,7 @@ class InvoiceController extends Controller
     public function index()
     {
         $invoices = Invoice::all();
-        return response()->json($invoices);
+        InvoiceResource::collections($invoices);
     }
 
     public function create()

@@ -10,8 +10,8 @@ class InvoiceItemController extends Controller
 {
     public function index()
     {
-        $items = InvoiceItem::all();
-        return response()->json($items);
+        $invoiceItems = InvoiceItem::all();
+        return InvoiceItemResource::collection($invoiceItems);
     }
 
     public function create()

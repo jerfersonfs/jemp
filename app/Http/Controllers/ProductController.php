@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
+use App\Http\Resources\ProductResource;
 
 class ProductController extends Controller
 {
@@ -21,7 +22,7 @@ class ProductController extends Controller
         // return view('products.index', compact('products'));
 
         // Por agora, vamos retornar como JSON para testarmos se funciona!
-        return response()->json($products);
+        return ProductResource::collection($products);
     }
 
     /**
