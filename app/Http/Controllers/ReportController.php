@@ -49,6 +49,10 @@ class ReportController extends Controller
             ->orderByDesc('occurred_at')
             ->orderByDesc('record_id')
             ->get();
+        $productSales = DB::table('vw_vendas_por_produto_90_dias')
+            ->orderByDesc('units_sold_last_90_days')
+            ->orderBy('product_name')
+            ->get();
 
         $overviewRows = $overviewInventory
             ->map(fn (object $row): array => $this->inventoryRow($row))
@@ -65,6 +69,26 @@ class ReportController extends Controller
         $overdueInvoiceRows = $overdueInvoices
             ->map(fn (object $invoice): array => $this->invoiceRow($invoice))
             ->all();
+        $productSalesRows = $productSales->map(function (object $row): array {
+            $unitsSold = (int) $row->units_sold_last_90_days;
+            $revenue = (float) $row->revenue_last_90_days;
+            $currentStock = (int) $row->current_stock;
+
+            return [
+                'product_id' => $row->product_id,
+                'code' => $row->sku,
+                'product' => $row->product_name,
+                'category' => $row->category,
+                'units_sold' => number_format($unitsSold, 0, ',', '.').' un.',
+                'raw_units_sold' => $unitsSold,
+                'revenue' => 'R$ '.number_format($revenue, 2, ',', '.'),
+                'raw_revenue' => $revenue,
+                'current_stock' => number_format($currentStock, 0, ',', '.').' un.',
+                'raw_current_stock' => $currentStock,
+                'last_sale' => $this->formatDate($row->last_sale_date, 'd/m/Y'),
+                'preset' => $unitsSold > 0 ? 'sold' : 'unsold',
+            ];
+        })->all();
         $mapMovement = function (object $movement) use ($movementDocuments): array {
             $row = $this->movementRow($movement);
             $row['document'] = $movementDocuments->get($movement->sm_id)?->associated_document ?? '—';
@@ -90,7 +114,13 @@ class ReportController extends Controller
         $movementCollection = collect($movementRows);
         $auditCollection = collect($auditRows);
         $inventoryCollection = collect($inventoryRows);
+        $productSalesCollection = collect($productSalesRows);
         $totalInvoiceValue = $invoiceCollection->sum('raw_total');
+        $soldProducts = $productSalesCollection->where('preset', 'sold')->values();
+        $unsoldProducts = $productSalesCollection->where('preset', 'unsold')->values();
+        $totalUnitsSold = $productSalesCollection->sum('raw_units_sold');
+        $totalSalesRevenue = $productSalesCollection->sum('raw_revenue');
+        $totalProductStock = $productSalesCollection->sum('raw_current_stock');
         $lowStockProductCount = collect($lowInventoryRows)->pluck('product_id')->unique()->count();
         $entryQuantity = $movementCollection->where('preset', 'entry')->sum('raw_quantity');
         $exitQuantity = $movementCollection->where('preset', 'exit')->sum('raw_quantity');
@@ -122,7 +152,7 @@ class ReportController extends Controller
                     ['key' => 'detailTarget', 'label' => 'Ações', 'type' => 'detail', 'target' => 'report-record-details', 'detailLabel' => 'Ver'],
                 ],
                 'statusVariants' => ['Normal' => 'success', 'Estoque baixo' => 'warning', 'Zerado' => 'danger'],
-                                'metrics' => [
+                'metrics' => [
                     ['label' => 'Produtos cadastrados', 'value' => number_format((int) $summary->product_count, 0, ',', '.'), 'source' => 'stock'],
                     ['label' => 'Unidades em estoque', 'value' => number_format((int) $summary->total_stock, 0, ',', '.'), 'source' => 'stock'],
                     ['label' => 'Produtos com estoque baixo', 'value' => $lowStockProductCount, 'source' => 'low'],
@@ -164,6 +194,39 @@ class ReportController extends Controller
                     ['label' => 'A vencer', 'value' => $invoiceCollection->where('preset', 'due')->count(), 'source' => 'invoice-due'],
                     ['label' => 'Vencidas', 'value' => count($overdueInvoiceRows), 'source' => 'invoice-overdue'],
                     ['label' => 'Pagas', 'value' => $invoiceCollection->where('preset', 'paid')->count(), 'source' => 'invoice-paid'],
+                ],
+            ],
+            'product_sales' => [
+                'label' => 'Vendas por produto',
+                'heading' => 'Desempenho de vendas por produto',
+                'description' => 'Vendas dos últimos 90 dias, saldo total entre barracões e condições e data da venda mais recente.',
+                'rows' => $productSalesRows,
+                'presets' => [
+                    ['value' => 'all', 'label' => 'Todos os produtos'],
+                    ['value' => 'sold', 'label' => 'Com vendas no período'],
+                    ['value' => 'unsold', 'label' => 'Sem vendas no período'],
+                ],
+                'columns' => [
+                    ['key' => 'code', 'label' => 'SKU'],
+                    ['key' => 'product', 'label' => 'Produto'],
+                    ['key' => 'category', 'label' => 'Categoria'],
+                    ['key' => 'units_sold', 'label' => 'Unidades vendidas'],
+                    ['key' => 'revenue', 'label' => 'Faturamento bruto'],
+                    ['key' => 'current_stock', 'label' => 'Saldo atual'],
+                    ['key' => 'last_sale', 'label' => 'Última venda'],
+                    ['key' => 'detailTarget', 'label' => 'Ações', 'type' => 'detail', 'target' => 'report-record-details', 'detailLabel' => 'Ver'],
+                ],
+                'statusVariants' => [],
+                'metricRows' => [
+                    'sold' => $soldProducts->all(),
+                    'unsold' => $unsoldProducts->all(),
+                ],
+                'metrics' => [
+                    ['label' => 'Produtos com vendas', 'value' => $soldProducts->count(), 'source' => 'product-sales-sold'],
+                    ['label' => 'Produtos sem vendas', 'value' => $unsoldProducts->count(), 'source' => 'product-sales-unsold'],
+                    ['label' => 'Unidades vendidas', 'value' => number_format($totalUnitsSold, 0, ',', '.'), 'source' => 'product-sales-sold'],
+                    ['label' => 'Faturamento bruto', 'value' => 'R$ '.number_format($totalSalesRevenue, 2, ',', '.'), 'source' => 'product-sales-sold'],
+                    ['label' => 'Saldo total atual', 'value' => number_format($totalProductStock, 0, ',', '.'), 'source' => 'product-sales-all'],
                 ],
             ],
             'stock' => [

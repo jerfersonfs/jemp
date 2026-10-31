@@ -201,6 +201,12 @@ if (reportPage) {
             const rows = section.metricRows?.[preset] || section.rows.filter((row) => row.preset === preset);
             return { section, rows };
         }
+        if (source.startsWith('product-sales-')) {
+            const preset = source.replace('product-sales-', '');
+            const section = config.product_sales;
+            const rows = section.metricRows?.[preset] || (preset === 'all' ? section.rows : section.rows.filter((row) => row.preset === preset));
+            return { section, rows };
+        }
         const sectionKey = activeSectionKey === 'overview' ? 'stock' : activeSectionKey;
         const section = config[sectionKey];
         if (!section) return { section: config.overview, rows: [] };
