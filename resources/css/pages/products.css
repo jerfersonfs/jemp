@@ -26,7 +26,16 @@
 .products-modal--details .jemp-details-dialog { background: var(--color-surface); }
 .products-modal--details .jemp-details-dialog__item { padding: 12px 16px; }
 .products-inventory { margin-top: 24px; }
-.products-inventory h3 { margin: 0 0 12px; color: var(--color-primary); font-size: 22px; font-weight: 600; }
+.products-inventory__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.products-inventory__header h3 { margin: 0; color: var(--color-primary); font-size: 22px; font-weight: 600; }
+.products-stock-add { min-height: 38px; padding: 8px 14px; border: 0; border-radius: 8px; background: var(--color-primary); color: white; font: inherit; font-weight: 600; cursor: pointer; }
+.products-stock-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; padding: 16px; border: 1px solid #dce6e6; border-radius: 10px; background: #f5fffd; }
+.products-stock-form[hidden] { display: none; }
+.products-stock-form__product, .products-stock-form__actions { grid-column: 1 / -1; }
+.products-stock-form__product { margin: 0; color: var(--color-caption); }
+.products-stock-form label { display: grid; gap: 6px; color: var(--color-secondary); font-size: 14px; }
+.products-stock-form :is(input, select, textarea) { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid #cddfdd; border-radius: 6px; padding: 8px 10px; background: white; color: var(--color-secondary); font: inherit; }
+.products-stock-form__actions { display: flex; justify-content: flex-end; gap: 8px; }
 .products-modal--details .jemp-dialog__title { font-size: 26px; }
 .products-page .products-modal--details .jemp-table { min-width: 580px; width: 100%; }
 .products-modal--details .jemp-table-region { border: 0; background: transparent; box-shadow: none; }

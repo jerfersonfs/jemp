@@ -3,6 +3,8 @@
     'createTitle',
     'description',
     'fields' => [],
+    'action' => '#',
+    'method' => 'POST',
 ])
 
 <div class="movement-dialog-layer" data-movement-layer="form" hidden>
@@ -12,8 +14,8 @@
         :description="$description"
         :fields="$fields"
         layout="grid"
-        action="#"
-        method="GET"
+        :action="$action"
+        :method="$method"
         size="large"
         :submit-label="'Cadastrar ' . $entity"
         data-movement-dialog="form"

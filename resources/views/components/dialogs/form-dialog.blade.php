@@ -38,7 +38,7 @@
                 $fieldId = $field['id'] ?? 'field-' . str_replace(['[', ']'], '', $fieldName);
                 $fieldValue = old($fieldName, $field['value'] ?? '');
             @endphp
-            <div class="jemp-form-dialog__field">
+            <div class="jemp-form-dialog__field" @if ($field['createOnly'] ?? false) data-form-create-only @endif>
                 <label for="{{ $fieldId }}">{{ $field['label'] }}</label>
                 @if ($fieldType === 'textarea')
                     <textarea id="{{ $fieldId }}" name="{{ $fieldName }}" placeholder="{{ $field['placeholder'] ?? '' }}" @required($field['required'] ?? false) @disabled($field['disabled'] ?? false) aria-invalid="@error($fieldName)true @else false @enderror">{{ $fieldValue }}</textarea>
@@ -48,6 +48,23 @@
                             <option value="{{ $optionValue }}" @selected((string) $fieldValue === (string) $optionValue)>{{ $optionLabel }}</option>
                         @endforeach
                     </select>
+                @elseif (isset($field['prefix']))
+                    <div class="jemp-form-dialog__input-wrap">
+                        <span class="jemp-form-dialog__input-prefix">{{ $field['prefix'] }}</span>
+                        <input
+                            id="{{ $fieldId }}"
+                            name="{{ $fieldName }}"
+                            type="{{ $fieldType }}"
+                            value="{{ $fieldValue }}"
+                            placeholder="{{ $field['placeholder'] ?? '' }}"
+                            autocomplete="{{ $field['autocomplete'] ?? 'off' }}"
+                            @if (isset($field['min'])) min="{{ $field['min'] }}" @endif
+                            @if (isset($field['step'])) step="{{ $field['step'] }}" @endif
+                            @readonly($field['readonly'] ?? false)
+                            @required($field['required'] ?? false)
+                            @disabled($field['disabled'] ?? false)
+                            aria-invalid="@error($fieldName)true @else false @enderror">
+                    </div>
                 @else
                     <input
                         id="{{ $fieldId }}"

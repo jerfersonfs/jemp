@@ -133,7 +133,7 @@ if (reportPage) {
         renderTable(panel.querySelector('[data-report-table]'), section.columns, visibleRows, section.statusVariants);
         const start = rows.length ? (currentPage - 1) * pageSize + 1 : 0;
         const end = Math.min(currentPage * pageSize, rows.length);
-        panel.querySelector('[data-report-summary]').textContent = `Mostrando ${start}–${end} de ${rows.length} registros demonstrativos`;
+        panel.querySelector('[data-report-summary]').textContent = `Mostrando ${start}–${end} de ${rows.length} registros`;
         panel.querySelector('[data-report-page]').textContent = `${currentPage} / ${pageCount}`;
         panel.querySelector('[data-report-prev]').disabled = currentPage <= 1;
         panel.querySelector('[data-report-next]').disabled = currentPage >= pageCount;
@@ -182,29 +182,37 @@ if (reportPage) {
 
     function metricComposition(source) {
         if (source.startsWith('movement-')) {
-            const rows = config.movements.rows;
             const preset = source.replace('movement-', '');
-            return { section: config.movements, rows: rows.filter((row) => row.preset === preset) };
+            const section = config.movements;
+            const rows = section.metricRows?.[preset] || (preset === 'all' ? section.rows : section.rows.filter((row) => row.preset === preset));
+            return { section, rows };
+        }
+        if (source.startsWith('audit-')) {
+            const preset = source.replace('audit-', '');
+            const rows = config.audit.rows;
+            return { section: config.audit, rows: preset === 'all' ? rows : rows.filter((row) => row.preset === preset) };
+        }
+        if (source === 'invoices') {
+            return { section: config.invoices, rows: config.invoices.rows };
         }
         if (source.startsWith('invoice-')) {
-            const rows = config.invoices.rows;
-            const operation = source.replace('invoice-', '') === 'entry' ? 'Entrada' : 'Saída';
-            return { section: config.invoices, rows: rows.filter((row) => row.operation === operation) };
+            const preset = source.replace('invoice-', '');
+            const section = config.invoices;
+            const rows = section.metricRows?.[preset] || section.rows.filter((row) => row.preset === preset);
+            return { section, rows };
+        }
+        if (source.startsWith('product-sales-')) {
+            const preset = source.replace('product-sales-', '');
+            const section = config.product_sales;
+            const rows = section.metricRows?.[preset] || (preset === 'all' ? section.rows : section.rows.filter((row) => row.preset === preset));
+            return { section, rows };
         }
         const sectionKey = activeSectionKey === 'overview' ? 'stock' : activeSectionKey;
         const section = config[sectionKey];
         if (!section) return { section: config.overview, rows: [] };
         if (['low', 'zero', 'normal'].includes(source)) {
-            return { section, rows: section.rows.filter((row) => row.preset === source) };
-        }
-        if (['pending', 'authorized', 'canceled'].includes(source)) {
-            return { section: config.invoices, rows: config.invoices.rows.filter((row) => row.preset === source) };
-        }
-        if (['entry', 'exit', 'internal'].includes(source) && activeSectionKey === 'movements') {
-            return { section: config.movements, rows: config.movements.rows.filter((row) => row.preset === source) };
-        }
-        if (['update', 'created', 'read'].includes(source)) {
-            return { section: config.audit, rows: config.audit.rows.filter((row) => row.preset === source) };
+            const rows = section.metricRows?.[source] || section.rows.filter((row) => row.preset === source);
+            return { section, rows };
         }
         return { section, rows: section.rows };
     }
@@ -218,7 +226,7 @@ if (reportPage) {
         const title = dialog?.querySelector('.jemp-dialog__title');
         const description = dialog?.querySelector('.jemp-dialog__description');
         if (title) title.textContent = metric.label;
-        if (description) description.textContent = `${metric.value} · ${rows.length} registro(s) demonstrativo(s) relacionados.`;
+        if (description) description.textContent = `${metric.value} · ${rows.length} registro(s) relacionados.`;
         renderTable(dialog?.querySelector('.jemp-table-region'), section.columns, rows.slice(0, 10), section.statusVariants);
         openDialog(layer, card.querySelector('[data-dialog-open]') || card);
     }
