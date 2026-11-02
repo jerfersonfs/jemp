@@ -26,6 +26,16 @@ class StockMovement extends Model
         return $this->belongsTo(Warehouse::class, 'dest_warehouse_id', 'warehouse_id');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
+    }
+
     protected function casts(): array
     {
         return [

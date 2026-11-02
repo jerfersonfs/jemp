@@ -1,3 +1,7 @@
+@php
+    $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
+@endphp
+
 <x-layouts.app title="Clientes · JEMP" page="customers">
     <div class="page-head customers-page__head">
         <div><h1>Clientes</h1><p>Gerencie e consulte os clientes cadastrados no sistema.</p></div>

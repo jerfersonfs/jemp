@@ -8,6 +8,46 @@ use Illuminate\View\View;
 
 class ReportController extends Controller
 {
+    public function upcomingInvoices(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $days = max(0, min(365, (int) $request->query('days', 7)));
+        $invoices = \App\Models\Invoice::with('customer')
+            ->where('payment_status', 'A vencer')
+            ->whereBetween('due_date', [now()->toDateString(), now()->addDays($days)->toDateString()])
+            ->orderBy('due_date')->get();
+
+        return response()->json(['data' => $invoices]);
+    }
+
+    public function movementExtract(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $filters = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'product_id' => ['nullable', 'integer', 'exists:products,product_id'],
+        ]);
+        $query = \App\Models\StockMovement::with(['product', 'originWarehouse', 'destinationWarehouse', 'user']);
+        if (!empty($filters['start_date'])) $query->whereDate('movement_date', '>=', $filters['start_date']);
+        if (!empty($filters['end_date'])) $query->whereDate('movement_date', '<=', $filters['end_date']);
+        if (!empty($filters['product_id'])) $query->where('product_id', $filters['product_id']);
+
+        return response()->json(['data' => $query->latest('movement_date')->get()]);
+    }
+
+    public function inventoryValuation(): \Illuminate\Http\JsonResponse
+    {
+        $items = \App\Models\Inventory::with('product')->get()
+            ->filter(fn ($item) => $item->product !== null)
+            ->map(fn ($item) => [
+                'product_name' => $item->product->product_name,
+                'warehouse_id' => $item->warehouse_id,
+                'quantity' => (int) $item->theoretical_balance,
+                'total_value' => (int) $item->theoretical_balance * (float) $item->product->cost_price,
+            ])->values();
+
+        return response()->json(['total_global' => $items->sum('total_value'), 'items' => $items]);
+    }
+
     public function index(): View
     {
         $summary = DB::table('vw_visao_geral')->first() ?? (object) [

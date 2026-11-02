@@ -1,5 +1,3 @@
-import { showFeedback } from '../components/feedback.js';
-
 document.querySelectorAll('[data-customers-list]').forEach((list) => {
     const queryInput = list.querySelector('[data-customer-search]');
     const paymentFilter = list.querySelector('[data-customer-payment]');
@@ -209,20 +207,8 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
             pendingDeleteTrigger = null;
             return;
         }
-<<<<<<< HEAD
-        if (event.target.closest('[data-movement-confirm]') && pendingDeleteRow) {
-            const deletedName = pendingDeleteRow.cells[0].textContent.trim();
-            pendingDeleteRow.remove();
-            rows.splice(rows.indexOf(pendingDeleteRow), 1);
-            pendingDeleteRow = null;
-            filterRows();
-            closeLayer(confirmLayer, list.querySelector('[data-customer-open]'));
-            pendingDeleteTrigger = null;
-            showFeedback(`Cliente ${deletedName} removido da demonstração. A alteração não foi salva no banco.`);
-=======
         if (event.target.closest('[data-movement-confirm]')) {
             deleteForm?.requestSubmit();
->>>>>>> feature/ft-database-views
         }
     });
     document.addEventListener('keydown', (event) => {
@@ -237,32 +223,6 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
             pendingDeleteTrigger = null;
         }
     });
-<<<<<<< HEAD
-    form?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        if (!form.reportValidity()) return;
-        const data = new FormData(form);
-        const values = ['name', 'document', 'city', 'phone', 'email', 'status'].map((key) => String(data.get(key) ?? ''));
-        const wasEditing = Boolean(editingRow);
-        let row = editingRow;
-        if (!row) {
-            row = document.createElement('tr');
-            row.dataset.customerRow = '';
-            row.innerHTML = '<td></td><td></td><td></td><td></td><td></td><td></td><td></td>';
-            list.querySelector('[data-customer-rows]').prepend(row);
-            rows.unshift(row);
-        }
-        values.slice(0, 5).forEach((value, index) => { row.cells[index].textContent = value; });
-        const statusCell = row.cells[5];
-        statusCell.innerHTML = `<span class="jemp-status-badge jemp-status-badge--${values[5] === 'Ativo' ? 'success' : 'danger'}"><span class="jemp-status-badge__dot"></span>${values[5]}</span>`;
-        row.cells[6].innerHTML = '<div class="customers-table__actions"><button class="customers-table__action customers-table__action--view" type="button" data-customer-view aria-label="Ver detalhes" title="Ver detalhes"><i class="ph ph-eye" aria-hidden="true"></i></button><button class="customers-table__action customers-table__action--edit" type="button" data-customer-edit aria-label="Editar cliente" title="Editar cliente"><i class="ph ph-pencil-simple-line" aria-hidden="true"></i></button><button class="customers-table__action customers-table__action--delete" type="button" data-customer-delete aria-label="Excluir cliente" title="Excluir cliente"><i class="ph ph-trash" aria-hidden="true"></i></button></div>';
-        row.dataset.status = values[5];
-        row.dataset.search = values.join(' ').toLocaleLowerCase('pt-BR');
-        filterRows();
-        closeDialog();
-        showFeedback(`Cliente ${wasEditing ? 'atualizado' : 'adicionado'} na demonstração. A alteração não foi salva no banco.`);
-    });
-=======
     list.querySelector('[data-customer-open]')?.addEventListener('click', (event) => setFormMode(null, event.currentTarget));
 
     if (list.dataset.validationErrors === 'true') {
@@ -272,5 +232,4 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
     }
 
     renderRows();
->>>>>>> feature/ft-database-views
 });

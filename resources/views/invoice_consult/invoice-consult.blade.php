@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 @php
-    $invoiceRows = [
-        ['id'=>'nfe-278','number'=>'000278','series'=>'1','issuer'=>'Comercial Aurora Ltda.','document'=>'12.345.678/0001-90','issue_date'=>'27/09/2026','issue_date_iso'=>'2026-09-27','due_date'=>'15/10/2026','due_date_iso'=>'2026-10-15','payment_date'=>'—','payment_date_iso'=>'','amount'=>'1500.00','total'=>'R$ 1.500,00','status'=>'Vencida','details_target'=>'invoice-details-nfe-278','edit_target'=>'invoice-edit-nfe-278','search_terms'=>'000278 1 Comercial Aurora Ltda 12.345.678/0001-90 material de escritório papel sulfite','items'=>[['label'=>'Papel sulfite A4','value'=>'10 caixas · R$ 1.200,00'],['label'=>'Material de escritório','value'=>'1 conjunto · R$ 300,00']]],
-        ['id'=>'nfe-277','number'=>'000277','series'=>'1','issuer'=>'Distribuidora Central','document'=>'23.456.789/0001-01','issue_date'=>'25/09/2026','issue_date_iso'=>'2026-09-25','due_date'=>'27/10/2026','due_date_iso'=>'2026-10-27','payment_date'=>'—','payment_date_iso'=>'','amount'=>'840.00','total'=>'R$ 840,00','status'=>'A vencer','details_target'=>'invoice-details-nfe-277','edit_target'=>'invoice-edit-nfe-277','search_terms'=>'000277 1 Distribuidora Central 23.456.789/0001-01 embalagens caixas','items'=>[['label'=>'Caixas para expedição','value'=>'40 unidades · R$ 840,00']]],
-        ['id'=>'nfe-276','number'=>'000276','series'=>'3','issuer'=>'Mercado do Vale','document'=>'34.567.890/0001-12','issue_date'=>'18/09/2026','issue_date_iso'=>'2026-09-18','due_date'=>'18/10/2026','due_date_iso'=>'2026-10-18','payment_date'=>'17/10/2026','payment_date_iso'=>'2026-10-17','amount'=>'2340.50','total'=>'R$ 2.340,50','status'=>'Paga','details_target'=>'invoice-details-nfe-276','edit_target'=>'invoice-edit-nfe-276','search_terms'=>'000276 3 Mercado do Vale 34.567.890/0001-12 alimentos arroz feijão','items'=>[['label'=>'Arroz tipo 1','value'=>'20 unidades · R$ 1.240,50'],['label'=>'Feijão carioca','value'=>'20 unidades · R$ 1.100,00']]],
-        ['id'=>'nfe-275','number'=>'000275','series'=>'1','issuer'=>'Oficina Horizonte','document'=>'45.678.901/0001-23','issue_date'=>'10/09/2026','issue_date_iso'=>'2026-09-10','due_date'=>'10/10/2026','due_date_iso'=>'2026-10-10','payment_date'=>'09/10/2026','payment_date_iso'=>'2026-10-09','amount'=>'685.90','total'=>'R$ 685,90','status'=>'Paga','details_target'=>'invoice-details-nfe-275','edit_target'=>'invoice-edit-nfe-275','search_terms'=>'000275 1 Oficina Horizonte 45.678.901/0001-23 manutenção ferramentas','items'=>[['label'=>'Ferramentas e peças','value'=>'1 conjunto · R$ 685,90']]],
-    ];
+    $invoiceRows = $invoices->all();
     $columns = [
         ['key'=>'number','label'=>'Nº da nota'],
         ['key'=>'series','label'=>'Série'],
@@ -51,7 +45,7 @@
         </header>
 
         <section class="invoice-overview" aria-label="Resumo das notas fiscais">
-            <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-files" aria-hidden="true"></i>Notas no período</div><strong data-invoice-count="all">{{ $totalInvoices }}</strong><span>registros demonstrativos</span></article>
+            <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-files" aria-hidden="true"></i>Notas no período</div><strong data-invoice-count="all">{{ $totalInvoices }}</strong><span>notas carregadas do banco de dados</span></article>
             <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-clock" aria-hidden="true"></i>A vencer</div><strong data-invoice-count="due">{{ $dueSoonCount }}</strong><span>acompanhe os prazos</span></article>
             <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-warning-circle" aria-hidden="true"></i>Vencidas</div><strong data-invoice-count="overdue">{{ $overdueCount }}</strong><span>precisam de atenção</span></article>
             <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-check-circle" aria-hidden="true"></i>Pagas</div><strong data-invoice-count="paid">{{ $paidCount }}</strong><span>pagamentos concluídos</span></article>
@@ -63,7 +57,7 @@
                     <span class="invoice-panel__icon" aria-hidden="true"><i class="ph ph-receipt"></i></span>
                     <div><h2 id="invoice-list-title">Lista de Notas Fiscais</h2><p>Visualize, filtre e consulte os dados das notas fiscais.</p></div>
                 </div>
-                <span class="invoice-demo-tag">Dados de demonstração</span>
+                <span class="invoice-demo-tag">Dados do banco de dados</span>
             </div>
 
             <form class="invoice-filters" action="{{ route('invoice-consult.index') }}" method="GET" role="search" aria-label="Filtros de notas fiscais" data-invoice-filter>
@@ -82,11 +76,11 @@
 
             <x-tables.table class="invoice-table" variant="rounded" caption="Notas fiscais cadastradas" :columns="$columns" :rows="$invoiceRows" :status-variants="$statusVariants" empty-message="Nenhuma nota fiscal cadastrada." />
             <p class="invoice-no-results" role="status" data-invoice-no-results hidden>Nenhuma nota fiscal encontrada com os filtros selecionados.</p>
-            <p class="invoice-table-caption">Os dados exibidos são fictícios e servem apenas para demonstrar a interface.</p>
+            <p class="invoice-table-caption">As notas fiscais são carregadas do banco de dados.</p>
         </section>
 
         <div class="invoice-feedback" data-invoice-feedback hidden>
-            <x-dialogs.alert variant="info" title="Interface demonstrativa" message="Os campos foram validados. A gravação será conectada ao backend." :dismissible="false" />
+            <x-dialogs.alert variant="info" title="Consulta de notas fiscais" message="Os dados exibidos são carregados do banco de dados." :dismissible="false" />
         </div>
 
         <div class="invoice-dialog-layer" data-dialog-layer="invoice-create" data-invoice-mode="create" role="presentation" hidden>
@@ -133,47 +127,4 @@
             </div>
         @endforeach
     </div>
-=======
-<x-layouts.app title="Consulta NF-e · JEMP" page="invoice-consult">
-    <div class="page-head sales-page__head">
-        <div>
-            <h1>Consulta de Notas Fiscais</h1>
-            <p>Consulte os dados disponíveis nos registros de notas fiscais.</p>
-        </div>
-    </div>
-
-    <section class="sales-card" aria-labelledby="invoice-list-title">
-        <header class="sales-card__header">
-            <span class="sales-card__icon"><i class="ph ph-receipt" aria-hidden="true"></i></span>
-            <div>
-                <h2 id="invoice-list-title">Notas Fiscais</h2>
-                <p>Número, série, cliente, emissão, itens e situação registrados no banco.</p>
-            </div>
-        </header>
-
-        <section class="sales-items" aria-labelledby="invoice-table-title">
-            <header class="sales-items__header"><h3 id="invoice-table-title">Registros encontrados</h3></header>
-            <div class="sales-table-wrap">
-                <table class="sales-table">
-                    <thead><tr><th>Número</th><th>Série</th><th>Cliente</th><th>Emissão</th><th>Unidades</th><th>Situação</th><th>Total calculado</th></tr></thead>
-                    <tbody>
-                        @forelse ($invoices as $invoice)
-                            <tr>
-                                <td>{{ $invoice['number'] }}</td>
-                                <td>{{ $invoice['series'] }}</td>
-                                <td>{{ $invoice['customer'] }}</td>
-                                <td>{{ $invoice['date'] }}</td>
-                                <td>{{ $invoice['items'] }}</td>
-                                <td>{{ $invoice['status'] }}</td>
-                                <td>R$ {{ number_format($invoice['total'], 2, ',', '.') }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="7">Nenhuma nota fiscal encontrada.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </section>
->>>>>>> feature/ft-database-views
 </x-layouts.app>

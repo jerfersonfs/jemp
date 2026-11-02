@@ -1,5 +1,3 @@
-import { showFeedback } from '../components/feedback.js';
-
 const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 document.querySelectorAll('[data-sales-form]').forEach((form) => {
@@ -109,12 +107,6 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
     });
 
     form.addEventListener('submit', (event) => {
-<<<<<<< HEAD
-        event.preventDefault();
-        if (!form.reportValidity()) return;
-        if (feedback) feedback.hidden = false;
-        showFeedback('Venda validada na demonstração. Nenhum dado foi salvo no banco.', 'info');
-=======
         if (!rows().length) {
             event.preventDefault();
             if (feedback) {
@@ -122,7 +114,6 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
                 feedback.textContent = 'Adicione pelo menos um produto à venda.';
             }
         }
->>>>>>> feature/ft-database-views
     });
 
     dialog?.addEventListener('click', (event) => {
@@ -184,12 +175,7 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
         }
         reindex();
         updateTotals();
-<<<<<<< HEAD
-        closeAddDialog();
-        showFeedback('Item adicionado à venda demonstrativa. A alteração não foi salva no banco.');
-=======
         closeDialog(addDialog, addTrigger);
->>>>>>> feature/ft-database-views
     });
 
     dialogForm?.addEventListener('submit', (event) => {
@@ -224,33 +210,6 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
             pendingDeleteRow.remove();
             reindex();
             updateTotals();
-<<<<<<< HEAD
-            closeConfirm(returnFocus);
-            showFeedback('Item removido da venda demonstrativa. A alteração não foi salva no banco.');
-        }
-    });
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && dialog && !dialog.hidden) closeDialog();
-        if (event.key === 'Escape' && addDialog && !addDialog.hidden) closeAddDialog();
-        if (event.key === 'Escape' && confirmLayer && !confirmLayer.hidden) closeConfirm();
-    });
-    dialogForm?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        if (!activeRow || !dialogForm.reportValidity()) return;
-        const quantity = Number(dialogForm.elements.quantity.value);
-        const price = Number(dialogForm.elements.price.value);
-        const discount = Number(dialogForm.elements.discount.value);
-        activeRow.dataset.quantity = String(quantity);
-        activeRow.dataset.price = String(price);
-        activeRow.dataset.discount = String(discount);
-        activeRow.cells[3].textContent = String(quantity);
-        activeRow.cells[4].textContent = formatCurrency(price);
-        activeRow.cells[5].textContent = formatCurrency(discount);
-        activeRow.querySelector('[data-item-total]').textContent = formatCurrency(quantity * price - discount);
-        updateTotals();
-        closeDialog();
-        showFeedback('Item atualizado na venda demonstrativa. A alteração não foi salva no banco.');
-=======
             closeConfirm();
         }
     });
@@ -259,7 +218,6 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
         if (dialog && !dialog.hidden) closeDialog(dialog, activeTrigger);
         if (addDialog && !addDialog.hidden) closeDialog(addDialog, addTrigger);
         if (confirmLayer && !confirmLayer.hidden) closeConfirm();
->>>>>>> feature/ft-database-views
     });
     reindex();
     updateTotals();

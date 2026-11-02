@@ -15,6 +15,8 @@ class Inventory extends Model
 
     public $incrementing = false;
 
+    protected $fillable = ['warehouse_id', 'product_id', 'product_condition', 'theoretical_balance'];
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id', 'product_id');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -14,25 +15,31 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View|\Illuminate\Http\JsonResponse|AnonymousResourceCollection
     {
+        $products = Product::query()
+            ->with(['inventory.warehouse', 'inventories.warehouse'])
+            ->withSum('inventory', 'theoretical_balance')
+            ->orderBy('sku')
+            ->get();
+
+        if ($request->expectsJson()) {
+            return \App\Http\Resources\ProductResource::collection($products);
+        }
+
         return view('products.products', [
             'page' => 'products',
-            'products' => Product::query()
-                ->with('inventory.warehouse')
-                ->withSum('inventory', 'theoretical_balance')
-                ->orderBy('sku')
-                ->get(),
+            'products' => $products,
             'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(),
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
-        $data = $request->validate($this->rules(includeInitialInventory: true));
+        $data = $request->validate($this->rules(includeInitialInventory: !$request->expectsJson()));
         $this->assertSpecificationIsAvailable($data);
 
-        DB::transaction(function () use ($data): void {
+        $product = DB::transaction(function () use ($data): Product {
             $temporarySku = 'TMP-'.Str::random(8);
             $product = Product::query()->create([
                 ...$this->productData($data),
@@ -47,20 +54,28 @@ class ProductController extends Controller
                 ),
             ]);
 
-            DB::table('inventory')->insert([
-                'warehouse_id' => $data['warehouse_id'],
-                'product_id' => $product->product_id,
-                'product_condition' => $data['product_condition'],
-                'theoretical_balance' => $data['theoretical_balance'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if (isset($data['warehouse_id'])) {
+                DB::table('inventory')->insert([
+                    'warehouse_id' => $data['warehouse_id'],
+                    'product_id' => $product->product_id,
+                    'product_condition' => $data['product_condition'],
+                    'theoretical_balance' => $data['theoretical_balance'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            return $product->load('inventory.warehouse');
         });
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Produto criado com sucesso.', 'data' => new \App\Http\Resources\ProductResource($product)], 201);
+        }
 
         return redirect()->route('products.index')->with('status', 'Produto cadastrado com sucesso.');
     }
 
-    public function update(Request $request, Product $produto): RedirectResponse
+    public function update(Request $request, Product $produto): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $data = $request->validate($this->rules());
         $this->assertSpecificationIsAvailable($data, $produto);
@@ -70,12 +85,25 @@ class ProductController extends Controller
             $lockedProduct->update($this->productData($data));
         });
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Produto atualizado com sucesso.', 'data' => new \App\Http\Resources\ProductResource($produto->load('inventory.warehouse'))]);
+        }
+
         return redirect()->route('products.index')->with('status', 'Produto atualizado com sucesso.');
     }
 
-    public function destroy(Product $produto): RedirectResponse
+    public function show(Product $produto): \Illuminate\Http\JsonResponse
+    {
+        return response()->json(new \App\Http\Resources\ProductResource($produto->load('inventory.warehouse')));
+    }
+
+    public function destroy(Product $produto): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         if ($produto->stockMovements()->exists() || $produto->invoiceItems()->exists()) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Produtos com histórico de movimentações ou notas fiscais não podem ser excluídos.'], 409);
+            }
+
             return redirect()->route('products.index')->with('error', 'Produtos com histórico de movimentações ou notas fiscais não podem ser excluídos.');
         }
 
@@ -83,6 +111,10 @@ class ProductController extends Controller
             DB::table('inventory')->where('product_id', $produto->product_id)->delete();
             $produto->delete();
         });
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Produto excluído com sucesso.']);
+        }
 
         return redirect()->route('products.index')->with('status', 'Produto excluído com sucesso.');
     }

@@ -1,5 +1,3 @@
-import { showFeedback } from '../components/feedback.js';
-
 function initializeMovementList(list) {
     const panel = list.closest('.content-panel');
     const pageRoot = list.closest('.jemp-shell__page') ?? document;
@@ -126,46 +124,6 @@ function initializeMovementList(list) {
         openDialog(detailDialog, trigger);
     };
 
-<<<<<<< HEAD
-    const generateCode = () => {
-        const codes = rows.map((row) => String(parseRecord(row).code ?? '')).map((code) => Number(code.replace(/\D/g, '')) || 0);
-        const nextCode = Math.max(0, ...codes) + 1;
-        return list.dataset.resourceLabel === 'saídas' ? String(nextCode).padStart(6, '0') : `#${nextCode}`;
-    };
-
-    const saveRecord = () => {
-        if (!recordForm || !rowTemplate || !tbody) return;
-        const formData = Object.fromEntries(new FormData(recordForm).entries());
-        if (formData.date) formData.date = displayValue('date', formData.date);
-        const wasEditing = editMode && Boolean(activeRow);
-        const previousRecord = editMode && activeRow ? parseRecord(activeRow) : {};
-        const record = { ...previousRecord, ...formData };
-        if ('quantity' in formData && !('unit' in formData)) {
-            const unit = String(previousRecord.quantity ?? '').match(/\s+(.+)$/)?.[1] ?? (list.dataset.resourceLabel === 'saídas' ? '' : 'un.');
-            record.quantity = `${formData.quantity}${unit ? ` ${unit}` : ''}`;
-        }
-        if (!record.code) record.code = generateCode();
-        if ('stock' in record && 'quantity' in record) {
-            record.remaining = String(Math.max(0, (Number(record.stock) || 0) - (Number(record.quantity) || 0)));
-        }
-
-        let row = activeRow;
-        if (!editMode || !row) {
-            row = rowTemplate.cloneNode(true);
-            row.hidden = false;
-            rows.push(row);
-            tbody.insertBefore(row, emptyRow);
-        }
-        updateRow(row, record);
-        activeRow = null;
-        page = 1;
-        update();
-        closeDialog();
-        showFeedback(`Movimentação ${wasEditing ? 'atualizada' : 'adicionada'} na demonstração. A alteração não foi salva no banco.`);
-    };
-
-=======
->>>>>>> feature/ft-database-views
     pageRoot.addEventListener('click', (event) => {
         const createTrigger = event.target.closest('[data-dialog-open="movement-form"]');
         if (createTrigger) {
@@ -187,33 +145,9 @@ function initializeMovementList(list) {
         }
 
         const layer = event.target.closest('.movement-dialog-layer');
-<<<<<<< HEAD
-        if (layer && (event.target === layer || event.target.closest('[data-dialog-dismiss]'))) {
-            closeDialog();
-            return;
-        }
-
-        if (event.target.closest('[data-movement-confirm]') && activeRow) {
-            const removedCode = parseRecord(activeRow).code ?? '';
-            activeRow.remove();
-            rows = rows.filter((row) => row !== activeRow);
-            activeRow = null;
-            update();
-            closeDialog();
-            showFeedback(`Movimentação ${removedCode} removida da demonstração. A alteração não foi salva no banco.`);
-        }
-    });
-
-    recordForm?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        if (!recordForm.reportValidity()) return;
-        saveRecord();
-    });
-=======
         if (layer && (event.target === layer || event.target.closest('[data-dialog-dismiss]'))) closeDialog();
     });
 
->>>>>>> feature/ft-database-views
     search?.addEventListener('input', () => { page = 1; update(); });
     filters.forEach((filter) => filter.addEventListener('change', () => { page = 1; update(); }));
     previous?.addEventListener('click', () => { page = Math.max(1, page - 1); update(); });

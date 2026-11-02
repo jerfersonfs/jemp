@@ -22,6 +22,11 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class, 'invoice_id', 'invoice_id');
     }
 
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'invoice_id', 'invoice_id');
+    }
+
     protected function casts(): array
     {
         return [

@@ -1,5 +1,3 @@
-import { showFeedback } from '../components/feedback.js';
-
 const catalog = document.querySelector('[data-product-catalog]');
 
 if (catalog) {
@@ -17,26 +15,6 @@ if (catalog) {
     const pageSize = 10;
     let currentPage = 1;
     let returnFocus = null;
-<<<<<<< HEAD
-    const pageSize = 10;
-    const find = (name) => catalog.querySelector(`[data-product-${name}]`);
-    const formModal = find('form-modal');
-    const detailsModal = find('details-modal');
-    const deleteModal = find('delete-modal');
-    const form = formModal.querySelector('form');
-    const tableBody = catalog.querySelector('tbody');
-    const actionTemplate = tableBody.querySelector('.jemp-table__actions').cloneNode(true);
-    const normalize = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
-    const formatMeasure = (value) => Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const tableValues = (product) => [product.code, product.name, product.category, product.type, `${formatMeasure(product.width)} × ${formatMeasure(product.length)} m`, product.location, product.material, product.wood];
-    const warehouses = ['Barracão 1', 'Barracão 2', 'Barracão 3'];
-    const inventoryFor = (product) => warehouses.map((location) => ({
-        location,
-        balance: product.inventory?.find((stock) => stock.location === location)?.balance
-            ?? (product.location === location ? product.quantity : 0),
-    }));
-=======
->>>>>>> feature/ft-database-views
 
     const normalize = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
     const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
@@ -130,11 +108,6 @@ if (catalog) {
         detailsModal.showModal();
     }
 
-<<<<<<< HEAD
-    function notify(message) {
-        showFeedback(`${message} Alteração demonstrativa, não salva no banco.`);
-    }
-=======
     stockOpen.addEventListener('click', () => {
         stockForm.hidden = false;
         stockForm.querySelector('[name="quantity"]').focus();
@@ -143,7 +116,6 @@ if (catalog) {
         stockForm.hidden = true;
         stockOpen.focus();
     });
->>>>>>> feature/ft-database-views
 
     function renderRows() {
         const query = normalize(find('search').value.trim());
@@ -258,9 +230,6 @@ if (catalog) {
             renderRows();
         }
     });
-<<<<<<< HEAD
-    renderProducts();
-=======
     find('notice').querySelector('.jemp-notice__close')?.addEventListener('click', () => {
         find('notice').hidden = true;
     });
@@ -273,5 +242,4 @@ if (catalog) {
     }
 
     renderRows();
->>>>>>> feature/ft-database-views
 }

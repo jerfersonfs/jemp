@@ -16,6 +16,8 @@ class Customer extends Model
 
     protected $primaryKey = 'customer_id';
 
+    protected $fillable = ['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms'];
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class, 'customer_id', 'customer_id');

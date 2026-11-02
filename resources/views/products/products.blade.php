@@ -1,3 +1,7 @@
+@php
+    $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
+@endphp
+
 <x-layouts.app title="Produtos · JEMP" page="products">
     @php
         $columns = [
@@ -117,7 +121,7 @@
                             </select>
                         </label>
                         <label>Data e hora
-                            <input name="date" type="datetime-local" value="{{ now()->format('Y-m-d\\TH:i') }}" required>
+                            <input name="date" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required>
                         </label>
                         <label>Quantidade
                             <input name="quantity" type="number" min="1" step="1" required>

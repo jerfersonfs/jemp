@@ -10,35 +10,62 @@ use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View|\Illuminate\Http\JsonResponse
     {
+        $customers = Customer::query()->with('invoices')->orderBy('customer_name')->get();
+
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $customers]);
+        }
+
         return view('customers.customers', [
             'page' => 'customers',
-            'customers' => Customer::query()->orderBy('customer_name')->get(),
+            'customers' => $customers,
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
-        Customer::query()->create($request->validate($this->rules()));
+        $customer = Customer::query()->create($request->validate($this->rules()));
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Cliente criado com sucesso.', 'data' => $customer], 201);
+        }
 
         return redirect()->route('customers.index')->with('status', 'Cliente cadastrado com sucesso.');
     }
 
-    public function update(Request $request, Customer $cliente): RedirectResponse
+    public function update(Request $request, Customer $cliente): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $cliente->update($request->validate($this->rules($cliente)));
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Cliente atualizado com sucesso.', 'data' => $cliente->load('invoices')]);
+        }
 
         return redirect()->route('customers.index')->with('status', 'Cliente atualizado com sucesso.');
     }
 
-    public function destroy(Customer $cliente): RedirectResponse
+    public function show(Customer $cliente): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($cliente->load('invoices'));
+    }
+
+    public function destroy(Customer $cliente): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         if ($cliente->invoices()->exists()) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Clientes vinculados a notas fiscais não podem ser excluídos.'], 409);
+            }
+
             return redirect()->route('customers.index')->with('error', 'Clientes vinculados a notas fiscais não podem ser excluídos.');
         }
 
         $cliente->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Cliente excluído com sucesso.']);
+        }
 
         return redirect()->route('customers.index')->with('status', 'Cliente excluído com sucesso.');
     }

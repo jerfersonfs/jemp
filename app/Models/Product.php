@@ -30,6 +30,11 @@ class Product extends Model
         return $this->hasMany(Inventory::class, 'product_id', 'product_id');
     }
 
+    public function inventories(): HasMany
+    {
+        return $this->inventory();
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'product_id', 'product_id');
