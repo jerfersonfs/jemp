@@ -3,16 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class SaleController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+        $endDate = $filters['end_date'] ?? now()->toDateString();
+        $startDate = $filters['start_date'] ?? now()->subDays(90)->toDateString();
+        $salesReport = [];
+        $salesReportError = null;
+
+        try {
+            $salesReport = DB::select('CALL sp_relatorio_vendas_periodo(?, ?)', [$startDate, $endDate]);
+        } catch (QueryException $exception) {
+            report($exception);
+            $salesReportError = 'Não foi possível carregar o relatório. Verifique se a stored procedure está aplicada no banco e se a conexão está ativa.';
+        }
+
         return view('sales.sales', [
             'page' => 'sales',
             'invoices' => $this->invoiceRows(),
+            'salesReport' => $salesReport,
+            'salesReportError' => $salesReportError,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
     }
 

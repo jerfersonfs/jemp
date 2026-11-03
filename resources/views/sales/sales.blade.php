@@ -41,4 +41,44 @@
             </div>
         </section>
     </section>
+
+    <section class="sales-card" aria-labelledby="sales-period-report-title" style="margin-top: 1.25rem">
+        <header class="sales-card__header">
+            <span class="sales-card__icon"><i class="ph ph-chart-line-up" aria-hidden="true"></i></span>
+            <div>
+                <h2 id="sales-period-report-title">Vendas por produto no período</h2>
+                <p>Relatório calculado pela stored procedure do banco de dados.</p>
+            </div>
+        </header>
+
+        <form method="GET" action="{{ route('sales.index') }}" style="display:flex; flex-wrap:wrap; align-items:end; gap:.75rem; padding:1rem 1.125rem">
+            <label>Data inicial <input type="date" name="start_date" value="{{ $startDate }}" required></label>
+            <label>Data final <input type="date" name="end_date" value="{{ $endDate }}" required></label>
+            <button class="btn btn-primary" type="submit">Consultar período</button>
+        </form>
+
+        @if ($salesReportError)
+            <p role="alert" style="padding:0 1.125rem; color:var(--color-danger)">{{ $salesReportError }}</p>
+        @else
+            <div class="sales-table-wrap">
+                <table class="sales-table">
+                    <thead><tr><th>SKU</th><th>Produto</th><th>Notas</th><th>Unidades vendidas</th><th>Faturamento bruto</th><th>Saldo atual</th></tr></thead>
+                    <tbody>
+                        @forelse ($salesReport as $row)
+                            <tr>
+                                <td>{{ $row->sku }}</td>
+                                <td>{{ $row->product_name }}</td>
+                                <td>{{ number_format((int) $row->invoice_count, 0, ',', '.') }}</td>
+                                <td>{{ number_format((int) $row->units_sold, 0, ',', '.') }}</td>
+                                <td>R$ {{ number_format((float) $row->gross_revenue, 2, ',', '.') }}</td>
+                                <td>{{ number_format((int) $row->current_stock, 0, ',', '.') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6">Nenhuma venda encontrada nesse período.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </section>
 </x-layouts.app>
