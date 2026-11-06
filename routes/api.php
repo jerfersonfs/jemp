@@ -17,6 +17,7 @@ Route::get('/user', function (Request $request) {
 
 // Os nomes recebem prefixo próprio para não sobrescrever os nomes das rotas web.
 Route::name('api.')->group(function (): void {
+    Route::post('/invoices/import', [InvoiceController::class, 'importXml']);
     Route::apiResource('products', ProductController::class)->parameters(['products' => 'produto']);
     Route::apiResource('customers', CustomerController::class)->parameters(['customers' => 'cliente']);
     Route::apiResource('inventories', InventoryController::class);

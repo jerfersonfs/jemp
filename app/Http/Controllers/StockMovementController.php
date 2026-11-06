@@ -39,67 +39,62 @@ class StockMovementController extends Controller
      */
     public function store(StoreStockMovementRequest $request)
     {
-        // O Request já validou se os tipos estão corretos e se a quantidade é > 0
+
         $data = $request->validated();
 
-        // Iniciamos a Transação. Se qualquer erro acontecer aqui dentro, o Laravel desfaz tudo no banco (Rollbac          k automático).
-        $result = DB::transaction(function () use ($data) {
-            $type = $data['movement_type'];
-            $qty = $data['quantity'];
-            $productId = $data['product_id'];
-            $destWarehouseId = $data['dest_warehouse_id'] ?? null;
-            $originWarehouseId = $data['origin_warehouse_id'] ?? null;
-            $condition = $data['product_condition'];
+        try {
+            $movement = DB::transaction(function () use ($data) {
+                $type = $data['movement_type'];
+                $qty = $data['quantity'];
+                $productId = $data['product_id'];
+                $destWarehouseId = $data['dest_warehouse_id'] ?? null;
+                $originWarehouseId = $data['origin_warehouse_id'] ?? null;
+                $condition = $data['product_condition'];
 
-            // Lógica de Entrada ou Transferência (Destino)
-            if ($type === 'Entrada' || $type === 'Transferência') {
-                $inventoryDest = Inventory::firstOrCreate(
-                    ['warehouse_id' => $destWarehouseId, 'product_id' => $productId, 'product_condition' => $condition],
-                    ['theoretical_balance' => 0]
-                );
+                if ($type === 'Saída' || $type === 'Transferência') {
+                    $inventoryOrigin = Inventory::where('warehouse_id', $originWarehouseId)
+                        ->where('product_id', $productId)
+                        ->where('product_condition', $condition)
+                        ->lockForUpdate()
+                        ->first();
 
-                // ATUALIZAÇÃO EXPLÍCITA: Encontra a linha pelas suas 3 chaves e soma
-                Inventory::where('warehouse_id', $destWarehouseId)
-                         ->where('product_id', $productId)
-                         ->where('product_condition', $condition)
-                         ->update(['theoretical_balance' => $inventoryDest->theoretical_balance + $qty]);
-            }
+                    if (!$inventoryOrigin || $inventoryOrigin->theoretical_balance < $qty) {
+                        throw new \Exception('Saldo insuficiente no armazém de origem.');
+                    }
 
-            // Lógica de Saída ou Transferência (Origem)
-            if ($type === 'Saída' || $type === 'Transferência') {
-                $inventoryOrigin = Inventory::where('warehouse_id', $originWarehouseId)
-                    ->where('product_id', $productId)
-                    ->where('product_condition', $condition)
-                    ->first();
-
-                if (!$inventoryOrigin || $inventoryOrigin->theoretical_balance < $qty) {
-                    abort(response()->json(['error' => 'Saldo insuficiente.'], 422));
+                    $inventoryOrigin->decrement('theoretical_balance', $qty);
                 }
 
-                // ATUALIZAÇÃO EXPLÍCITA: Encontra a linha pelas suas 3 chaves e subtrai
-                Inventory::where('warehouse_id', $originWarehouseId)
-                         ->where('product_id', $productId)
-                         ->where('product_condition', $condition)
-                         ->update(['theoretical_balance' => $inventoryOrigin->theoretical_balance - $qty]);
-            }
+                if ($type === 'Entrada' || $type === 'Transferência') {
+                    $inventoryDest = Inventory::firstOrCreate(
+                        ['warehouse_id' => $destWarehouseId, 'product_id' => $productId, 'product_condition' => $condition],
+                        ['theoretical_balance' => 0]
+                    );
 
-            // Agora sim, grava o recibo da movimentação
-            $movement = StockMovement::create($data);
-            $movement->load([
-                'product',
-                'originWarehouse',
-                'destinationWarehouse',
-                'user',
-                'invoice',
-            ]);
+                    $inventoryDest->increment('theoretical_balance', $qty);
+                }
+
+                $createdMovement = StockMovement::create($data);
+                $createdMovement->load([
+                    'product', 'originWarehouse', 'destinationWarehouse', 'user', 'invoice',
+                ]);
+
+                return $createdMovement;
+            });
 
             return response()->json([
                 'message' => 'Movimentação registrada e saldo atualizado com sucesso.',
                 'data' => $movement
             ], 201);
-        });
-        return $result;
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Falha ao processar movimentação.',
+                'details' => $e->getMessage()
+            ], 422);
+        }
     }
+
     /**
      * Display the specified resource.
      */
