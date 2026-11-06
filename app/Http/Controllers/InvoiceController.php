@@ -6,6 +6,10 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
+use App\Models\Inventory;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class InvoiceController extends Controller
 {
@@ -31,6 +35,70 @@ class InvoiceController extends Controller
         return response()->json($invoice, 201);
     }
 
+    public function importXml(Request $request)
+    {
+        $request->validate([
+            'xml_file' => ['required', 'file', 'mimes:xml', 'max:2048'],
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+        ]);
+
+        try {
+            $result = DB::transaction(function () use ($request) {
+                $xmlString = file_get_contents($request->file('xml_file')->getRealPath());
+                $xml = simplexml_load_string($xmlString);
+
+                if ($xml === false || !isset($xml->NFe->infNFe)) {
+                    throw new \Exception('Ficheiro XML inválido ou não é uma NFe brasileira padrão.');
+                }
+
+                $infNFe = $xml->NFe->infNFe;
+                $warehouseId = $request->input('warehouse_id');
+
+                $invoice = Invoice::create([
+                    'invoice_number'     => (int) $infNFe->ide->nNF,
+                    'invoice_serie'      => (int) $infNFe->ide->serie,
+                    'customer_id'        => 1, // ID temporário para passar na chave estrangeira (fk_invoices_customer)
+                    'issue_date'         => date('Y-m-d', strtotime((string) $infNFe->ide->dhEmi)),
+                    'due_date'           => date('Y-m-d'), // Obrigatório na migration
+                    'payment_method'     => 'Dinheiro', // Obrigatório (varchar 50)
+                    'payment_terms_days' => 0, // Obrigatório (inteiro)
+                    'payment_status'     => 'Paga', // TEM de ser exatamente 'Paga' para bater com o ENUM da migration
+                    'payment_date'       => date('Y-m-d'), // Opcional, mas faz sentido se está 'Paga'
+                    'amount'             => (float) $infNFe->total->ICMSTot->vNF,
+                ]);
+
+                foreach ($infNFe->det as $itemXML) {
+                    $productId = (string) $itemXML->prod->cProd;
+                    $quantity = (float) $itemXML->prod->qCom;
+
+                    $inventory = Inventory::firstOrCreate(
+                        [
+                            'warehouse_id' => $warehouseId,
+                            'product_id' => $productId,
+                            'product_condition' => 'Novo'
+                        ],
+                        ['theoretical_balance' => 0]
+                    );
+
+                    $inventory->increment('theoretical_balance', $quantity);
+                }
+
+                return $invoice;
+            });
+
+            return response()->json([
+                'message' => 'NFe importada e estoque atualizado com sucesso!',
+                'data' => clone new InvoiceResource($result)
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Falha ao importar a Nota Fiscal.',
+                'details' => $e->getMessage()
+            ], 422);
+        }
+    }
+
     /**
      * Mostra os detalhes de uma nota fiscal específica
      */
@@ -48,7 +116,6 @@ class InvoiceController extends Controller
 
         $invoice->update($dados);
 
-        // O fresh() garante que devolvemos os dados mais atualizados diretamente do banco
         return new InvoiceResource($invoice->fresh());
     }
 
