@@ -72,6 +72,7 @@ class MovementController extends Controller
             ->where('movement.movement_type', $direction)
             ->orderByDesc('movement.movement_date')
             ->select([
+                'movement.origin_warehouse_id as id',
                 'movement.*',
                 'products.sku as product_sku',
                 'products.product_name',
