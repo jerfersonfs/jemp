@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\Warehouse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -15,7 +17,7 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse|AnonymousResourceCollection
+    public function index(Request $request): View|JsonResponse|AnonymousResourceCollection
     {
         $products = Product::query()
             ->with(['inventory.warehouse', 'inventories.warehouse'])
@@ -24,7 +26,7 @@ class ProductController extends Controller
             ->get();
 
         if ($request->expectsJson()) {
-            return \App\Http\Resources\ProductResource::collection($products);
+            return ProductResource::collection($products);
         }
 
         return view('products.products', [
@@ -34,70 +36,88 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $data = $request->validate($this->rules(includeInitialInventory: !$request->expectsJson()));
+        $data = $request->validate($this->rules(includeInitialInventory: ! $request->expectsJson()));
         $this->assertSpecificationIsAvailable($data);
 
-        $product = DB::transaction(function () use ($data): Product {
-            $temporarySku = 'TMP-'.Str::random(8);
-            $product = Product::query()->create([
-                ...$this->productData($data),
-                'sku' => $temporarySku,
-            ]);
-            $product->update([
-                'sku' => $this->generateSku(
-                    $data['category'],
-                    (int) $data['length_mm'],
-                    (int) $data['width_mm'],
-                    $product->product_id,
-                ),
-            ]);
-
-            if (isset($data['warehouse_id'])) {
-                DB::table('inventory')->insert([
-                    'warehouse_id' => $data['warehouse_id'],
-                    'product_id' => $product->product_id,
-                    'product_condition' => $data['product_condition'],
-                    'theoretical_balance' => $data['theoretical_balance'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
+        try {
+            $product = DB::transaction(function () use ($data): Product {
+                $temporarySku = 'TMP-'.Str::random(8);
+                $product = Product::query()->create([
+                    ...$this->productData($data),
+                    'sku' => $temporarySku,
                 ]);
+                $product->update([
+                    'sku' => $this->generateSku(
+                        $data['category'],
+                        (int) $data['length_mm'],
+                        (int) $data['width_mm'],
+                        $product->product_id,
+                    ),
+                ]);
+
+                if (isset($data['warehouse_id'])) {
+                    DB::table('inventory')->insert([
+                        'warehouse_id' => $data['warehouse_id'],
+                        'product_id' => $product->product_id,
+                        'product_condition' => $data['product_condition'],
+                        'theoretical_balance' => $data['theoretical_balance'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                return $product->load('inventory.warehouse');
+            });
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Falha ao cadastrar produto.'], 500);
             }
 
-            return $product->load('inventory.warehouse');
-        });
+            return back()->with('error', 'Falha ao cadastrar produto.');
+        }
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Produto criado com sucesso.', 'data' => new \App\Http\Resources\ProductResource($product)], 201);
+            return response()->json(['message' => 'Produto criado com sucesso.', 'data' => new ProductResource($product)], 201);
         }
 
         return redirect()->route('products.index')->with('status', 'Produto cadastrado com sucesso.');
     }
 
-    public function update(Request $request, Product $produto): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function update(Request $request, Product $produto): RedirectResponse|JsonResponse
     {
         $data = $request->validate($this->rules());
         $this->assertSpecificationIsAvailable($data, $produto);
 
-        DB::transaction(function () use ($produto, $data): void {
-            $lockedProduct = Product::query()->whereKey($produto->product_id)->lockForUpdate()->firstOrFail();
-            $lockedProduct->update($this->productData($data));
-        });
+        try {
+            DB::transaction(function () use ($produto, $data): void {
+                $lockedProduct = Product::query()->whereKey($produto->product_id)->lockForUpdate()->firstOrFail();
+                $lockedProduct->update($this->productData($data));
+            });
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Falha ao atualizar produto.'], 500);
+            }
+
+            return back()->with('error', 'Falha ao atualizar produto.');
+        }
+
+        $produto->refresh();
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Produto atualizado com sucesso.', 'data' => new \App\Http\Resources\ProductResource($produto->load('inventory.warehouse'))]);
+            return response()->json(['message' => 'Produto atualizado com sucesso.', 'data' => new ProductResource($produto->load('inventory.warehouse'))]);
         }
 
         return redirect()->route('products.index')->with('status', 'Produto atualizado com sucesso.');
     }
 
-    public function show(Product $produto): \Illuminate\Http\JsonResponse
+    public function show(Product $produto): JsonResponse
     {
-        return response()->json(new \App\Http\Resources\ProductResource($produto->load('inventory.warehouse')));
+        return response()->json(new ProductResource($produto->load('inventory.warehouse')));
     }
 
-    public function destroy(Product $produto): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function destroy(Product $produto): RedirectResponse|JsonResponse
     {
         if ($produto->stockMovements()->exists() || $produto->invoiceItems()->exists()) {
             if (request()->expectsJson()) {
@@ -107,10 +127,18 @@ class ProductController extends Controller
             return redirect()->route('products.index')->with('error', 'Produtos com histórico de movimentações ou notas fiscais não podem ser excluídos.');
         }
 
-        DB::transaction(function () use ($produto): void {
-            DB::table('inventory')->where('product_id', $produto->product_id)->delete();
-            $produto->delete();
-        });
+        try {
+            DB::transaction(function () use ($produto): void {
+                DB::table('inventory')->where('product_id', $produto->product_id)->delete();
+                $produto->delete();
+            });
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Falha ao excluir produto.'], 500);
+            }
+
+            return back()->with('error', 'Falha ao excluir produto.');
+        }
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Produto excluído com sucesso.']);

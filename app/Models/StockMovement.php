@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\StockMovementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['origin_warehouse_id', 'dest_warehouse_id', 'product_id', 'product_condition', 'user_id', 'invoice_id', 'quantity', 'movement_type', 'movement_justification', 'movement_date', 'is_fiscal'])]
 class StockMovement extends Model
 {
+    /** @use HasFactory<StockMovementFactory> */
+    use HasFactory;
+
     protected $primaryKey = 'sm_id';
 
     public function product(): BelongsTo

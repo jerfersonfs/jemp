@@ -5,9 +5,9 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\WarehouseController;
-use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +18,8 @@ Route::get('/user', function (Request $request) {
 // Os nomes recebem prefixo próprio para não sobrescrever os nomes das rotas web.
 Route::name('api.')->group(function (): void {
     Route::post('/invoices/import', [InvoiceController::class, 'importXml']);
+    Route::post('/inventories/remove-stock', [InventoryController::class, 'removeStock'])
+        ->name('inventories.remove-stock');
     Route::apiResource('products', ProductController::class)->parameters(['products' => 'produto']);
     Route::apiResource('customers', CustomerController::class)->parameters(['customers' => 'cliente']);
     Route::apiResource('inventories', InventoryController::class);

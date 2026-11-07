@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateStockMovementRequest extends FormRequest
+class StoreStockMovementRequest extends FormRequest
 {
     public function authorize(): bool
     {

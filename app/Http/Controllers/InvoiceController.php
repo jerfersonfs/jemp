@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
-use App\Models\Invoice;
 use App\Models\Inventory;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
 
 class InvoiceController extends Controller
 {
@@ -47,7 +46,7 @@ class InvoiceController extends Controller
                 $xmlString = file_get_contents($request->file('xml_file')->getRealPath());
                 $xml = simplexml_load_string($xmlString);
 
-                if ($xml === false || !isset($xml->NFe->infNFe)) {
+                if ($xml === false || ! isset($xml->NFe->infNFe)) {
                     throw new \Exception('Ficheiro XML inválido ou não é uma NFe brasileira padrão.');
                 }
 
@@ -55,16 +54,16 @@ class InvoiceController extends Controller
                 $warehouseId = $request->input('warehouse_id');
 
                 $invoice = Invoice::create([
-                    'invoice_number'     => (int) $infNFe->ide->nNF,
-                    'invoice_serie'      => (int) $infNFe->ide->serie,
-                    'customer_id'        => 1, // ID temporário para passar na chave estrangeira (fk_invoices_customer)
-                    'issue_date'         => date('Y-m-d', strtotime((string) $infNFe->ide->dhEmi)),
-                    'due_date'           => date('Y-m-d'), // Obrigatório na migration
-                    'payment_method'     => 'Dinheiro', // Obrigatório (varchar 50)
+                    'invoice_number' => (int) $infNFe->ide->nNF,
+                    'invoice_serie' => (int) $infNFe->ide->serie,
+                    'customer_id' => 1, // ID temporário para passar na chave estrangeira (fk_invoices_customer)
+                    'issue_date' => date('Y-m-d', strtotime((string) $infNFe->ide->dhEmi)),
+                    'due_date' => date('Y-m-d'), // Obrigatório na migration
+                    'payment_method' => 'Dinheiro', // Obrigatório (varchar 50)
                     'payment_terms_days' => 0, // Obrigatório (inteiro)
-                    'payment_status'     => 'Paga', // TEM de ser exatamente 'Paga' para bater com o ENUM da migration
-                    'payment_date'       => date('Y-m-d'), // Opcional, mas faz sentido se está 'Paga'
-                    'amount'             => (float) $infNFe->total->ICMSTot->vNF,
+                    'payment_status' => 'Paga', // TEM de ser exatamente 'Paga' para bater com o ENUM da migration
+                    'payment_date' => date('Y-m-d'), // Opcional, mas faz sentido se está 'Paga'
+                    'amount' => (float) $infNFe->total->ICMSTot->vNF,
                 ]);
 
                 foreach ($infNFe->det as $itemXML) {
@@ -75,7 +74,7 @@ class InvoiceController extends Controller
                         [
                             'warehouse_id' => $warehouseId,
                             'product_id' => $productId,
-                            'product_condition' => 'Novo'
+                            'product_condition' => 'Novo',
                         ],
                         ['theoretical_balance' => 0]
                     );
@@ -88,13 +87,13 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'message' => 'NFe importada e estoque atualizado com sucesso!',
-                'data' => clone new InvoiceResource($result)
+                'data' => clone new InvoiceResource($result),
             ], 201);
 
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Falha ao importar a Nota Fiscal.',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 422);
         }
     }
@@ -110,7 +109,7 @@ class InvoiceController extends Controller
     /**
      * Atualiza uma nota fiscal existente
      */
-    public function update(UpdateInvoiceRequest $request, Invoices $invoice)
+    public function update(UpdateInvoiceRequest $request, Invoice $invoice)
     {
         $dados = $request->validated();
 

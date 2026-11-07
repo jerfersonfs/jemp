@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InvoiceItem;
 use App\Http\Requests\StoreInvoiceItemRequest;
 use App\Http\Requests\UpdateInvoiceItemRequest;
+use App\Models\InvoiceItem;
 
 class InvoiceItemController extends Controller
 {
@@ -23,14 +23,18 @@ class InvoiceItemController extends Controller
      */
     public function store(StoreInvoiceItemRequest $request)
     {
-        $invoiceItem = InvoiceItem::create($request->validated());
+        try {
+            $invoiceItem = InvoiceItem::create($request->validated());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao cadastrar item da nota fiscal.'], 500);
+        }
 
         // Carrega os relacionamentos para devolver o objeto completo ao frontend
         $invoiceItem->load(['invoice', 'product']);
 
         return response()->json([
             'message' => 'Item de nota fiscal criado com sucesso.',
-            'data' => $invoiceItem
+            'data' => $invoiceItem,
         ], 201);
     }
 
@@ -49,13 +53,17 @@ class InvoiceItemController extends Controller
      */
     public function update(UpdateInvoiceItemRequest $request, InvoiceItem $invoiceItem)
     {
-        $invoiceItem->update($request->validated());
+        try {
+            $invoiceItem->update($request->validated());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao atualizar item da nota fiscal.'], 500);
+        }
 
         $invoiceItem->load(['invoice', 'product']);
 
         return response()->json([
             'message' => 'Item de nota fiscal atualizado com sucesso.',
-            'data' => $invoiceItem
+            'data' => $invoiceItem,
         ], 200);
     }
 
@@ -64,10 +72,14 @@ class InvoiceItemController extends Controller
      */
     public function destroy(InvoiceItem $invoiceItem)
     {
-        $invoiceItem->delete();
+        try {
+            $invoiceItem->delete();
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao excluir item da nota fiscal.'], 500);
+        }
 
         return response()->json([
-            'message' => 'Item de nota fiscal excluído com sucesso.'
+            'message' => 'Item de nota fiscal excluído com sucesso.',
         ], 200);
     }
 }
