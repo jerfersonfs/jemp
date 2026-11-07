@@ -7,6 +7,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::unprepared('DROP PROCEDURE IF EXISTS sp_relatorio_vendas_periodo');
         DB::unprepared("CREATE PROCEDURE sp_relatorio_vendas_periodo(
     IN p_data_inicio DATE,
@@ -60,6 +64,10 @@ END");
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::unprepared('DROP PROCEDURE IF EXISTS sp_relatorio_vendas_periodo');
     }
 };

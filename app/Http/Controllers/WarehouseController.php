@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Warehouse;
 use App\Http\Requests\StoreWarehouseRequest;
 use App\Http\Requests\UpdateWarehouseRequest;
+use App\Models\Warehouse;
 
 class WarehouseController extends Controller
 {
@@ -23,11 +23,15 @@ class WarehouseController extends Controller
      */
     public function store(StoreWarehouseRequest $request)
     {
-        $warehouse = Warehouse::create($request->validated());
+        try {
+            $warehouse = Warehouse::create($request->validated());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao cadastrar armazem.'], 500);
+        }
 
         return response()->json([
             'message' => 'Armazém criado com sucesso.',
-            'data' => $warehouse
+            'data' => $warehouse,
         ], 201);
     }
 
@@ -46,11 +50,15 @@ class WarehouseController extends Controller
      */
     public function update(UpdateWarehouseRequest $request, Warehouse $warehouse)
     {
-        $warehouse->update($request->validated());
+        try {
+            $warehouse->update($request->validated());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao atualizar armazem.'], 500);
+        }
 
         return response()->json([
             'message' => 'Armazém atualizado com sucesso.',
-            'data' => $warehouse
+            'data' => $warehouse,
         ], 200);
     }
 
@@ -59,10 +67,14 @@ class WarehouseController extends Controller
      */
     public function destroy(Warehouse $warehouse)
     {
-        $warehouse->delete();
+        try {
+            $warehouse->delete();
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Falha ao excluir armazem.'], 500);
+        }
 
         return response()->json([
-            'message' => 'Armazém excluído com sucesso.'
+            'message' => 'Armazém excluído com sucesso.',
         ], 200);
     }
 }
