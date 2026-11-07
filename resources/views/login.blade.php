@@ -37,14 +37,21 @@
 
         <section class="login-card" aria-labelledby="login-title">
             <a class="login-card__brand" href="{{ route('login') }}" aria-label="JEMP, página de login">
-                <span class="login-card__logo" aria-hidden="true">
-                    <svg viewBox="0 0 48 48" focusable="false">
-                        <path d="M5 14 22 5v36L5 32V14Z" fill="currentColor" />
-                        <path d="m26 5 17 9v18l-17 9V5Z" fill="currentColor" opacity=".72" />
-                        <path d="m9 17 9 5v4l-9-5v-4Zm0 9 9 5v4l-9-5v-4Zm21-13 8 4v4l-8-4v-4Zm0 9 8 4v4l-8-4v-4Z" fill="white" />
-                    </svg>
-                </span>
-                <span class="login-card__wordmark">JEMP</span>
+                <svg class="login-card__brand-image" viewBox="544 224 582 480" role="img" aria-labelledby="login-brand-title">
+                    <title id="login-brand-title">JEMP</title>
+                    <defs>
+                        <filter id="login-brand-teal" color-interpolation-filters="sRGB" x="0" y="0" width="1680" height="944" filterUnits="userSpaceOnUse">
+                            <feColorMatrix values="0 0 0 0 0.09 0 0 0 0 0.24 0 0 0 0 0.25 0.299 0.587 0.114 0 0" />
+                            <feComponentTransfer><feFuncA type="linear" slope="4" intercept="-0.82" /></feComponentTransfer>
+                        </filter>
+                        <filter id="login-brand-turquoise" color-interpolation-filters="sRGB" x="0" y="0" width="1680" height="944" filterUnits="userSpaceOnUse">
+                            <feColorMatrix values="0 0 0 0 0.03 0 0 0 0 0.58 0 0 0 0 0.56 -1 1 0 0 0" />
+                            <feComponentTransfer><feFuncA type="linear" slope="3" intercept="-0.8" /></feComponentTransfer>
+                        </filter>
+                    </defs>
+                    <image href="{{ asset('images/logo_jemp_png.png') }}" x="0" y="0" width="1680" height="944" filter="url(#login-brand-teal)" />
+                    <image href="{{ asset('images/logo_jemp_png.png') }}" x="0" y="0" width="1680" height="944" filter="url(#login-brand-turquoise)" />
+                </svg>
                 <span class="login-card__tagline">Sistema de gerenciamento<br>de estoque e notas fiscais</span>
             </a>
 
@@ -56,20 +63,24 @@
                     <label for="login-username">Usuário</label>
                     <div class="login-field__control">
                         <span class="login-field__icon" aria-hidden="true"><x-layout.icon name="user" /></span>
-                        <input id="login-username" name="email" type="email" value="{{ old('email') }}" autocomplete="username" placeholder="Digite seu usuário" required>
+                        <input id="login-username" name="email" type="email" value="{{ old('email') }}"
+                            autocomplete="username" placeholder="Digite seu usuário" required>
                     </div>
                 </div>
                 <div class="login-field">
                     <label for="login-password">Senha</label>
                     <div class="login-field__control">
                         <span class="login-field__icon" aria-hidden="true"><x-layout.icon name="lock" /></span>
-                        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
-                        <button class="login-field__toggle" type="button" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">
+                        <input id="login-password" name="password" type="password" autocomplete="current-password"
+                            placeholder="Digite sua senha" required>
+                        <button class="login-field__toggle" type="button" data-password-toggle
+                            aria-label="Mostrar senha" aria-pressed="false">
                             <x-layout.icon name="eye" />
                         </button>
                     </div>
                 </div>
-                <div class="login-form__options"><span></span><button type="button" data-password-help>Esqueceu sua senha?</button></div>
+                <div class="login-form__options"><span></span><button type="button" data-password-help>Esqueceu sua
+                        senha?</button></div>
                 <x-buttons.button type="submit" class="login-form__submit">Entrar</x-buttons.button>
                 @error('email')
                     <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
