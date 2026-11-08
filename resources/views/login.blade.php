@@ -37,21 +37,7 @@
 
         <section class="login-card" aria-labelledby="login-title">
             <a class="login-card__brand" href="{{ route('login') }}" aria-label="JEMP, página de login">
-                <svg class="login-card__brand-image" viewBox="544 224 582 480" role="img" aria-labelledby="login-brand-title">
-                    <title id="login-brand-title">JEMP</title>
-                    <defs>
-                        <filter id="login-brand-teal" color-interpolation-filters="sRGB" x="0" y="0" width="1680" height="944" filterUnits="userSpaceOnUse">
-                            <feColorMatrix values="0 0 0 0 0.09 0 0 0 0 0.24 0 0 0 0 0.25 0.299 0.587 0.114 0 0" />
-                            <feComponentTransfer><feFuncA type="linear" slope="4" intercept="-0.82" /></feComponentTransfer>
-                        </filter>
-                        <filter id="login-brand-turquoise" color-interpolation-filters="sRGB" x="0" y="0" width="1680" height="944" filterUnits="userSpaceOnUse">
-                            <feColorMatrix values="0 0 0 0 0.03 0 0 0 0 0.58 0 0 0 0 0.56 -1 1 0 0 0" />
-                            <feComponentTransfer><feFuncA type="linear" slope="3" intercept="-0.8" /></feComponentTransfer>
-                        </filter>
-                    </defs>
-                    <image href="{{ asset('images/logo_jemp_png.png') }}" x="0" y="0" width="1680" height="944" filter="url(#login-brand-teal)" />
-                    <image href="{{ asset('images/logo_jemp_png.png') }}" x="0" y="0" width="1680" height="944" filter="url(#login-brand-turquoise)" />
-                </svg>
+                <img class="login-card__brand-image" src="{{ asset('images/logo_oficial.png') }}" alt="JEMP">
                 <span class="login-card__tagline">Sistema de gerenciamento<br>de estoque e notas fiscais</span>
             </a>
 

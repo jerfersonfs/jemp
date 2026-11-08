@@ -238,7 +238,7 @@
     text-decoration: none;
 }
 
-.login-card__brand-image { display: block; width: 206px; max-width: 100%; height: auto; }
+.login-card__brand-image { display: block; width: 200px; max-width: 100%; height: auto; }
 .login-card__tagline { color: #667d7d; font-size: .6875rem; font-weight: 600; line-height: 1.2; text-transform: uppercase; letter-spacing: .13em; }
 
 .login-card__accessible-title {
