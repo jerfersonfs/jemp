@@ -1,6 +1,41 @@
 const catalog = document.querySelector('[data-product-catalog]');
 
 if (catalog) {
+    const warehousesModal = catalog.querySelector('[data-warehouses-modal]');
+    const warehouseForm = catalog.querySelector('[data-warehouse-form]');
+    const warehouseRows = catalog.querySelector('[data-warehouses-rows]');
+    const warehouseError = catalog.querySelector('[data-warehouses-error]');
+    const csrf = catalog.querySelector('input[name="_token"]')?.value ?? document.querySelector('meta[name="csrf-token"]')?.content;
+    const warehousesUrl = '/api/warehouses';
+    const showWarehouseError = (message = '') => { warehouseError.textContent = message; warehouseError.hidden = !message; };
+    async function loadWarehouses() {
+        showWarehouseError();
+        try {
+            const response = await fetch(warehousesUrl, { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error('Não foi possível carregar os armazéns.');
+            const data = await response.json();
+            warehouseRows.replaceChildren();
+            for (const warehouse of data) {
+                const row = document.createElement('tr');
+                for (const value of [warehouse.warehouse_name, warehouse.warehouse_description]) { const cell = document.createElement('td'); cell.textContent = value ?? '—'; row.append(cell); }
+                const actions = document.createElement('td');
+                for (const [label, action] of [['Editar', 'edit'], ['Excluir', 'delete']]) { const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.dataset.warehouseAction = action; button.dataset.id = warehouse.warehouse_id; button.dataset.name = warehouse.warehouse_name; button.dataset.description = warehouse.warehouse_description ?? ''; actions.append(button); }
+                row.append(actions); warehouseRows.append(row);
+            }
+            warehouseRows.querySelectorAll('button').forEach(button => button.addEventListener('click', async () => {
+                if (button.dataset.warehouseAction === 'edit') { warehouseForm.elements.warehouse_id.value = button.dataset.id; warehouseForm.elements.warehouse_name.value = button.dataset.name; warehouseForm.elements.warehouse_description.value = button.dataset.description; }
+                else if (window.confirm(`Excluir o armazém “${button.dataset.name}”?`)) { const res = await fetch(`${warehousesUrl}/${button.dataset.id}`, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); if (!res.ok) showWarehouseError('Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.'); else loadWarehouses(); }
+            }));
+        } catch (error) { showWarehouseError(error.message); }
+    }
+    catalog.querySelector('[data-warehouses-open]').addEventListener('click', () => { warehousesModal.showModal(); loadWarehouses(); });
+    catalog.querySelector('[data-warehouse-reset]').addEventListener('click', () => { warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém'; });
+    warehouseForm.addEventListener('submit', async event => {
+        event.preventDefault(); showWarehouseError();
+        const id = warehouseForm.elements.warehouse_id.value;
+        const body = Object.fromEntries(new FormData(warehouseForm)); delete body.warehouse_id;
+        try { const response = await fetch(id ? `${warehousesUrl}/${id}` : warehousesUrl, { method: id ? 'PUT' : 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.message ?? 'Falha ao salvar armazém.'); warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; loadWarehouses(); } catch (error) { showWarehouseError(error.message); }
+    });
     const formModal = catalog.querySelector('[data-product-form-modal]');
     const detailsModal = catalog.querySelector('[data-product-details-modal]');
     const deleteModal = catalog.querySelector('[data-product-delete-modal]');

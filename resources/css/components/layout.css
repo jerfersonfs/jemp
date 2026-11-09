@@ -51,8 +51,8 @@ html.jemp-sidebar-precollapsed .jemp-shell { --sidebar-width: 68px; }
 
 .jemp-sidebar__brand img {
     display: block;
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
     border-radius: 4px;
     object-fit: contain;
 }

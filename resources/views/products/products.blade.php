@@ -75,7 +75,10 @@
         <section class="products-panel" aria-labelledby="products-list-title">
             <header class="products-panel__header">
                 <div><h2 id="products-list-title">Listagem de Produtos</h2><p>Gerencie todos os produtos do seu catálogo.</p></div>
-                <x-buttons.button class="products-create" data-product-create><x-icons.icon name="plus" size="sm" /> Novo Produto</x-buttons.button>
+                <div class="products-panel__actions">
+                    <button class="products-warehouses" type="button" data-warehouses-open><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
+                    <x-buttons.button class="products-create" data-product-create><x-icons.icon name="plus" size="sm" /> Novo Produto</x-buttons.button>
+                </div>
             </header>
             <div class="products-panel__body">
                 <x-filters.filter-bar class="products-filters" label="Filtrar produtos" data-product-filters>
@@ -146,6 +149,19 @@
                 @method('DELETE')
                 <x-dialogs.confirmation title="Excluir produto?" message="" confirm-label="Excluir produto" />
             </form>
+        </x-dialogs.modal>
+        <x-dialogs.modal label="Armazéns" class="products-modal products-warehouses-modal" data-warehouses-modal>
+            <section class="jemp-dialog jemp-dialog--large jemp-details-dialog" role="dialog" aria-modal="true" aria-label="Armazéns">
+                <header class="jemp-dialog__header"><div><h2 class="jemp-dialog__title">Armazéns</h2><p class="jemp-dialog__description">Consulte e gerencie os armazéns cadastrados.</p></div><button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button></header>
+                <div class="jemp-details-dialog__body"><p data-warehouses-error role="alert" hidden></p><table class="jemp-table"><thead><tr><th>Armazém</th><th>Descrição</th><th>Ações</th></tr></thead><tbody data-warehouses-rows></tbody></table></div>
+                <form class="jemp-form-dialog jemp-form-dialog--grid" data-warehouse-form>
+                    <h3 data-warehouse-form-title>Novo armazém</h3><input type="hidden" name="warehouse_id">
+                    <label>Nome<input name="warehouse_name" maxlength="100" required></label>
+                    <label>Descrição<textarea name="warehouse_description" required></textarea></label>
+                    <footer class="jemp-dialog__footer"><button type="button" class="jemp-dialog__button jemp-dialog__button--secondary" data-warehouse-reset>Limpar</button><button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">Salvar armazém</button></footer>
+                </form>
+                <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>Fechar</button></footer>
+            </section>
         </x-dialogs.modal>
         <div class="products-notice" @if (!session('status')) hidden @endif data-product-notice><x-dialogs.alert variant="success" :message="session('status', '')" /></div>
     </div>

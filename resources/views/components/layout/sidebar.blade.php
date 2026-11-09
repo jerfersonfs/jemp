@@ -24,7 +24,7 @@
 <aside class="jemp-sidebar" id="app-sidebar" aria-label="Navegação principal">
     <div class="jemp-sidebar__brand-row">
         <a class="jemp-sidebar__brand" href="{{ route('home') }}" aria-label="JEMP, página inicial" title="Página inicial">
-            <img src="{{ asset('images/logo-simbolo.jpg') }}" alt="" width="44" height="44">
+            <img src="{{ asset('images/logo-simbolo.jpg') }}" alt="" width="56" height="56">
             <span class="sr-only">JEMP</span>
         </a>
         <button class="jemp-sidebar__collapse" type="button" data-sidebar-collapse aria-controls="app-sidebar" aria-expanded="true" aria-label="Recolher menu lateral" title="Recolher menu lateral">

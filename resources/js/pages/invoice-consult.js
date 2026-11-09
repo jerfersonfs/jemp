@@ -3,6 +3,23 @@ import { showFeedback } from '../components/feedback.js';
 const page = document.querySelector('[data-invoice-page]');
 
 if (page) {
+    const importLayer = page.querySelector('[data-invoice-import-layer]');
+    const importForm = page.querySelector('[data-invoice-import-form]');
+    const importFeedback = page.querySelector('[data-invoice-import-feedback]');
+    const openImport = page.querySelector('[data-invoice-import-open]');
+    const setImportFeedback = (message, isError = false) => { importFeedback.textContent = message; importFeedback.hidden = !message; importFeedback.dataset.error = String(isError); };
+    openImport?.addEventListener('click', () => { setImportFeedback(''); importLayer.hidden = false; importForm.querySelector('input[type="file"]').focus(); });
+    page.querySelectorAll('[data-invoice-import-close]').forEach(button => button.addEventListener('click', () => { importLayer.hidden = true; openImport?.focus(); }));
+    importForm?.addEventListener('submit', async (event) => {
+        event.preventDefault(); setImportFeedback('Enviando XML...');
+        try {
+            const response = await fetch('/api/invoices/import', { method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(importForm) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.details || Object.values(result.errors || {}).flat().join(' ') || result.message || 'Falha ao importar o XML.');
+            setImportFeedback(result.message || 'NF-e importada com sucesso.');
+            window.setTimeout(() => window.location.reload(), 900);
+        } catch (error) { setImportFeedback(error.message, true); }
+    });
     const filterForm = page.querySelector('[data-invoice-filter]');
     const rows = [...page.querySelectorAll('[data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');

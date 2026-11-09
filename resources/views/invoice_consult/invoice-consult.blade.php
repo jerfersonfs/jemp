@@ -39,9 +39,12 @@
                 <h1>Consultar Nota Fiscal</h1>
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
+            <div class="invoice-page-head__actions">
+            <button class="button invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML</button>
             <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
                 <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
             </button>
+            </div>
         </header>
 
         <section class="invoice-overview" aria-label="Resumo das notas fiscais">
@@ -81,6 +84,18 @@
 
         <div class="invoice-feedback" data-invoice-feedback hidden>
             <x-dialogs.alert variant="info" title="Consulta de notas fiscais" message="Os dados exibidos são carregados do banco de dados." :dismissible="false" />
+        </div>
+
+        <div class="invoice-dialog-layer" data-invoice-import-layer role="presentation" hidden>
+            <section class="jemp-dialog jemp-dialog--large invoice-import-dialog" role="dialog" aria-modal="true" aria-label="Importar nota fiscal XML">
+                <header class="jemp-dialog__header"><div><h2 class="jemp-dialog__title">Importar NF-e por XML</h2><p class="jemp-dialog__description">Selecione o arquivo XML e o armazém que receberá os itens.</p></div><button class="jemp-dialog__close" type="button" data-invoice-import-close aria-label="Fechar">×</button></header>
+                <form data-invoice-import-form enctype="multipart/form-data">
+                    <label>Arquivo XML da NF-e<input type="file" name="xml_file" accept=".xml,application/xml,text/xml" required></label>
+                    <label>Armazém de destino<select name="warehouse_id" required><option value="">Selecione um armazém</option>@foreach ($warehouses as $warehouse)<option value="{{ $warehouse->warehouse_id }}">{{ $warehouse->warehouse_name }}</option>@endforeach</select></label>
+                    <p data-invoice-import-feedback role="status" hidden></p>
+                    <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-invoice-import-close>Cancelar</button><button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">Importar XML</button></footer>
+                </form>
+            </section>
         </div>
 
         <div class="invoice-dialog-layer" data-dialog-layer="invoice-create" data-invoice-mode="create" role="presentation" hidden>

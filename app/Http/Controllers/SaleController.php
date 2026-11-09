@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Models\Warehouse;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,7 @@ class SaleController extends Controller
         return view('invoice_consult.invoice-consult', [
             'page' => 'invoice-consult',
             'invoices' => $this->invoiceRows(forConsult: true),
+            'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(['warehouse_id', 'warehouse_name']),
         ]);
     }
 
