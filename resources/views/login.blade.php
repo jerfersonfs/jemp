@@ -1,6 +1,7 @@
 <x-layouts.app title="Entrar · JEMP">
     <main class="login-page">
-        <section class="login-story" aria-label="Sobre a JEMP">
+        <section class="login-story" aria-label="Sobre a JEMP"
+            style="--login-warehouse-image: url('{{ asset('images/login-warehouse.png') }}')">
             <header class="login-story__header">
                 <a class="login-brand" href="{{ route('login') }}" aria-label="JEMP, página de login">
                     <span>JEMP</span>

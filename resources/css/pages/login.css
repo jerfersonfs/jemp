@@ -21,7 +21,7 @@
     color: white;
     background:
         linear-gradient(90deg, rgb(7 47 48 / 58%) 0%, rgb(7 47 48 / 48%) 55%, rgb(7 47 48 / 38%) 100%),
-        url('/images/login-warehouse.png') 58% center / cover no-repeat,
+        var(--login-warehouse-image) 58% center / cover no-repeat,
         var(--color-secondary);
     animation: jemp-content-enter var(--motion-slow) var(--motion-ease-out) both;
 }
