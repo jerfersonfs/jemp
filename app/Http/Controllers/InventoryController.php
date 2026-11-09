@@ -73,7 +73,6 @@ class InventoryController extends Controller
 
         return response()->noContent();
     }
-
     public function removeStock(Request $request)
     {
         $request->validate([

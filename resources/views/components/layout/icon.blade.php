@@ -20,6 +20,7 @@
         'user' => 'ph-user',
         'lock' => 'ph-lock-key',
         'eye' => 'ph-eye',
+        'eye-slash' => 'ph-eye-slash',
     ];
 @endphp
 
