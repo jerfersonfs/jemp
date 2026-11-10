@@ -19,7 +19,7 @@
 .jemp-toast-region {
     position: fixed;
     z-index: 1000;
-    inset: 1rem 1rem auto auto;
+    inset: auto 1rem 1rem auto;
     display: grid;
     width: min(26rem, calc(100vw - 2rem));
     gap: .625rem;

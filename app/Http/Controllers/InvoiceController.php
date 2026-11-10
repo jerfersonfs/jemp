@@ -17,7 +17,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $invoices = Invoice::all();
+        $invoices = Invoice::with('items')->get();
 
         return InvoiceResource::collection($invoices);
     }
@@ -28,10 +28,15 @@ class InvoiceController extends Controller
     public function store(StoreInvoiceRequest $request)
     {
         $dados = $request->validated();
+        $invoice = DB::transaction(function () use ($dados): Invoice {
+            return Invoice::query()->create(array_merge($dados, [
+                'issue_date' => $dados['issue_date'] ?? now()->toDateString(),
+                'payment_status' => $dados['payment_status'] ?? 'A vencer',
+                'amount' => 0,
+            ]));
+        });
 
-        $invoice = Invoice::create($dados);
-
-        return response()->json($invoice, 201);
+        return response()->json(new InvoiceResource($invoice->load('items')), 201);
     }
 
     public function importXml(Request $request)
@@ -63,12 +68,25 @@ class InvoiceController extends Controller
                     'payment_terms_days' => 0, // Obrigatório (inteiro)
                     'payment_status' => 'Paga', // TEM de ser exatamente 'Paga' para bater com o ENUM da migration
                     'payment_date' => date('Y-m-d'), // Opcional, mas faz sentido se está 'Paga'
-                    'amount' => (float) $infNFe->total->ICMSTot->vNF,
+                    'amount' => 0,
                 ]);
 
+                $calculatedAmount = 0.0;
                 foreach ($infNFe->det as $itemXML) {
                     $productId = (string) $itemXML->prod->cProd;
                     $quantity = (float) $itemXML->prod->qCom;
+                    $unitPrice = (float) $itemXML->prod->vUnCom;
+
+                    if ($quantity < 1 || floor($quantity) !== $quantity || $unitPrice < 0) {
+                        throw new \Exception('O XML contém item com quantidade fracionada ou preço inválido para o cadastro atual.');
+                    }
+
+                    $invoice->items()->create([
+                        'product_id' => $productId,
+                        'quantity' => (int) $quantity,
+                        'unit_price' => $unitPrice,
+                    ]);
+                    $calculatedAmount += $quantity * $unitPrice;
 
                     $inventory = Inventory::firstOrCreate(
                         [
@@ -81,6 +99,8 @@ class InvoiceController extends Controller
 
                     $inventory->increment('theoretical_balance', $quantity);
                 }
+
+                $invoice->forceFill(['amount' => $calculatedAmount])->save();
 
                 return $invoice;
             });
@@ -103,6 +123,7 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
+        $invoice->load('items');
         return new InvoiceResource($invoice);
     }
 

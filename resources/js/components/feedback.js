@@ -1,4 +1,19 @@
 const region = document.querySelector('[data-toast-region]');
+const NOTICE_DURATION = 15_000;
+
+function dismissNotice(notice) {
+    if (!notice || notice.dataset.dismissing === 'true') return;
+    notice.dataset.dismissing = 'true';
+    notice.classList.add('jemp-toast--leaving');
+    notice.addEventListener('animationend', () => notice.remove(), { once: true });
+    window.setTimeout(() => notice.remove(), 250);
+}
+
+document.querySelectorAll('.jemp-notice:not(.jemp-toast)').forEach((notice) => {
+    if (notice.closest('[hidden]')) return;
+    notice.querySelector('.jemp-notice__close')?.addEventListener('click', () => dismissNotice(notice));
+    window.setTimeout(() => dismissNotice(notice), NOTICE_DURATION);
+});
 
 export function showFeedback(message, variant = 'success') {
     if (!region || !message) return;
@@ -25,16 +40,8 @@ export function showFeedback(message, variant = 'success') {
     close.setAttribute('aria-label', 'Fechar notificação');
     close.textContent = '×';
 
-    let timeout;
-    const dismiss = () => {
-        clearTimeout(timeout);
-        toast.classList.add('jemp-toast--leaving');
-        toast.addEventListener('animationend', () => toast.remove(), { once: true });
-        setTimeout(() => toast.remove(), 250);
-    };
-
-    close.addEventListener('click', dismiss);
+    close.addEventListener('click', () => dismissNotice(toast));
     toast.append(icon, content, close);
     region.append(toast);
-    timeout = setTimeout(dismiss, 5000);
+    window.setTimeout(() => dismissNotice(toast), NOTICE_DURATION);
 }

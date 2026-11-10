@@ -26,7 +26,7 @@ class InvoiceResource extends JsonResource
             'payment_terms_days' => (int) $this->payment_terms_days,
             'payment_status' => (string) $this->payment_status,
             'payment_date' => $this->payment_date?->format('Y-m-d'),
-            'amount' => (float) $this->amount,
+            'amount' => $this->calculatedAmount(),
         ];
     }
 }

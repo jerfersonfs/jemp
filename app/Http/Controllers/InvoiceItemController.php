@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInvoiceItemRequest;
 use App\Http\Requests\UpdateInvoiceItemRequest;
+use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceItemController extends Controller
 {
@@ -23,14 +26,14 @@ class InvoiceItemController extends Controller
      */
     public function store(StoreInvoiceItemRequest $request)
     {
-        try {
-            $invoiceItem = InvoiceItem::create($request->validated());
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Falha ao cadastrar item da nota fiscal.'], 500);
-        }
+        $invoiceItem = DB::transaction(function () use ($request): InvoiceItem {
+            $data = $request->validated();
+            $product = Product::query()->findOrFail($data['product_id']);
+            $invoiceItem = InvoiceItem::create($data + ['unit_price' => $product->cost_price]);
+            $invoiceItem->invoice->recalculateAmount();
 
-        // Carrega os relacionamentos para devolver o objeto completo ao frontend
-        $invoiceItem->load(['invoice', 'product']);
+            return $invoiceItem->load(['invoice', 'product']);
+        });
 
         return response()->json([
             'message' => 'Item de nota fiscal criado com sucesso.',
@@ -53,17 +56,28 @@ class InvoiceItemController extends Controller
      */
     public function update(UpdateInvoiceItemRequest $request, InvoiceItem $invoiceItem)
     {
-        try {
-            $invoiceItem->update($request->validated());
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Falha ao atualizar item da nota fiscal.'], 500);
-        }
+        $updatedItem = DB::transaction(function () use ($request, $invoiceItem): InvoiceItem {
+            $data = $request->validated();
+            $previousInvoiceId = $invoiceItem->invoice_id;
+            $nextInvoiceId = $data['invoice_id'] ?? $previousInvoiceId;
+            $nextProductId = $data['product_id'] ?? $invoiceItem->product_id;
 
-        $invoiceItem->load(['invoice', 'product']);
+            if ((int) $nextProductId !== (int) $invoiceItem->product_id) {
+                $data['unit_price'] = Product::query()->findOrFail($nextProductId)->cost_price;
+            }
+
+            $invoiceItem->update($data);
+            Invoice::query()->findOrFail($previousInvoiceId)->recalculateAmount();
+            if ((int) $nextInvoiceId !== (int) $previousInvoiceId) {
+                Invoice::query()->findOrFail($nextInvoiceId)->recalculateAmount();
+            }
+
+            return $invoiceItem->load(['invoice', 'product']);
+        });
 
         return response()->json([
             'message' => 'Item de nota fiscal atualizado com sucesso.',
-            'data' => $invoiceItem,
+            'data' => $updatedItem,
         ], 200);
     }
 
@@ -72,11 +86,11 @@ class InvoiceItemController extends Controller
      */
     public function destroy(InvoiceItem $invoiceItem)
     {
-        try {
+        DB::transaction(function () use ($invoiceItem): void {
+            $invoiceId = $invoiceItem->invoice_id;
             $invoiceItem->delete();
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Falha ao excluir item da nota fiscal.'], 500);
-        }
+            Invoice::query()->findOrFail($invoiceId)->recalculateAmount();
+        });
 
         return response()->json([
             'message' => 'Item de nota fiscal excluído com sucesso.',

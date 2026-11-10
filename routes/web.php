@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
@@ -18,7 +19,7 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::view('/', 'jemp', ['page' => 'home'])->name('home');
+    Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/produtos', [ProductController::class, 'index'])->name('products.index');
     Route::resource('produtos', ProductController::class)->only(['store', 'update', 'destroy'])->names('products');
     Route::get('/clientes', [CustomerController::class, 'index'])->name('customers.index');

@@ -37,14 +37,32 @@
             <x-tabs.tabs :id="$tabSetId" :tabs="$tabItems" :label="'Seções de ' . $title" variant="underline">
                 @foreach ($sections as $section)
                     <section class="jemp-details-dialog__section" data-tab-panel="{{ $section['id'] }}">
-                        <dl class="jemp-details-dialog__grid">
-                            @foreach ($section['details'] ?? [] as $detail)
-                                <div class="jemp-details-dialog__item">
-                                    <dt>{{ $detail['label'] }}</dt>
-                                    <dd>{{ $detail['value'] ?? '—' }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
+                        @if (isset($section['items']))
+                            <div class="invoice-items-table-wrap" role="region" aria-label="Itens da nota fiscal" tabindex="0">
+                                <table class="invoice-items-table">
+                                    <thead><tr><th>Produto</th><th>SKU</th><th>Quantidade</th><th>Preço unitário</th><th>Subtotal</th><th>Ações</th></tr></thead>
+                                    <tbody>
+                                        @forelse ($section['items'] as $item)
+                                            <tr>
+                                                <td>{{ $item['product'] }}</td><td>{{ $item['sku'] }}</td><td>{{ $item['quantity'] }}</td><td>{{ $item['unit_price_display'] }}</td><td>{{ $item['subtotal'] }}</td>
+                                                <td><div class="invoice-item-actions">
+                                                    <button type="button" data-invoice-item-action="edit" data-item-id="{{ $item['id'] }}" data-product-id="{{ $item['product_id'] }}" data-quantity="{{ $item['quantity'] }}" data-unit-price="{{ $item['unit_price'] }}" aria-label="Editar item {{ $item['product'] }}" title="Editar item"><i class="ph ph-pencil-simple" aria-hidden="true"></i></button>
+                                                    <button type="button" data-invoice-item-action="delete" data-item-id="{{ $item['id'] }}" data-item-label="{{ $item['product'] }}" aria-label="Excluir item {{ $item['product'] }}" title="Excluir item"><i class="ph ph-trash" aria-hidden="true"></i></button>
+                                                </div></td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="6" class="invoice-items-table__empty">Nenhum item cadastrado nesta nota.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <dl class="jemp-details-dialog__grid">
+                                @foreach ($section['details'] ?? [] as $detail)
+                                    <div class="jemp-details-dialog__item"><dt>{{ $detail['label'] }}</dt><dd>{{ $detail['value'] ?? '—' }}</dd></div>
+                                @endforeach
+                            </dl>
+                        @endif
                     </section>
                 @endforeach
             </x-tabs.tabs>

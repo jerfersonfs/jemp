@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Product;
 use App\Models\Warehouse;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -45,6 +47,8 @@ class SaleController extends Controller
         return view('invoice_consult.invoice-consult', [
             'page' => 'invoice-consult',
             'invoices' => $this->invoiceRows(forConsult: true),
+            'customers' => Customer::query()->orderBy('customer_name')->get(['customer_id', 'customer_name', 'customer_document']),
+            'products' => Product::query()->orderBy('product_name')->get(['product_id', 'product_name', 'sku', 'cost_price']),
             'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(['warehouse_id', 'warehouse_name']),
         ]);
     }
@@ -57,7 +61,7 @@ class SaleController extends Controller
             ->latest('issue_date')
             ->get()
             ->map(function (Invoice $invoice) use ($forConsult): array {
-                $total = $invoice->items->sum(fn ($item): float => (int) $item->quantity * (float) $item->unit_price);
+                $total = $invoice->calculatedAmount();
                 $customerName = $invoice->customer?->customer_name ?? '—';
 
                 if (!$forConsult) {
@@ -75,12 +79,19 @@ class SaleController extends Controller
                 $id = (string) $invoice->invoice_id;
                 $formattedTotal = 'R$ '.number_format($total, 2, ',', '.');
                 $items = $invoice->items->map(fn ($item): array => [
-                    'label' => $item->product?->product_name ?? 'Produto',
-                    'value' => (int) $item->quantity.' un. · R$ '.number_format((float) $item->unit_price, 2, ',', '.'),
+                    'id' => (string) $item->item_id,
+                    'product_id' => (string) $item->product_id,
+                    'product' => $item->product?->product_name ?? 'Produto',
+                    'sku' => $item->product?->sku ?? '—',
+                    'quantity' => (int) $item->quantity,
+                    'unit_price' => number_format((float) $item->unit_price, 2, '.', ''),
+                    'unit_price_display' => 'R$ '.number_format((float) $item->unit_price, 2, ',', '.'),
+                    'subtotal' => 'R$ '.number_format((int) $item->quantity * (float) $item->unit_price, 2, ',', '.'),
                 ])->all();
 
                 return [
                     'id' => $id,
+                    'customer_id' => (string) $invoice->customer_id,
                     'number' => (string) $invoice->invoice_number,
                     'series' => (string) $invoice->invoice_serie,
                     'issuer' => $customerName,
@@ -92,10 +103,13 @@ class SaleController extends Controller
                     'payment_date' => $invoice->payment_date?->format('d/m/Y') ?? '—',
                     'payment_date_iso' => $invoice->payment_date?->format('Y-m-d') ?? '',
                     'amount' => number_format($total, 2, '.', ''),
+                    'payment_method' => $invoice->payment_method,
+                    'payment_terms_days' => (string) $invoice->payment_terms_days,
                     'total' => $formattedTotal,
                     'status' => $invoice->payment_status,
                     'details_target' => 'invoice-details-'.$id,
                     'edit_target' => 'invoice-edit-'.$id,
+                    'add_item_target' => 'invoice-add-item-'.$id,
                     'search_terms' => $invoice->invoice_number.' '.$invoice->invoice_serie.' '.$customerName.' '.($invoice->customer?->customer_document ?? ''),
                     'items' => $items,
                 ];

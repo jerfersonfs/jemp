@@ -3,7 +3,7 @@
     $columns = [
         ['key'=>'number','label'=>'Nº da nota'],
         ['key'=>'series','label'=>'Série'],
-        ['key'=>'issuer','label'=>'Cliente / fornecedor'],
+        ['key'=>'issuer','label'=>'Cliente'],
         ['key'=>'issue_date','label'=>'Emissão','class'=>'invoice-issued-date'],
         ['key'=>'due_date','label'=>'Vencimento'],
         ['key'=>'payment_date','label'=>'Pagamento'],
@@ -12,22 +12,28 @@
         ['key'=>'details_target','label'=>'Ações','type'=>'detail','targetKey'=>'details_target','detailLabel'=>'Ver detalhes'],
     ];
     $statusVariants = ['Pendente'=>'info','A vencer'=>'warning','Vencida'=>'danger','Paga'=>'success'];
-    $statusOptions = ['Pendente'=>'Pendente','A vencer'=>'A vencer','Vencida'=>'Vencida','Paga'=>'Paga'];
+    $statusOptions = ['A vencer'=>'A vencer','Vencida'=>'Vencida','Paga'=>'Paga','Cancelada'=>'Cancelada'];
+    $customerOptions = $customers->mapWithKeys(fn ($customer) => [
+        $customer->customer_id => [
+            'label' => $customer->customer_name.' · '.$customer->customer_document,
+            'document' => $customer->customer_document,
+        ],
+    ])->all();
     $totalInvoices = count($invoiceRows);
     $dueSoonCount = count(array_filter($invoiceRows, fn ($invoice) => $invoice['status'] === 'A vencer'));
     $overdueCount = count(array_filter($invoiceRows, fn ($invoice) => $invoice['status'] === 'Vencida'));
     $paidCount = count(array_filter($invoiceRows, fn ($invoice) => $invoice['status'] === 'Paga'));
     $createFields = [
-        ['name'=>'number','id'=>'invoice-create-number','label'=>'Número da nota','type'=>'text','placeholder'=>'Gerado pelo sistema ao salvar','readonly'=>true],
-        ['name'=>'series','id'=>'invoice-create-series','label'=>'Série','type'=>'text','required'=>true],
-        ['name'=>'issuer','id'=>'invoice-create-issuer','label'=>'Cliente / fornecedor','type'=>'text','required'=>true],
-        ['name'=>'document','id'=>'invoice-create-document','label'=>'CNPJ / CPF','type'=>'text','required'=>true,'placeholder'=>'00.000.000/0000-00'],
-        ['name'=>'issue_date','id'=>'invoice-create-issue-date','label'=>'Data de emissão','type'=>'date','value'=>now()->toDateString(),'readonly'=>true],
+        ['name'=>'invoice_number','id'=>'invoice-create-number','label'=>'Número da nota','type'=>'number','required'=>true,'min'=>1],
+        ['name'=>'invoice_serie','id'=>'invoice-create-series','label'=>'Série','type'=>'number','required'=>true,'min'=>1,'value'=>1],
+        ['name'=>'customer_id','id'=>'invoice-create-customer','label'=>'Cliente','type'=>'select','options'=>[''=>'Selecione um cliente'] + $customerOptions,'required'=>true],
+        ['name'=>'customer_document_preview','id'=>'invoice-create-document','label'=>'CPF / CNPJ','type'=>'text','placeholder'=>'Preenchido pelo cliente selecionado','readonly'=>true],
+        ['name'=>'issue_date_preview','id'=>'invoice-create-issue-date','label'=>'Data de emissão','type'=>'text','value'=>now()->format('d/m/Y'),'disabled'=>true],
         ['name'=>'due_date','id'=>'invoice-create-due-date','label'=>'Vencimento','type'=>'date','required'=>true],
+        ['name'=>'payment_method','id'=>'invoice-create-payment-method','label'=>'Forma de pagamento','type'=>'text','required'=>true],
+        ['name'=>'payment_terms_days','id'=>'invoice-create-payment-terms','label'=>'Prazo de pagamento (dias)','type'=>'number','value'=>0,'required'=>true,'min'=>0],
+        ['name'=>'payment_status','id'=>'invoice-create-status','label'=>'Situação','type'=>'select','value'=>'A vencer','options'=>$statusOptions,'required'=>true],
         ['name'=>'payment_date','id'=>'invoice-create-payment-date','label'=>'Data de pagamento','type'=>'date'],
-        ['name'=>'amount','id'=>'invoice-create-amount','label'=>'Valor total (R$)','type'=>'number','required'=>true,'placeholder'=>'0,00'],
-        ['name'=>'status','id'=>'invoice-create-status','label'=>'Situação','type'=>'select','value'=>'Pendente','options'=>$statusOptions,'required'=>true],
-        ['name'=>'notes','id'=>'invoice-create-notes','label'=>'Observações','type'=>'textarea'],
     ];
 @endphp
 
@@ -40,7 +46,6 @@
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
             <div class="invoice-page-head__actions">
-            <button class="button invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML</button>
             <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
                 <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
             </button>
@@ -68,8 +73,8 @@
                     <span>Buscar nota fiscal</span>
                     <span class="invoice-filter__control"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" name="search" placeholder="Número, série, cliente, CNPJ ou produto" autocomplete="off"></span>
                 </label>
-                <label class="invoice-filter"><span>Emissão a partir de</span><input type="date" name="from" value="2026-09-01"></label>
-                <label class="invoice-filter"><span>Até</span><input type="date" name="to" value="2026-09-30"></label>
+                <label class="invoice-filter"><span>Emissão a partir de</span><input type="date" name="from"></label>
+                <label class="invoice-filter"><span>Até</span><input type="date" name="to"></label>
                 <label class="invoice-filter">
                     <span>Situação</span>
                     <select name="status"><option value="all">Todas as situações</option>@foreach ($statusOptions as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
@@ -81,10 +86,6 @@
             <p class="invoice-no-results" role="status" data-invoice-no-results hidden>Nenhuma nota fiscal encontrada com os filtros selecionados.</p>
             <p class="invoice-table-caption">As notas fiscais são carregadas do banco de dados.</p>
         </section>
-
-        <div class="invoice-feedback" data-invoice-feedback hidden>
-            <x-dialogs.alert variant="info" title="Consulta de notas fiscais" message="Os dados exibidos são carregados do banco de dados." :dismissible="false" />
-        </div>
 
         <div class="invoice-dialog-layer" data-invoice-import-layer role="presentation" hidden>
             <section class="jemp-dialog jemp-dialog--large invoice-import-dialog" role="dialog" aria-modal="true" aria-label="Importar nota fiscal XML">
@@ -99,46 +100,79 @@
         </div>
 
         <div class="invoice-dialog-layer" data-dialog-layer="invoice-create" data-invoice-mode="create" role="presentation" hidden>
-            <x-dialogs.form-dialog class="invoice-form-dialog" title="Cadastrar nota fiscal" description="Preencha os dados da nota. O número e a data de emissão são definidos pelo sistema." action="#" method="POST" size="large" submit-label="Cadastrar nota fiscal" :fields="$createFields" />
+            <x-dialogs.form-dialog class="invoice-form-dialog" title="Cadastrar nota fiscal" description="Informe o número e os dados da nota. A data de emissão é preenchida pelo sistema; o total será calculado pelos itens." action="#" method="POST" size="large" submit-label="Cadastrar nota fiscal" :fields="$createFields" />
         </div>
 
         @foreach ($invoiceRows as $invoice)
             @php
                 $editFields = [
-                    ['name'=>'number','id'=>'invoice-edit-'.$invoice['id'].'-number','label'=>'Número da nota','type'=>'text','value'=>$invoice['number'],'readonly'=>true],
-                    ['name'=>'series','id'=>'invoice-edit-'.$invoice['id'].'-series','label'=>'Série','type'=>'text','value'=>$invoice['series'],'required'=>true],
-                    ['name'=>'issuer','id'=>'invoice-edit-'.$invoice['id'].'-issuer','label'=>'Cliente / fornecedor','type'=>'text','value'=>$invoice['issuer'],'required'=>true],
-                    ['name'=>'document','id'=>'invoice-edit-'.$invoice['id'].'-document','label'=>'CNPJ / CPF','type'=>'text','value'=>$invoice['document'],'required'=>true],
-                    ['name'=>'issue_date','id'=>'invoice-edit-'.$invoice['id'].'-issue-date','label'=>'Data de emissão','type'=>'date','value'=>$invoice['issue_date_iso'],'readonly'=>true],
+                    ['name'=>'invoice_number','id'=>'invoice-edit-'.$invoice['id'].'-number','label'=>'Número da nota','type'=>'number','value'=>$invoice['number'],'required'=>true,'min'=>1],
+                    ['name'=>'invoice_serie','id'=>'invoice-edit-'.$invoice['id'].'-series','label'=>'Série','type'=>'number','value'=>$invoice['series'],'required'=>true,'min'=>1],
+                    ['name'=>'customer_id','id'=>'invoice-edit-'.$invoice['id'].'-customer','label'=>'Cliente','type'=>'select','value'=>$invoice['customer_id'],'options'=>[''=>'Selecione um cliente'] + $customerOptions,'required'=>true],
+                    ['name'=>'customer_document_preview','id'=>'invoice-edit-'.$invoice['id'].'-document','label'=>'CPF / CNPJ','type'=>'text','value'=>$invoice['document'],'readonly'=>true],
+                    ['name'=>'issue_date_preview','id'=>'invoice-edit-'.$invoice['id'].'-issue-date','label'=>'Data de emissão','type'=>'text','value'=>$invoice['issue_date'],'disabled'=>true],
                     ['name'=>'due_date','id'=>'invoice-edit-'.$invoice['id'].'-due-date','label'=>'Vencimento','type'=>'date','value'=>$invoice['due_date_iso'],'required'=>true],
+                    ['name'=>'payment_method','id'=>'invoice-edit-'.$invoice['id'].'-payment-method','label'=>'Forma de pagamento','type'=>'text','value'=>$invoice['payment_method'],'required'=>true],
+                    ['name'=>'payment_terms_days','id'=>'invoice-edit-'.$invoice['id'].'-payment-terms','label'=>'Prazo de pagamento (dias)','type'=>'number','value'=>$invoice['payment_terms_days'],'required'=>true,'min'=>0],
+                    ['name'=>'payment_status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Situação','type'=>'select','value'=>$invoice['status'],'options'=>$statusOptions,'required'=>true],
                     ['name'=>'payment_date','id'=>'invoice-edit-'.$invoice['id'].'-payment-date','label'=>'Data de pagamento','type'=>'date','value'=>$invoice['payment_date_iso']],
-                    ['name'=>'amount','id'=>'invoice-edit-'.$invoice['id'].'-amount','label'=>'Valor total (R$)','type'=>'number','value'=>$invoice['amount'],'required'=>true],
-                    ['name'=>'status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Situação','type'=>'select','value'=>$invoice['status'],'options'=>$statusOptions,'required'=>true],
-                    ['name'=>'notes','id'=>'invoice-edit-'.$invoice['id'].'-notes','label'=>'Observações','type'=>'textarea'],
                 ];
                 $detailSections = [
                     ['id'=>'invoice-data','label'=>'Dados da nota','details'=>[
                         ['label'=>'Número','value'=>$invoice['number']],
                         ['label'=>'Série','value'=>$invoice['series']],
-                        ['label'=>'Cliente / fornecedor','value'=>$invoice['issuer']],
+                        ['label'=>'Cliente','value'=>$invoice['issuer']],
                         ['label'=>'CNPJ / CPF','value'=>$invoice['document']],
                         ['label'=>'Emissão','value'=>$invoice['issue_date']],
                         ['label'=>'Vencimento','value'=>$invoice['due_date']],
                         ['label'=>'Pagamento','value'=>$invoice['payment_date']],
-                        ['label'=>'Valor total','value'=>$invoice['total']],
+                        ['label'=>'Valor total calculado pelos itens','value'=>$invoice['total']],
                         ['label'=>'Situação','value'=>$invoice['status']],
                     ]],
-                    ['id'=>'invoice-items','label'=>'Itens da nota','details'=>$invoice['items']],
+                    ['id'=>'invoice-items','label'=>'Itens da nota','items'=>$invoice['items']],
                 ];
             @endphp
 
             <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['details_target'] }}" role="presentation" hidden>
                 <x-dialogs.details-dialog id="{{ $invoice['details_target'] }}-tabs" title="Nota fiscal {{ $invoice['number'] }}" description="Consulte os dados e os itens desta nota fiscal." :sections="$detailSections">
-                    <x-slot:footer><button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">Editar dados</button></x-slot:footer>
+                    <x-slot:footer>
+                        <button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-open="{{ $invoice['add_item_target'] }}">Adicionar item</button>
+                        <button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">Editar dados</button>
+                    </x-slot:footer>
                 </x-dialogs.details-dialog>
             </div>
-            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['edit_target'] }}" data-invoice-mode="edit" role="presentation" hidden>
-                <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" title="Editar nota fiscal {{ $invoice['number'] }}" description="Atualize as informações permitidas e salve as alterações." action="#" method="PUT" size="large" submit-label="Salvar alterações" :fields="$editFields" />
+            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['add_item_target'] }}" data-invoice-mode="item" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
+                <section class="jemp-dialog invoice-item-dialog" role="dialog" aria-modal="true" aria-label="Adicionar item à nota fiscal {{ $invoice['number'] }}">
+                    <header class="jemp-dialog__header">
+                        <div><h2 class="jemp-dialog__title" data-item-dialog-title>Adicionar item à nota</h2><p class="jemp-dialog__description">Escolha o produto e informe a quantidade. O preço é preenchido pelo cadastro do produto.</p></div>
+                        <button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button>
+                    </header>
+                    <form data-invoice-item-form>
+                        <input type="hidden" name="invoice_id" value="{{ $invoice['id'] }}">
+                        <label>Produto
+                            <select name="product_id" required>
+                                <option value="">Selecione um produto</option>
+                                @foreach ($products as $product)
+                                    <option value="{{ $product->product_id }}" data-unit-price="{{ $product->cost_price }}">{{ $product->product_name }} · {{ $product->sku }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>Quantidade
+                            <input type="number" name="quantity" min="1" step="1" required>
+                        </label>
+                        <label>Valor unitário (R$)
+                            <input type="number" name="unit_price" min="0" step="0.01" readonly required aria-describedby="invoice-item-price-help">
+                            <small id="invoice-item-price-help">Valor definido pelo cadastro do produto.</small>
+                        </label>
+                        <footer class="jemp-dialog__footer">
+                            <button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>Cancelar</button>
+                            <button class="jemp-dialog__button jemp-dialog__button--primary" type="submit" data-item-submit-label>Cadastrar item</button>
+                        </footer>
+                    </form>
+                </section>
+            </div>
+            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['edit_target'] }}" data-invoice-mode="edit" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
+                    <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" title="Editar nota fiscal {{ $invoice['number'] }}" description="Atualize os dados da nota. O total permanece calculado pelos itens." action="#" method="PUT" size="large" submit-label="Salvar alterações" :fields="$editFields" />
             </div>
         @endforeach
     </div>

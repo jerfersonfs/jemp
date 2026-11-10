@@ -22,10 +22,10 @@ class UpdateInvoiceItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'invoice_id' => ['sometimes', 'required', 'integer'],
-            'product_id' => ['sometimes', 'required', 'integer'],
+            'invoice_id' => ['sometimes', 'required', 'integer', 'exists:invoices,invoice_id'],
+            'product_id' => ['sometimes', 'required', 'integer', 'exists:products,product_id'],
             'quantity' => ['sometimes', 'required', 'integer', 'min:1'],
-            'unit_price' => ['sometimes', 'required', 'numeric', 'min:0'],
+            'unit_price' => ['prohibited'],
         ];
     }
 }

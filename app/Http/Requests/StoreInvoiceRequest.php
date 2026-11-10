@@ -7,6 +7,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreInvoiceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('issue_date')) {
+            $this->merge(['issue_date' => now()->toDateString()]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,14 +33,14 @@ class StoreInvoiceRequest extends FormRequest
             'customer_id' => ['required', 'exists:customers,customer_id'],
             'invoice_number' => ['required', 'integer', 'min:1'],
             'invoice_serie' => ['required', 'integer', 'min:1'],
-            'issue_date' => ['required', 'date'],
+            'issue_date' => ['sometimes', 'required', 'date'],
             'due_date' => ['required', 'date', 'after_or_equal:issue_date'],
             'payment_method' => ['required', 'string', 'max:50'],
             'delivery_driver' => ['nullable', 'string', 'max:100'],
             'payment_terms_days' => ['required', 'integer', 'min:0'],
             'payment_status' => ['sometimes', 'in:A vencer,Vencida,Paga,Cancelada'],
             'payment_date' => ['nullable', 'required_if:payment_status,Paga', 'prohibited_unless:payment_status,Paga', 'date'],
-            'amount' => ['required', 'numeric', 'decimal:0,2', 'min:0']
+            'amount' => ['prohibited'],
         ];
     }
 }

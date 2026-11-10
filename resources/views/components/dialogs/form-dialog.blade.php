@@ -45,7 +45,11 @@
                 @elseif ($fieldType === 'select')
                     <select id="{{ $fieldId }}" name="{{ $fieldName }}" @required($field['required'] ?? false) @disabled($field['disabled'] ?? false) aria-invalid="@error($fieldName)true @else false @enderror">
                         @foreach (($field['options'] ?? []) as $optionValue => $optionLabel)
-                            <option value="{{ $optionValue }}" @selected((string) $fieldValue === (string) $optionValue)>{{ $optionLabel }}</option>
+                            @php
+                                $optionText = is_array($optionLabel) ? ($optionLabel['label'] ?? $optionValue) : $optionLabel;
+                                $optionDocument = is_array($optionLabel) ? ($optionLabel['document'] ?? null) : null;
+                            @endphp
+                            <option value="{{ $optionValue }}" @if ($optionDocument) data-customer-document="{{ $optionDocument }}" @endif @selected((string) $fieldValue === (string) $optionValue)>{{ $optionText }}</option>
                         @endforeach
                     </select>
                 @elseif (isset($field['prefix']))

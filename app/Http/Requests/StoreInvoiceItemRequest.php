@@ -14,10 +14,10 @@ class StoreInvoiceItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'invoice_id' => ['required', 'integer'],
-            'product_id' => ['required', 'integer'],
+            'invoice_id' => ['required', 'integer', 'exists:invoices,invoice_id'],
+            'product_id' => ['required', 'integer', 'exists:products,product_id'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'unit_price' => ['required', 'numeric', 'min:0'],
+            'unit_price' => ['prohibited'],
         ];
     }
 }

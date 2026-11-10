@@ -9,6 +9,11 @@ class UpdateInvoiceRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        $invoice = $this->route('invoice');
+        if (! $this->filled('issue_date') && $invoice instanceof \App\Models\Invoice) {
+            $this->merge(['issue_date' => $invoice->issue_date->toDateString()]);
+        }
+
         if (
             $this->has('payment_status')
             && $this->input('payment_status') !== 'Paga'
@@ -44,6 +49,7 @@ class UpdateInvoiceRequest extends FormRequest
             'payment_terms_days' => ['sometimes', 'required', 'integer', 'min:0'],
             'payment_status' => ['sometimes', 'required', 'in:A vencer,Vencida,Paga,Cancelada'],
             'payment_date' => ['sometimes', 'nullable', 'required_if:payment_status,Paga', 'prohibited_unless:payment_status,Paga', 'date'],
+            'amount' => ['prohibited'],
         ];
     }
 }

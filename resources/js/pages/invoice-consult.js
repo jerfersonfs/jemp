@@ -7,7 +7,14 @@ if (page) {
     const importForm = page.querySelector('[data-invoice-import-form]');
     const importFeedback = page.querySelector('[data-invoice-import-feedback]');
     const openImport = page.querySelector('[data-invoice-import-open]');
-    const setImportFeedback = (message, isError = false) => { importFeedback.textContent = message; importFeedback.hidden = !message; importFeedback.dataset.error = String(isError); };
+    let importFeedbackTimer;
+    const setImportFeedback = (message, isError = false) => {
+        window.clearTimeout(importFeedbackTimer);
+        importFeedback.textContent = message;
+        importFeedback.hidden = !message;
+        importFeedback.dataset.error = String(isError);
+        if (message) importFeedbackTimer = window.setTimeout(() => { importFeedback.hidden = true; }, 15_000);
+    };
     openImport?.addEventListener('click', () => { setImportFeedback(''); importLayer.hidden = false; importForm.querySelector('input[type="file"]').focus(); });
     page.querySelectorAll('[data-invoice-import-close]').forEach(button => button.addEventListener('click', () => { importLayer.hidden = true; openImport?.focus(); }));
     importForm?.addEventListener('submit', async (event) => {
@@ -17,13 +24,18 @@ if (page) {
             const result = await response.json();
             if (!response.ok) throw new Error(result.details || Object.values(result.errors || {}).flat().join(' ') || result.message || 'Falha ao importar o XML.');
             setImportFeedback(result.message || 'NF-e importada com sucesso.');
+            sessionStorage.setItem('invoice-page-feedback', result.message || 'NF-e importada com sucesso.');
             window.setTimeout(() => window.location.reload(), 900);
         } catch (error) { setImportFeedback(error.message, true); }
     });
+    const pendingFeedback = sessionStorage.getItem('invoice-page-feedback');
+    if (pendingFeedback) {
+        sessionStorage.removeItem('invoice-page-feedback');
+        showFeedback(pendingFeedback, 'success');
+    }
     const filterForm = page.querySelector('[data-invoice-filter]');
     const rows = [...page.querySelectorAll('[data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');
-    const feedback = page.querySelector('[data-invoice-feedback]');
     const dialogLayers = [...page.querySelectorAll('[data-dialog-layer]')];
     let activeLayer = null;
     let activeTrigger = null;
@@ -123,8 +135,63 @@ if (page) {
         trigger.addEventListener('click', () => {
             const target = trigger.dataset.dialogOpen;
             const layer = dialogLayers.find((candidate) => candidate.dataset.dialogLayer === target);
-            if (layer) openDialog(layer, trigger);
+            if (layer) {
+                if (layer.querySelector('[data-invoice-item-form]')) {
+                    const form = layer.querySelector('[data-invoice-item-form]');
+                    form?.reset();
+                    delete layer.dataset.itemId;
+                    layer.querySelector('[data-item-dialog-title]').textContent = 'Adicionar item à nota';
+                    layer.querySelector('[data-item-submit-label]').textContent = 'Cadastrar item';
+                    syncItemPrice(form);
+                    layer.dataset.invoiceMode = 'item';
+                }
+                openDialog(layer, trigger);
+            }
         });
+    });
+
+    function syncItemPrice(form) {
+        if (!form) return;
+        const product = form.elements.product_id?.selectedOptions[0];
+        const price = form.elements.unit_price;
+        if (price) price.value = product?.dataset.unitPrice ?? '';
+    }
+
+    page.querySelectorAll('[data-invoice-item-form]').forEach((form) => {
+        form.elements.product_id?.addEventListener('change', () => syncItemPrice(form));
+    });
+
+    page.addEventListener('click', async (event) => {
+        const action = event.target.closest('[data-invoice-item-action]');
+        if (!action) return;
+        const detailLayer = action.closest('[data-dialog-layer]');
+        const itemLayerId = detailLayer?.querySelector('[data-dialog-open][data-dialog-open^="invoice-add-item-"]')?.dataset.dialogOpen;
+        const itemLayer = dialogLayers.find((layer) => layer.dataset.dialogLayer === itemLayerId);
+        if (!itemLayer) return;
+
+        if (action.dataset.invoiceItemAction === 'edit') {
+            const form = itemLayer.querySelector('[data-invoice-item-form]');
+            form.elements.product_id.value = action.dataset.productId;
+            form.elements.quantity.value = action.dataset.quantity;
+            form.elements.unit_price.value = action.dataset.unitPrice;
+            itemLayer.dataset.itemId = action.dataset.itemId;
+            itemLayer.dataset.invoiceMode = 'item-edit';
+            itemLayer.querySelector('[data-item-dialog-title]').textContent = 'Editar item da nota';
+            itemLayer.querySelector('[data-item-submit-label]').textContent = 'Salvar alterações';
+            openDialog(itemLayer, action);
+            return;
+        }
+
+        if (!window.confirm(`Excluir o item “${action.dataset.itemLabel}” desta nota fiscal?`)) return;
+        try {
+            const response = await fetch(`/api/invoice-items/${action.dataset.itemId}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Não foi possível excluir o item.');
+            sessionStorage.setItem('invoice-page-feedback', 'Item excluído da nota fiscal.');
+            window.location.reload();
+        } catch (error) {
+            showFeedback(error.message, 'error');
+        }
     });
 
     dialogLayers.forEach((layer) => {
@@ -132,31 +199,61 @@ if (page) {
             if (event.target === layer || event.target.closest('[data-dialog-dismiss], .jemp-dialog__close')) closeDialog();
         });
         layer.querySelectorAll('form').forEach((form) => {
-            form.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const message = feedback?.querySelector('.jemp-notice__message');
-                if (feedback) feedback.hidden = false;
-                if (message) message.textContent = 'Campos validados. Os dados serão persistidos quando o backend estiver integrado.';
-                closeDialog();
-                showFeedback('Campos validados. Nenhuma nota foi salva no banco; o backend ainda será integrado.', 'info');
-            });
-            form.querySelectorAll('input[type="number"]').forEach((input) => {
-                input.min = '0.01';
-                input.step = '0.01';
-            });
-            const issueDate = form.querySelector('input[name="issue_date"]');
-            const dueDate = form.querySelector('input[name="due_date"]');
-            const paymentDate = form.querySelector('input[name="payment_date"]');
-            const status = form.querySelector('select[name="status"]');
-            if (issueDate?.value) {
-                if (dueDate) dueDate.min = issueDate.value;
-                if (paymentDate) paymentDate.min = issueDate.value;
-            }
-            const syncPaymentRequirement = () => {
-                if (paymentDate) paymentDate.required = status?.value === 'Paga';
+            const paymentStatus = form.querySelector('[name="payment_status"]');
+            const paymentDate = form.querySelector('[name="payment_date"]');
+            const paymentDateField = paymentDate?.closest('.jemp-form-dialog__field');
+            const customerSelect = form.querySelector('[name="customer_id"]');
+            const customerDocument = form.querySelector('[name="customer_document_preview"]');
+            const syncCustomerDocument = () => {
+                if (customerDocument) customerDocument.value = customerSelect?.selectedOptions[0]?.dataset.customerDocument || '';
             };
-            status?.addEventListener('change', syncPaymentRequirement);
-            syncPaymentRequirement();
+            const syncPaymentDate = () => {
+                const isPaid = paymentStatus?.value === 'Paga';
+                if (paymentDateField) paymentDateField.hidden = !isPaid;
+                if (paymentDate) {
+                    paymentDate.required = isPaid;
+                    if (!isPaid) paymentDate.value = '';
+                }
+            };
+            customerSelect?.addEventListener('change', syncCustomerDocument);
+            paymentStatus?.addEventListener('change', syncPaymentDate);
+            syncCustomerDocument();
+            syncPaymentDate();
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const invoiceMode = layer.dataset.invoiceMode;
+                const payload = Object.fromEntries(new FormData(form).entries());
+                if (['item', 'item-edit'].includes(invoiceMode)) delete payload.unit_price;
+                const invoiceId = layer.dataset.invoiceId;
+                const endpoint = invoiceMode === 'item-edit'
+                    ? `/api/invoice-items/${layer.dataset.itemId}`
+                    : invoiceMode === 'item' ? '/api/invoice-items'
+                    : invoiceMode === 'edit' ? `/api/invoices/${invoiceId}` : '/api/invoices';
+                const method = ['edit', 'item-edit'].includes(invoiceMode) ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method,
+                        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        const validationMessage = Object.values(result.errors || {}).flat().join(' ');
+                        throw new Error(validationMessage || result.message || 'Não foi possível salvar a nota fiscal.');
+                    }
+
+                    const message = ['item', 'item-edit'].includes(invoiceMode)
+                        ? invoiceMode === 'item-edit' ? 'Item da nota fiscal atualizado com sucesso.' : 'Item adicionado à nota fiscal com sucesso.'
+                        : invoiceMode === 'edit' ? 'Nota fiscal atualizada com sucesso.' : 'Nota fiscal cadastrada com sucesso.';
+                    sessionStorage.setItem('invoice-page-feedback', message);
+                    closeDialog();
+                    window.location.reload();
+                } catch (error) {
+                    showFeedback(error.message, 'error');
+                }
+            });
         });
     });
 
