@@ -50,7 +50,7 @@
                 @if ($errors->any())
                     <p class="jemp-form-dialog__error" role="alert">{{ $errors->first() }}</p>
                 @endif
-                <label>Nome / Empresa<input name="customer_name" value="{{ old('customer_name') }}" required></label><label>Documento<input name="customer_document" value="{{ old('customer_document') }}" required></label>
+                <label>Nome / Empresa<input name="customer_name" value="{{ old('customer_name') }}" required></label><label class="customers-document-field">Documento<span class="customers-document-field__control"><select data-customer-document-type aria-label="Tipo de documento"><option value="cpf" selected>CPF</option><option value="cnpj">CNPJ</option></select><input name="customer_document" data-customer-document inputmode="numeric" maxlength="18" autocomplete="off" value="{{ old('customer_document') }}" required></span></label>
                 <label>Contato<input name="customer_contact" type="tel" value="{{ old('customer_contact') }}"></label><label>E-mail<input name="customer_email" type="email" value="{{ old('customer_email') }}"></label>
                 <label>Condição de pagamento<input name="customer_payment_terms" value="{{ old('customer_payment_terms') }}" required></label>
                 <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-customer-close>Cancelar</button><button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">Salvar Cliente</button></footer>
@@ -69,5 +69,5 @@
             <x-dialogs.confirmation title="Excluir cliente?" message="Esta ação não poderá ser desfeita." confirm-label="Excluir cliente" cancel-label="Cancelar" data-customer-confirm-dialog />
         </form>
     </div>
-    <p class="customers-note" @if (session('status')) role="status" @endif>{{ session('status', 'Dados carregados do cadastro do banco.') }}</p>
+    @if (session('status')) <p class="customers-note" role="status">{{ session('status') }}</p> @endif
 </x-layouts.app>

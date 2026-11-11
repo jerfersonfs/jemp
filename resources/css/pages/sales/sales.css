@@ -84,6 +84,8 @@
 .customers-dialog-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-md); }
 .customers-dialog-form label { display: grid; gap: .375rem; color: var(--color-secondary); font-size: var(--font-size-caption); font-weight: 600; }
 .customers-dialog-form input, .customers-dialog-form select { width: 100%; min-height: 2.625rem; border: 1px solid color-mix(in srgb, var(--color-primary) 32%, white); border-radius: .5rem; background: white; padding: .625rem .75rem; color: var(--color-secondary); font: inherit; font-weight: 400; }
+.customers-document-field__control { display: grid; grid-template-columns: minmax(7rem, .45fr) minmax(0, 1fr); gap: .5rem; }
+.customers-document-field__control input, .customers-document-field__control select { min-width: 0; }
 .customers-dialog-form .jemp-dialog__footer { grid-column: 1 / -1; }
 .customers-dialog-open { overflow: hidden; }
 

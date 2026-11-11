@@ -46,6 +46,7 @@
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
             <div class="invoice-page-head__actions">
+            <button class="button invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML</button>
             <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
                 <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
             </button>
@@ -53,7 +54,7 @@
         </header>
 
         <section class="invoice-overview" aria-label="Resumo das notas fiscais">
-            <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-files" aria-hidden="true"></i>Notas no período</div><strong data-invoice-count="all">{{ $totalInvoices }}</strong><span>notas carregadas do banco de dados</span></article>
+            <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-files" aria-hidden="true"></i>Notas no período</div><strong data-invoice-count="all">{{ $totalInvoices }}</strong><span>notas cadastradas</span></article>
             <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-clock" aria-hidden="true"></i>A vencer</div><strong data-invoice-count="due">{{ $dueSoonCount }}</strong><span>acompanhe os prazos</span></article>
             <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-warning-circle" aria-hidden="true"></i>Vencidas</div><strong data-invoice-count="overdue">{{ $overdueCount }}</strong><span>precisam de atenção</span></article>
             <article class="invoice-stat card"><div class="invoice-stat__label"><i class="ph ph-check-circle" aria-hidden="true"></i>Pagas</div><strong data-invoice-count="paid">{{ $paidCount }}</strong><span>pagamentos concluídos</span></article>
@@ -65,7 +66,7 @@
                     <span class="invoice-panel__icon" aria-hidden="true"><i class="ph ph-receipt"></i></span>
                     <div><h2 id="invoice-list-title">Lista de Notas Fiscais</h2><p>Visualize, filtre e consulte os dados das notas fiscais.</p></div>
                 </div>
-                <span class="invoice-demo-tag">Dados do banco de dados</span>
+                <span class="invoice-demo-tag">Notas registradas</span>
             </div>
 
             <form class="invoice-filters" action="{{ route('invoice-consult.index') }}" method="GET" role="search" aria-label="Filtros de notas fiscais" data-invoice-filter>
@@ -84,7 +85,7 @@
 
             <x-tables.table class="invoice-table" variant="rounded" caption="Notas fiscais cadastradas" :columns="$columns" :rows="$invoiceRows" :status-variants="$statusVariants" empty-message="Nenhuma nota fiscal cadastrada." />
             <p class="invoice-no-results" role="status" data-invoice-no-results hidden>Nenhuma nota fiscal encontrada com os filtros selecionados.</p>
-            <p class="invoice-table-caption">As notas fiscais são carregadas do banco de dados.</p>
+            <p class="invoice-table-caption">Consulte os registros e os itens de cada nota fiscal.</p>
         </section>
 
         <div class="invoice-dialog-layer" data-invoice-import-layer role="presentation" hidden>
@@ -136,8 +137,8 @@
             <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['details_target'] }}" role="presentation" hidden>
                 <x-dialogs.details-dialog id="{{ $invoice['details_target'] }}-tabs" title="Nota fiscal {{ $invoice['number'] }}" description="Consulte os dados e os itens desta nota fiscal." :sections="$detailSections">
                     <x-slot:footer>
-                        <button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-open="{{ $invoice['add_item_target'] }}">Adicionar item</button>
-                        <button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">Editar dados</button>
+                        <button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['add_item_target'] }}">Adicionar item</button>
+                        <button class="jemp-dialog__button jemp-dialog__button--secondary invoice-edit-data-button" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">Editar dados</button>
                     </x-slot:footer>
                 </x-dialogs.details-dialog>
             </div>
@@ -175,5 +176,8 @@
                     <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" title="Editar nota fiscal {{ $invoice['number'] }}" description="Atualize os dados da nota. O total permanece calculado pelos itens." action="#" method="PUT" size="large" submit-label="Salvar alterações" :fields="$editFields" />
             </div>
         @endforeach
+        <div class="invoice-dialog-layer" data-dialog-layer="invoice-item-delete-confirm" data-invoice-item-confirm-layer role="presentation" hidden>
+            <x-dialogs.confirmation title="Excluir item da nota?" message="" confirm-label="Excluir item" cancel-label="Cancelar" data-invoice-item-confirm-dialog />
+        </div>
     </div>
 </x-layouts.app>

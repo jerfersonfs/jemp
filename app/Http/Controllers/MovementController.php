@@ -72,7 +72,6 @@ class MovementController extends Controller
             ->where('movement.movement_type', $direction)
             ->orderByDesc('movement.movement_date')
             ->select([
-                'movement.origin_warehouse_id as id',
                 'movement.*',
                 'products.sku as product_sku',
                 'products.product_name',
@@ -85,6 +84,13 @@ class MovementController extends Controller
             'page' => $page,
             'products' => Product::query()->orderBy('sku')->get(['product_id', 'sku', 'product_name']),
             'movements' => $movements,
+            'invoiceOptions' => DB::table('invoices')
+                ->orderByDesc('invoice_id')
+                ->get(['invoice_id', 'invoice_number', 'invoice_serie'])
+                ->mapWithKeys(fn ($invoice): array => [
+                    (string) $invoice->invoice_id => $invoice->invoice_number . ' / ' . $invoice->invoice_serie,
+                ])
+                ->all(),
             'locations' => Warehouse::query()->orderBy('warehouse_name')->get()->mapWithKeys(
                 fn (Warehouse $warehouse): array => [(string) $warehouse->warehouse_id => $warehouse->warehouse_name],
             )->all(),
@@ -100,6 +106,8 @@ class MovementController extends Controller
             'product_condition' => ['required', 'string', 'max:30'],
             'quantity' => ['required', 'integer', 'min:1', 'max:2147483647'],
             'movement_justification' => ['nullable', 'string', 'max:255'],
+            'is_fiscal' => ['sometimes', 'boolean'],
+            'invoice_id' => ['nullable', 'required_if:is_fiscal,1', 'integer', 'exists:invoices,invoice_id'],
         ];
     }
 
@@ -112,6 +120,8 @@ class MovementController extends Controller
             $condition = (string) $data['product_condition'];
             $originWarehouseId = isset($data['origin_warehouse_id']) ? (int) $data['origin_warehouse_id'] : null;
             $destinationWarehouseId = isset($data['dest_warehouse_id']) ? (int) $data['dest_warehouse_id'] : null;
+            $isFiscal = filter_var($data['is_fiscal'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $invoiceId = $isFiscal ? (int) $data['invoice_id'] : null;
 
             Product::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
 
@@ -130,12 +140,12 @@ class MovementController extends Controller
                 'product_id' => $productId,
                 'product_condition' => $condition,
                 'user_id' => auth()->id(),
-                'invoice_id' => null,
+                'invoice_id' => $invoiceId,
                 'quantity' => $quantity,
                 'movement_type' => $direction,
                 'movement_justification' => $data['movement_justification'] ?? null,
                 'movement_date' => $data['date'],
-                'is_fiscal' => false,
+                'is_fiscal' => $isFiscal,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

@@ -83,7 +83,7 @@ foreach ($reportSections as $sectionKey => $section) {
                 </x-tabs.tabs>
             </div>
         </div>
-        <p class="reports-page__note">Os relatórios são carregados pelas views SQL do banco de dados.</p>
+        <p class="reports-page__note">Indicadores consolidados das movimentações e notas fiscais.</p>
     </section>
 
     <div class="reports-dialog-layer" data-dialog-layer="report-indicator-details" role="presentation" hidden>

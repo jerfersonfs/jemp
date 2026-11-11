@@ -37,6 +37,8 @@ if (page) {
     const rows = [...page.querySelectorAll('[data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');
     const dialogLayers = [...page.querySelectorAll('[data-dialog-layer]')];
+    const itemConfirmLayer = page.querySelector('[data-invoice-item-confirm-layer]');
+    let pendingItemDelete = null;
     let activeLayer = null;
     let activeTrigger = null;
     let fallbackTrigger = null;
@@ -105,7 +107,9 @@ if (page) {
 
     function closeDialog({ restoreFocus = true } = {}) {
         if (!activeLayer) return;
+        const closingItemConfirm = activeLayer === itemConfirmLayer;
         activeLayer.hidden = true;
+        if (closingItemConfirm) pendingItemDelete = null;
         document.body.classList.remove('invoice-dialog-open');
         if (restoreFocus) {
             const triggerIsHidden = activeTrigger?.closest("[data-dialog-layer]")?.hidden;
@@ -162,6 +166,25 @@ if (page) {
     });
 
     page.addEventListener('click', async (event) => {
+        const confirmDelete = event.target.closest('[data-invoice-item-confirm-layer] [data-movement-confirm]');
+        if (confirmDelete && pendingItemDelete) {
+            const item = pendingItemDelete;
+            closeDialog({ restoreFocus: false });
+            try {
+                const response = await fetch('/api/invoice-items/' + item.id, {
+                    method: 'DELETE',
+                    headers: { Accept: 'application/json' },
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Não foi possível excluir o item.');
+                sessionStorage.setItem('invoice-page-feedback', 'Item excluído da nota fiscal.');
+                window.location.reload();
+            } catch (error) {
+                showFeedback(error.message, 'error');
+            }
+            return;
+        }
+
         const action = event.target.closest('[data-invoice-item-action]');
         if (!action) return;
         const detailLayer = action.closest('[data-dialog-layer]');
@@ -182,21 +205,17 @@ if (page) {
             return;
         }
 
-        if (!window.confirm(`Excluir o item “${action.dataset.itemLabel}” desta nota fiscal?`)) return;
-        try {
-            const response = await fetch(`/api/invoice-items/${action.dataset.itemId}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || 'Não foi possível excluir o item.');
-            sessionStorage.setItem('invoice-page-feedback', 'Item excluído da nota fiscal.');
-            window.location.reload();
-        } catch (error) {
-            showFeedback(error.message, 'error');
+        pendingItemDelete = { id: action.dataset.itemId, label: action.dataset.itemLabel };
+        const message = itemConfirmLayer?.querySelector('.jemp-confirmation__message');
+        if (message) {
+            message.textContent = 'Confirma excluir o item “' + pendingItemDelete.label + '” desta nota fiscal? Esta ação não poderá ser desfeita.';
         }
+        openDialog(itemConfirmLayer, action);
     });
 
     dialogLayers.forEach((layer) => {
         layer.addEventListener('click', (event) => {
-            if (event.target === layer || event.target.closest('[data-dialog-dismiss], .jemp-dialog__close')) closeDialog();
+            if (event.target.closest('[data-dialog-dismiss], .jemp-dialog__close')) closeDialog();
         });
         layer.querySelectorAll('form').forEach((form) => {
             const paymentStatus = form.querySelector('[name="payment_status"]');

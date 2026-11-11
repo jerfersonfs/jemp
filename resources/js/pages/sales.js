@@ -117,10 +117,10 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
     });
 
     dialog?.addEventListener('click', (event) => {
-        if (event.target === dialog || event.target.closest('[data-sales-dialog-close]')) closeDialog(dialog, activeTrigger);
+        if (event.target.closest('[data-sales-dialog-close]')) closeDialog(dialog, activeTrigger);
     });
     addDialog?.addEventListener('click', (event) => {
-        if (event.target === addDialog || event.target.closest('[data-sales-add-close]')) closeDialog(addDialog, addTrigger);
+        if (event.target.closest('[data-sales-add-close]')) closeDialog(addDialog, addTrigger);
     });
     addForm?.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -202,7 +202,7 @@ document.querySelectorAll('[data-sales-form]').forEach((form) => {
         pendingDeleteTrigger = null;
     };
     confirmLayer?.addEventListener('click', (event) => {
-        if (event.target === confirmLayer || event.target.closest('[data-dialog-dismiss]')) {
+        if (event.target.closest('[data-dialog-dismiss]')) {
             closeConfirm();
             return;
         }

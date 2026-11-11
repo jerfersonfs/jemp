@@ -10,6 +10,18 @@ function initializeMovementList(list) {
     const formDialog = pageRoot.querySelector('[data-movement-dialog="form"]');
     const detailDialog = pageRoot.querySelector('[data-movement-dialog="details"]');
     const recordForm = formDialog?.querySelector('form');
+    const fiscalField = recordForm?.elements.namedItem('is_fiscal');
+    const invoiceField = recordForm?.elements.namedItem('invoice_id');
+    const syncFiscalFields = () => {
+        const invoiceFieldWrapper = invoiceField?.closest('.jemp-form-dialog__field');
+        const isFiscal = fiscalField?.value === '1';
+        if (invoiceFieldWrapper) invoiceFieldWrapper.hidden = !isFiscal;
+        if (invoiceField) {
+            invoiceField.required = isFiscal;
+            if (!isFiscal) invoiceField.value = '';
+        }
+    };
+    fiscalField?.addEventListener('change', syncFiscalFields);
     const search = panel?.querySelector('[data-movement-search]');
     const filters = [...(panel?.querySelectorAll('[data-movement-filter]') ?? [])];
     const previous = list.querySelector('[data-page-previous]');
@@ -97,7 +109,7 @@ function initializeMovementList(list) {
         const grid = detailDialog.querySelector('.jemp-details-dialog__grid');
         const headers = [...(table?.querySelectorAll('thead th') ?? [])];
         const labels = new Map();
-        const fallbackLabels = { code: 'Código', date: 'Data', type: 'Tipo', product: 'Produto', quantity: 'Quantidade', origin: 'Origem', destination: 'Destino', warehouse: 'Almoxarifado', recipient: 'Destinatário', justification: 'Justificação', condition: 'Condição', fiscal: 'Fiscal', invoice: 'ID da nota fiscal', responsible: 'ID do usuário' };
+        const fallbackLabels = { code: 'Código', sm_id: 'ID da movimentação', date: 'Data e hora', type: 'Tipo', product: 'Produto', quantity: 'Quantidade', origin: 'Origem', destination: 'Destino', warehouse: 'Armazém', recipient: 'Destinatário', justification: 'Justificação', condition: 'Condição', fiscal: 'Documento fiscal', invoice_id: 'ID da nota fiscal', responsible: 'ID do usuário' };
         row.querySelectorAll('td[data-column-key]').forEach((cell, index) => {
             if (cell.dataset.columnType !== 'actions') labels.set(cell.dataset.columnKey, headers[index]?.textContent.trim() || cell.dataset.columnKey);
         });
@@ -133,6 +145,7 @@ function initializeMovementList(list) {
                 const localDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString();
                 dateField.value = dateField.type === 'datetime-local' ? localDate.slice(0, 16) : localDate.slice(0, 10);
             }
+            syncFiscalFields();
             openDialog(formDialog, createTrigger);
             return;
         }
@@ -145,7 +158,7 @@ function initializeMovementList(list) {
         }
 
         const layer = event.target.closest('.movement-dialog-layer');
-        if (layer && (event.target === layer || event.target.closest('[data-dialog-dismiss]'))) closeDialog();
+        if (layer && event.target.closest('[data-dialog-dismiss]')) closeDialog();
     });
 
     search?.addEventListener('input', () => { page = 1; update(); });

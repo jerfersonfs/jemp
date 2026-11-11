@@ -23,7 +23,7 @@
         ];
         $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $transferFormFields = [
-            ['name' => 'date', 'label' => 'Data e hora', 'type' => 'datetime-local', 'required' => true, 'value' => now()->format('Y-m-d\TH:i')],
+            ['name' => 'date', 'label' => 'Data e hora', 'type' => 'datetime-local', 'required' => true, 'readonly' => true, 'value' => now()->format('Y-m-d\TH:i')],
             ['name' => 'product_id', 'label' => 'Produto', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um produto'] + $productOptions],
             ['name' => 'product_condition', 'label' => 'Condição', 'type' => 'select', 'required' => true, 'options' => ['Novo' => 'Novo', 'Reforma' => 'Reforma', 'Descarte' => 'Descarte']],
             ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
@@ -49,7 +49,6 @@
             <x-tables.table variant="spreadsheet" caption="Histórico de transferências internas" :columns="$transferColumns" :rows="$transferRows" empty-message="Nenhuma movimentação encontrada." />
             <div class="movement-table-footer"><span class="movement-table-footer__summary" data-movement-summary></span><nav class="movement-pagination" aria-label="Paginação das transferências"><button class="btn btn-secondary" type="button" data-page-previous disabled><x-icons.icon name="caret-left" size="sm" /> Anterior</button><span class="movement-pagination__current" data-page-current aria-live="polite">1 / 1</span><button class="btn btn-secondary" type="button" data-page-next disabled>Próximo <x-icons.icon name="caret-right" size="sm" /></button></nav></div>
         </div>
-        <x-slot:footer><p class="movement-demo-note">Dados carregados do banco de dados.</p></x-slot:footer>
     </x-cards.panel>
     <x-movements.record-dialogs entity="transferência" create-title="Nova transferência" description="Informe o produto, a quantidade e os armazéns de origem e destino." :fields="$transferFormFields" :action="route('internal.store')" />
 </x-layouts.app>

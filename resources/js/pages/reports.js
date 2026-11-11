@@ -279,7 +279,7 @@ if (reportPage) {
             return;
         }
         if (!activeDialog) return;
-        if (event.target === activeDialog || event.target.closest('[data-dialog-dismiss]')) {
+        if (event.target.closest('[data-dialog-dismiss]')) {
             activeDialog.hidden = true;
             document.body.classList.remove('reports-dialog-open');
             lastTrigger?.focus();

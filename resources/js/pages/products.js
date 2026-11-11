@@ -19,13 +19,51 @@ if (catalog) {
                 const row = document.createElement('tr');
                 for (const value of [warehouse.warehouse_name, warehouse.warehouse_description]) { const cell = document.createElement('td'); cell.textContent = value ?? '—'; row.append(cell); }
                 const actions = document.createElement('td');
-                for (const [label, action] of [['Editar', 'edit'], ['Excluir', 'delete']]) { const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.dataset.warehouseAction = action; button.dataset.id = warehouse.warehouse_id; button.dataset.name = warehouse.warehouse_name; button.dataset.description = warehouse.warehouse_description ?? ''; actions.append(button); }
+                for (const [label, action] of [['Editar', 'edit'], ['Excluir', 'delete']]) {
+                    const button = document.createElement('button');
+                    button.className = 'products-warehouse-action products-warehouse-action--' + action;
+                    button.type = 'button';
+                    button.dataset.warehouseAction = action;
+                    button.dataset.id = warehouse.warehouse_id;
+                    button.dataset.name = warehouse.warehouse_name;
+                    button.dataset.description = warehouse.warehouse_description ?? '';
+                    button.setAttribute('aria-label', label + ' o armazém ' + warehouse.warehouse_name);
+                    button.title = label;
+                    const icon = document.createElement('i');
+                    icon.className = action === 'edit' ? 'ph ph-pencil-simple-line' : 'ph ph-trash';
+                    icon.setAttribute('aria-hidden', 'true');
+                    button.append(icon);
+                    actions.append(button);
+                }
                 row.append(actions); warehouseRows.append(row);
             }
-            warehouseRows.querySelectorAll('button').forEach(button => button.addEventListener('click', async () => {
-                if (button.dataset.warehouseAction === 'edit') { warehouseForm.elements.warehouse_id.value = button.dataset.id; warehouseForm.elements.warehouse_name.value = button.dataset.name; warehouseForm.elements.warehouse_description.value = button.dataset.description; }
-                else if (window.confirm(`Excluir o armazém “${button.dataset.name}”?`)) { const res = await fetch(`${warehousesUrl}/${button.dataset.id}`, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); if (!res.ok) showWarehouseError('Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.'); else loadWarehouses(); }
-            }));
+            if (!warehouseRows.dataset.actionsBound) {
+                warehouseRows.dataset.actionsBound = 'true';
+                warehouseRows.addEventListener('click', async (event) => {
+                    const button = event.target.closest('[data-warehouse-action]');
+                    if (!button) return;
+                    if (button.dataset.warehouseAction === 'edit') {
+                        warehouseForm.elements.warehouse_id.value = button.dataset.id;
+                        warehouseForm.elements.warehouse_name.value = button.dataset.name;
+                        warehouseForm.elements.warehouse_description.value = button.dataset.description;
+                        warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Editar armazém';
+                    } else if (window.confirm('Excluir o armazém “' + button.dataset.name + '”?')) {
+                        try {
+                            const response = await fetch(warehousesUrl + '/' + button.dataset.id, {
+                                method: 'DELETE',
+                                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+                            });
+                            if (!response.ok) {
+                                showWarehouseError('Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.');
+                            } else {
+                                loadWarehouses();
+                            }
+                        } catch {
+                            showWarehouseError('Não foi possível conectar para excluir o armazém.');
+                        }
+                    }
+                });
+            }
         } catch (error) { showWarehouseError(error.message); }
     }
     catalog.querySelector('[data-warehouses-open]').addEventListener('click', () => { warehousesModal.showModal(); loadWarehouses(); });
@@ -34,7 +72,7 @@ if (catalog) {
         event.preventDefault(); showWarehouseError();
         const id = warehouseForm.elements.warehouse_id.value;
         const body = Object.fromEntries(new FormData(warehouseForm)); delete body.warehouse_id;
-        try { const response = await fetch(id ? `${warehousesUrl}/${id}` : warehousesUrl, { method: id ? 'PUT' : 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.message ?? 'Falha ao salvar armazém.'); warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; loadWarehouses(); } catch (error) { showWarehouseError(error.message); }
+        try { const response = await fetch(id ? `${warehousesUrl}/${id}` : warehousesUrl, { method: id ? 'PUT' : 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.message ?? 'Falha ao salvar armazém.'); warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém'; loadWarehouses(); } catch (error) { showWarehouseError(error.message); }
     });
     const formModal = catalog.querySelector('[data-product-form-modal]');
     const detailsModal = catalog.querySelector('[data-product-details-modal]');

@@ -76,7 +76,7 @@
             <header class="products-panel__header">
                 <div><h2 id="products-list-title">Listagem de Produtos</h2><p>Gerencie todos os produtos do seu catálogo.</p></div>
                 <div class="products-panel__actions">
-                    <button class="products-warehouses" type="button" data-warehouses-open><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
+                    <button class="products-warehouses" type="button" data-warehouses-open aria-label="Abrir gerenciamento de armazéns"><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
                     <x-buttons.button class="products-create" data-product-create><x-icons.icon name="plus" size="sm" /> Novo Produto</x-buttons.button>
                 </div>
             </header>

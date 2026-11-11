@@ -11,7 +11,7 @@
             <span class="sales-card__icon"><i class="ph ph-handshake" aria-hidden="true"></i></span>
             <div>
                 <h2 id="sales-list-title">Vendas Registradas</h2>
-                <p>Notas fiscais e itens existentes no banco de dados.</p>
+                <p>Consulte as notas fiscais e os itens registrados.</p>
             </div>
         </header>
 
@@ -47,7 +47,7 @@
             <span class="sales-card__icon"><i class="ph ph-chart-line-up" aria-hidden="true"></i></span>
             <div>
                 <h2 id="sales-period-report-title">Vendas por produto no período</h2>
-                <p>Relatório calculado pela stored procedure do banco de dados.</p>
+                <p>Resumo de vendas calculado para o período informado.</p>
             </div>
         </header>
 

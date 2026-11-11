@@ -6,6 +6,33 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
     const summary = list.querySelector('[data-customer-summary]');
     const dialog = document.querySelector('[data-customer-dialog]');
     const form = dialog?.querySelector('[data-customer-form]');
+    const documentType = form?.querySelector('[data-customer-document-type]');
+    const documentInput = form?.querySelector('[data-customer-document]');
+    const documentDigits = (value) => String(value ?? '').replace(/\D/g, '');
+    const formatCustomerDocument = (value, type) => {
+        const digits = documentDigits(value).slice(0, type === 'cnpj' ? 14 : 11);
+        if (type === 'cnpj') {
+            return digits
+                .replace(/^(\d{2})(\d)/, '$1.$2')
+                .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                .replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        return digits
+            .replace(/^(\d{3})(\d)/, '$1.$2')
+            .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1-$2');
+    };
+    const syncCustomerDocument = (inferType = false) => {
+        if (!documentType || !documentInput) return;
+        if (inferType) {
+            documentType.value = documentDigits(documentInput.value).length > 11 ? 'cnpj' : 'cpf';
+        }
+        documentInput.maxLength = documentType.value === 'cnpj' ? 18 : 14;
+        documentInput.value = formatCustomerDocument(documentInput.value, documentType.value);
+    };
+    documentInput?.addEventListener('input', () => syncCustomerDocument());
+    documentType?.addEventListener('change', () => syncCustomerDocument());
     const title = dialog?.querySelector('#customer-dialog-title');
     const editDialog = dialog?.querySelector('[data-customer-edit-dialog]');
     const detailsLayer = document.querySelector('[data-customer-details-layer]');
@@ -67,6 +94,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
                 }
             }
         }
+        syncCustomerDocument(true);
         dialog.hidden = false;
         document.body.classList.add('customers-dialog-open');
         dialog.querySelector('input:not([type="hidden"])')?.focus();
@@ -192,17 +220,17 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
     });
 
     dialog?.addEventListener('click', (event) => {
-        if (event.target === dialog || event.target.closest('[data-customer-close]')) {
+        if (event.target.closest('[data-customer-close]')) {
             closeDialog();
         }
     });
     detailsLayer?.addEventListener('click', (event) => {
-        if (event.target === detailsLayer || event.target.closest('[data-dialog-dismiss]')) {
+        if (event.target.closest('[data-dialog-dismiss]')) {
             closeLayer(detailsLayer, activeTrigger);
         }
     });
     confirmLayer?.addEventListener('click', (event) => {
-        if (event.target === confirmLayer || event.target.closest('[data-dialog-dismiss]')) {
+        if (event.target.closest('[data-dialog-dismiss]')) {
             closeLayer(confirmLayer, pendingDeleteTrigger);
             pendingDeleteTrigger = null;
             return;

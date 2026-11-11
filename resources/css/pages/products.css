@@ -64,12 +64,15 @@
 .products-modal .jemp-dialog--editing :is(input, select):focus-visible { outline-color: var(--color-info); }
 @media (max-width: 700px) { .products-footer { flex-wrap: wrap; } }
 .products-panel__actions { display: flex; align-items: center; gap: 10px; }
-.products-warehouses { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 16px; border: 1px solid var(--color-primary); border-radius: 8px; background: var(--color-surface); color: var(--color-primary); font: inherit; font-weight: 600; cursor: pointer; }
+.products-warehouses { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 9px 16px; border: 1px solid var(--color-primary); border-radius: 8px; background: var(--color-surface); color: var(--color-primary); font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
 .products-warehouses:hover { background: color-mix(in srgb, var(--color-primary) 8%, white); }
 .jemp-modal.products-warehouses-modal { width: min(900px, calc(100vw - 32px)); }
-.products-warehouses-modal [data-warehouse-form] { display: grid; gap: 12px; padding: 0 24px 20px; }
+.products-warehouses-modal [data-warehouse-form] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 0 24px 20px; }
 .products-warehouses-modal [data-warehouse-form] label { display: grid; gap: 6px; color: var(--color-secondary); }
-.products-warehouses-modal [data-warehouse-form] input, .products-warehouses-modal [data-warehouse-form] textarea { width: 100%; padding: 10px 12px; border: 1px solid #cddfdd; border-radius: 6px; font: inherit; }
+.products-warehouses-modal [data-warehouse-form] input, .products-warehouses-modal [data-warehouse-form] textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #cddfdd; border-radius: 6px; font: inherit; }
 .products-warehouses-modal [data-warehouse-form] h3 { margin: 0; color: var(--color-primary); }
-.products-warehouses-modal [data-warehouses-rows] button { margin: 3px; padding: 6px 10px; border: 1px solid var(--color-primary); border-radius: 6px; color: var(--color-primary); background: white; cursor: pointer; }
+.products-warehouse-action { display: inline-grid; width: 2rem; height: 2rem; margin: 3px; place-items: center; border: 1px solid transparent; border-radius: 6px; color: var(--color-info); background: transparent; cursor: pointer; }
+.products-warehouse-action:hover { background: color-mix(in srgb, var(--color-info) 9%, white); }
+.products-warehouse-action--delete { color: var(--color-danger); }
+.products-warehouse-action--delete:hover { background: color-mix(in srgb, var(--color-danger) 9%, white); }
 .products-warehouses-modal [data-warehouses-error] { color: var(--color-danger); }
