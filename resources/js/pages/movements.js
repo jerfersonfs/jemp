@@ -21,6 +21,25 @@ function initializeMovementList(list) {
             if (!isFiscal) invoiceField.value = '';
         }
     };
+    const resetCreateForm = () => {
+        if (!recordForm) return;
+
+        recordForm.reset();
+        recordForm.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach((control) => {
+            if (control instanceof HTMLSelectElement) {
+                control.selectedIndex = 0;
+            } else if (control.type === 'checkbox' || control.type === 'radio') {
+                control.checked = false;
+            } else {
+                control.value = '';
+            }
+
+            control.removeAttribute('aria-invalid');
+        });
+        recordForm.querySelectorAll('.jemp-form-dialog__error').forEach((message) => message.remove());
+
+        if (fiscalField) fiscalField.value = '0';
+    };
     fiscalField?.addEventListener('change', syncFiscalFields);
     const search = panel?.querySelector('[data-movement-search]');
     const filters = [...(panel?.querySelectorAll('[data-movement-filter]') ?? [])];
@@ -50,6 +69,7 @@ function initializeMovementList(list) {
 
     const closeDialog = () => {
         if (!activeLayer) return;
+        if (formDialog && activeLayer.contains(formDialog)) resetCreateForm();
         activeLayer.hidden = true;
         document.body.classList.remove('movement-dialog-open');
         activeTrigger?.focus();
@@ -139,7 +159,7 @@ function initializeMovementList(list) {
     pageRoot.addEventListener('click', (event) => {
         const createTrigger = event.target.closest('[data-dialog-open="movement-form"]');
         if (createTrigger) {
-            recordForm?.reset();
+            resetCreateForm();
             const dateField = recordForm?.elements.date;
             if (dateField) {
                 const localDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString();

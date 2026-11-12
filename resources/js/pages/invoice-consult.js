@@ -26,7 +26,10 @@ if (page) {
             setImportFeedback(result.message || 'NF-e importada com sucesso.');
             sessionStorage.setItem('invoice-page-feedback', result.message || 'NF-e importada com sucesso.');
             window.setTimeout(() => window.location.reload(), 900);
-        } catch (error) { setImportFeedback(error.message, true); }
+        } catch (error) {
+            setImportFeedback('');
+            showFeedback(error.message, 'error');
+        }
     });
     const pendingFeedback = sessionStorage.getItem('invoice-page-feedback');
     if (pendingFeedback) {

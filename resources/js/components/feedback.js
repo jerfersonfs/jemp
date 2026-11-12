@@ -45,3 +45,8 @@ export function showFeedback(message, variant = 'success') {
     region.append(toast);
     window.setTimeout(() => dismissNotice(toast), NOTICE_DURATION);
 }
+
+document.querySelectorAll('[data-toast-message]').forEach((source) => {
+    showFeedback(source.textContent.trim(), source.dataset.toastVariant || 'error');
+    source.remove();
+});

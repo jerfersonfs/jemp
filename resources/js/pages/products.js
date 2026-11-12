@@ -1,15 +1,20 @@
+import { showFeedback } from '../components/feedback.js';
+
 const catalog = document.querySelector('[data-product-catalog]');
 
 if (catalog) {
     const warehousesModal = catalog.querySelector('[data-warehouses-modal]');
+    const warehouseDeleteModal = catalog.querySelector('[data-warehouse-delete-modal]');
+    const warehouseDeleteDialog = warehouseDeleteModal?.querySelector('[data-warehouse-delete-dialog]');
     const warehouseForm = catalog.querySelector('[data-warehouse-form]');
     const warehouseRows = catalog.querySelector('[data-warehouses-rows]');
-    const warehouseError = catalog.querySelector('[data-warehouses-error]');
     const csrf = catalog.querySelector('input[name="_token"]')?.value ?? document.querySelector('meta[name="csrf-token"]')?.content;
     const warehousesUrl = '/api/warehouses';
-    const showWarehouseError = (message = '') => { warehouseError.textContent = message; warehouseError.hidden = !message; };
+    let pendingWarehouse = null;
+    const showWarehouseError = (message) => {
+        if (message) showFeedback(message, 'error');
+    };
     async function loadWarehouses() {
-        showWarehouseError();
         try {
             const response = await fetch(warehousesUrl, { headers: { Accept: 'application/json' } });
             if (!response.ok) throw new Error('Não foi possível carregar os armazéns.');
@@ -39,7 +44,7 @@ if (catalog) {
             }
             if (!warehouseRows.dataset.actionsBound) {
                 warehouseRows.dataset.actionsBound = 'true';
-                warehouseRows.addEventListener('click', async (event) => {
+                warehouseRows.addEventListener('click', (event) => {
                     const button = event.target.closest('[data-warehouse-action]');
                     if (!button) return;
                     if (button.dataset.warehouseAction === 'edit') {
@@ -47,32 +52,68 @@ if (catalog) {
                         warehouseForm.elements.warehouse_name.value = button.dataset.name;
                         warehouseForm.elements.warehouse_description.value = button.dataset.description;
                         warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Editar armazém';
-                    } else if (window.confirm('Excluir o armazém “' + button.dataset.name + '”?')) {
-                        try {
-                            const response = await fetch(warehousesUrl + '/' + button.dataset.id, {
-                                method: 'DELETE',
-                                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
-                            });
-                            if (!response.ok) {
-                                showWarehouseError('Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.');
-                            } else {
-                                loadWarehouses();
-                            }
-                        } catch {
-                            showWarehouseError('Não foi possível conectar para excluir o armazém.');
-                        }
+                    } else {
+                        pendingWarehouse = { id: button.dataset.id, name: button.dataset.name };
+                        returnFocus = button;
+                        warehouseDeleteDialog.querySelector('.jemp-confirmation__message').textContent = `Tem certeza de que deseja excluir o armazém ${button.dataset.name}? Esta ação não poderá ser desfeita.`;
+                        warehouseDeleteModal.showModal();
+                        warehouseDeleteDialog.querySelector('.jemp-confirmation__button--cancel').focus();
                     }
                 });
             }
-        } catch (error) { showWarehouseError(error.message); }
+        } catch (error) {
+            showWarehouseError(error instanceof TypeError ? 'Não foi possível conectar para carregar os armazéns.' : error.message);
+        }
     }
+    warehouseDeleteModal?.addEventListener('click', async (event) => {
+        const confirmButton = event.target.closest('.jemp-confirmation__button--confirm');
+        if (!confirmButton || !pendingWarehouse) return;
+
+        confirmButton.disabled = true;
+        try {
+            const response = await fetch(`${warehousesUrl}/${pendingWarehouse.id}`, {
+                method: 'DELETE',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.message || 'Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.');
+            }
+
+            warehouseDeleteModal.close();
+            pendingWarehouse = null;
+            await loadWarehouses();
+        } catch (error) {
+            showWarehouseError(error instanceof TypeError ? 'Não foi possível conectar para excluir o armazém.' : error.message);
+        } finally {
+            confirmButton.disabled = false;
+        }
+    });
+    warehouseDeleteModal?.addEventListener('close', () => {
+        pendingWarehouse = null;
+    });
     catalog.querySelector('[data-warehouses-open]').addEventListener('click', () => { warehousesModal.showModal(); loadWarehouses(); });
     catalog.querySelector('[data-warehouse-reset]').addEventListener('click', () => { warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém'; });
     warehouseForm.addEventListener('submit', async event => {
-        event.preventDefault(); showWarehouseError();
+        event.preventDefault();
         const id = warehouseForm.elements.warehouse_id.value;
         const body = Object.fromEntries(new FormData(warehouseForm)); delete body.warehouse_id;
-        try { const response = await fetch(id ? `${warehousesUrl}/${id}` : warehousesUrl, { method: id ? 'PUT' : 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.message ?? 'Falha ao salvar armazém.'); warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém'; loadWarehouses(); } catch (error) { showWarehouseError(error.message); }
+        try {
+            const response = await fetch(id ? `${warehousesUrl}/${id}` : warehousesUrl, {
+                method: id ? 'PUT' : 'POST',
+                headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify(body),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.message ?? 'Falha ao salvar armazém.');
+
+            warehouseForm.reset();
+            warehouseForm.elements.warehouse_id.value = '';
+            warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém';
+            loadWarehouses();
+        } catch (error) {
+            showWarehouseError(error instanceof TypeError ? 'Não foi possível conectar para salvar o armazém.' : error.message);
+        }
     });
     const formModal = catalog.querySelector('[data-product-form-modal]');
     const detailsModal = catalog.querySelector('[data-product-details-modal]');
@@ -270,7 +311,7 @@ if (catalog) {
             if (event.target.closest('[data-dialog-dismiss], .jemp-dialog__close, .jemp-confirmation__button--cancel')) {
                 modal.close();
             }
-            if (event.target.closest('[data-movement-confirm]')) {
+            if (modal === deleteModal && event.target.closest('[data-movement-confirm]')) {
                 deleteForm.requestSubmit();
             }
         });

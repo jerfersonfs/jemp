@@ -8,6 +8,7 @@
     'mode' => 'create',
     'layout' => 'inline',
     'cancelLabel' => null,
+    'preserveOldInput' => true,
 ])
 
 @php
@@ -36,7 +37,7 @@
                 $fieldName = $field['name'];
                 $fieldType = $field['type'] ?? 'text';
                 $fieldId = $field['id'] ?? 'field-' . str_replace(['[', ']'], '', $fieldName);
-                $fieldValue = old($fieldName, $field['value'] ?? '');
+                $fieldValue = $preserveOldInput ? old($fieldName, $field['value'] ?? '') : ($field['value'] ?? '');
             @endphp
             <div class="jemp-form-dialog__field" @if ($field['createOnly'] ?? false) data-form-create-only @endif>
                 <label for="{{ $fieldId }}">{{ $field['label'] }}</label>

@@ -71,9 +71,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
         <div class="page-head">
             <h1>Produtos</h1>
         </div>
-        @if ($errors->any()) <p class="products-error" role="alert">{{ $errors->first() }}</p> @endif
-        @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
-        @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
         <section class="products-panel" aria-labelledby="products-list-title">
             <header class="products-panel__header">
                 <div>
@@ -168,7 +165,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                     </div><button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button>
                 </header>
                 <div class="jemp-details-dialog__body">
-                    <p data-warehouses-error role="alert" hidden></p>
                     <table class="jemp-table">
                         <thead>
                             <tr>
@@ -188,6 +184,9 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                 </form>
                 <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>Fechar</button></footer>
             </section>
+        </x-dialogs.modal>
+        <x-dialogs.modal label="Excluir armazém?" class="products-modal products-modal--delete" data-warehouse-delete-modal>
+            <x-dialogs.confirmation title="Excluir armazém?" message="" confirm-label="Excluir armazém" cancel-label="Cancelar" data-warehouse-delete-dialog />
         </x-dialogs.modal>
         <div class="products-notice" @if (!session('status')) hidden @endif data-product-notice><x-dialogs.alert variant="success" :message="session('status', '')" /></div>
     </div>

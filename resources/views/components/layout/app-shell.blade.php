@@ -12,5 +12,11 @@
     </div>
 
     <button class="jemp-shell__backdrop" type="button" data-sidebar-close aria-label="Fechar menu"></button>
-    <div class="jemp-toast-region" data-toast-region aria-live="polite" aria-relevant="additions"></div>
+    <div class="jemp-toast-region" data-toast-region aria-live="polite" aria-relevant="additions">
+        @if (session('error'))
+            <span hidden data-toast-message data-toast-variant="error">{{ session('error') }}</span>
+        @elseif ($errors->any())
+            <span hidden data-toast-message data-toast-variant="error">{{ $errors->first() }}</span>
+        @endif
+    </div>
 </div>

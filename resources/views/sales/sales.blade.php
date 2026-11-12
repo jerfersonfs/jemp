@@ -58,7 +58,7 @@
         </form>
 
         @if ($salesReportError)
-            <p role="alert" style="padding:0 1.125rem; color:var(--color-danger)">{{ $salesReportError }}</p>
+            <span hidden data-toast-message data-toast-variant="error">{{ $salesReportError }}</span>
         @else
             <div class="sales-table-wrap">
                 <table class="sales-table">

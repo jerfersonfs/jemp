@@ -13,6 +13,7 @@
         :title="$createTitle"
         :description="$description"
         :fields="$fields"
+        :preserve-old-input="false"
         layout="grid"
         :action="$action"
         :method="$method"

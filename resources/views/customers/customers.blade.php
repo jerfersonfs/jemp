@@ -81,9 +81,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
             <form class="customers-dialog-form jemp-form-dialog--create" data-customer-form action="{{ route('customers.store') }}" method="POST" data-customer-store-url="{{ route('customers.store') }}">
                 @csrf
                 <input type="hidden" name="_record_id" value="{{ old('_record_id', '') }}">
-                @if ($errors->any())
-                <p class="jemp-form-dialog__error" role="alert">{{ $errors->first() }}</p>
-                @endif
                 <label>Nome / Empresa<input name="customer_name" value="{{ old('customer_name') }}" required></label><label class="customers-document-field">Documento<span class="customers-document-field__control"><select data-customer-document-type aria-label="Tipo de documento">
                             <option value="cpf" selected>CPF</option>
                             <option value="cnpj">CNPJ</option>

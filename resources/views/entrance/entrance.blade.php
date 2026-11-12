@@ -38,7 +38,6 @@
 
     <div class="page-head movement-page__head"><div><h1>Entradas</h1></div></div>
     @if (session('status')) <p class="movement-feedback" role="status">{{ session('status') }}</p> @endif
-    @if ($errors->any()) <p class="movement-feedback movement-feedback--error" role="alert">{{ $errors->first() }}</p> @endif
 
     <x-cards.panel class="movement-panel movement-panel--entries" variant="mint" title="Listagem de Entradas" description="Gerencie todas as entradas do seu catálogo.">
         <x-slot:actions>

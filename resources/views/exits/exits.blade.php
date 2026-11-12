@@ -34,7 +34,6 @@
 
     <div class="page-head movement-page__head"><div><h1>Saídas</h1></div></div>
     @if (session('status')) <p class="movement-feedback" role="status">{{ session('status') }}</p> @endif
-    @if ($errors->any()) <p class="movement-feedback movement-feedback--error" role="alert">{{ $errors->first() }}</p> @endif
     <x-cards.panel class="exit-panel movement-panel movement-panel--exits" variant="mint" title="Histórico de Saídas" description="Acompanhe e gerencie as saídas registradas no estoque.">
         <x-slot:actions><button class="btn btn-primary movement-action-button" type="button" data-dialog-open="movement-form" aria-label="Cadastrar nova saída"><x-icons.icon name="plus" size="sm" color="white" /> Nova Saída</button></x-slot:actions>
         <x-slot:filters>

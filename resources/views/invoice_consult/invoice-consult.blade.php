@@ -46,11 +46,11 @@
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
             <div class="invoice-page-head__actions">
-                <!--
+
             <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
                 <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
             </button>
--->
+
             </div>
         </header>
 
