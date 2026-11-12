@@ -76,3 +76,20 @@
 .products-warehouse-action--delete { color: var(--color-danger); }
 .products-warehouse-action--delete:hover { background: color-mix(in srgb, var(--color-danger) 9%, white); }
 .products-warehouses-modal [data-warehouses-error] { color: var(--color-danger); }
+
+.products-filters .jemp-filter-bar__fields { grid-template-columns: minmax(0, 2fr) minmax(200px, 1fr); }
+.products-filters .jemp-filter-bar__fields > .products-search { min-width: 0; }
+@media (max-width: 700px) { .products-filters .jemp-filter-bar__fields { grid-template-columns: minmax(0, 1fr); } }
+
+.jemp-modal.products-warehouses-modal { box-sizing: border-box; width: min(900px, calc(100vw - 32px)); }
+.products-warehouses-modal > .jemp-dialog { box-sizing: border-box; width: 100%; min-width: 0; max-width: none; overflow-x: hidden; }
+.products-warehouses-modal .jemp-details-dialog__body,
+.products-warehouses-modal .jemp-table-region,
+.products-warehouses-modal .jemp-table-scroll { box-sizing: border-box; width: 100%; min-width: 0; overflow-x: hidden; }
+.products-warehouses-modal .jemp-table { width: 100%; min-width: 0; table-layout: fixed; }
+.products-warehouses-modal .jemp-table :is(th, td) { overflow-wrap: anywhere; white-space: normal; }
+.products-warehouses-modal .jemp-table :is(th, td):last-child { width: 6rem; }
+.products-warehouses-modal [data-warehouse-form] { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; width: 100%; max-width: 100%; min-width: 0; padding: 0 24px 20px; }
+.products-warehouses-modal [data-warehouse-form] label { display: grid; min-width: 0; gap: 6px; color: var(--color-secondary); }
+.products-warehouses-modal [data-warehouse-form] input,
+.products-warehouses-modal [data-warehouse-form] textarea { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid #cddfdd; border-radius: 6px; font: inherit; }

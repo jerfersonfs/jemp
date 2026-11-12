@@ -1,80 +1,85 @@
 @php
-    $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
+$errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
 @endphp
 
 <x-layouts.app title="Produtos · JEMP" page="products">
     @php
-        $columns = [
-            ['key' => 'code', 'label' => 'Cód.'], ['key' => 'name', 'label' => 'Nome do Produto'],
-            ['key' => 'category', 'label' => 'Categoria'], ['key' => 'type', 'label' => 'Condição'],
-            ['key' => 'measure', 'label' => 'Medida'], ['key' => 'location', 'label' => 'Local'],
-            ['key' => 'material', 'label' => 'Material'], ['key' => 'cost_price_display', 'label' => 'Custo'],
-            ['key' => 'actions', 'label' => 'Ações', 'type' => 'actions', 'idKey' => 'id', 'actions' => [
-                ['name' => 'view', 'label' => 'Ver detalhes', 'icon' => 'eye'],
-                ['name' => 'edit', 'label' => 'Editar produto', 'icon' => 'pencil-simple'],
-                ['name' => 'delete', 'label' => 'Excluir produto', 'icon' => 'trash'],
-            ]],
-        ];
-        $rows = $products->map(fn ($product) => [
-            'id' => $product->product_id,
-            'product_id' => $product->product_id,
-            'code' => $product->sku,
-            'name' => $product->product_name,
-            'sku' => $product->sku,
-            'product_name' => $product->product_name,
-            'category' => $product->category,
-            'type' => $product->inventory->pluck('product_condition')->unique()->implode(', ') ?: '—',
-            'measure' => $product->width_mm.' × '.$product->length_mm.' mm',
-            'location' => $product->inventory->first()?->warehouse?->warehouse_name ?? '—',
-            'material' => $product->material,
-            'cost_price' => $product->cost_price,
-            'cost_price_display' => 'R$ '.number_format((float) $product->cost_price, 2, ',', '.'),
-            'width_mm' => $product->width_mm,
-            'length_mm' => $product->length_mm,
-            'theoretical_balance' => $product->inventory_sum_theoretical_balance ?? 0,
-            'warehouse_id' => $product->inventory->first()?->warehouse_id,
-            'product_condition' => $product->inventory->first()?->product_condition ?? 'Novo',
-            'updated_at' => $product->updated_at,
-            'inventory' => $product->inventory->map(fn ($stock) => [
-                'warehouse_id' => $stock->warehouse_id,
-                'warehouse' => $stock->warehouse?->warehouse_name,
-                'product_condition' => $stock->product_condition,
-                'theoretical_balance' => $stock->theoretical_balance,
-            ])->values(),
-            '_data' => [
-                'search' => implode(' ', [$product->sku, $product->product_name, $product->category, $product->material]),
-                'update-url' => route('products.update', $product),
-                'delete-url' => route('products.destroy', $product),
-            ],
-        ])->all();
-        $fields = [
-            ['name' => 'sku', 'id' => 'product-sku', 'label' => 'SKU gerado pelo sistema', 'readonly' => true, 'value' => 'Gerado ao cadastrar'],
-            ['name' => 'product_name', 'id' => 'product-name', 'label' => 'Produto', 'required' => true],
-            ['name' => 'category', 'id' => 'product-category', 'label' => 'Categoria', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'Descartável' => 'Descartável', 'Não Standard' => 'Não Standard'], 'required' => true],
-            ['name' => 'material', 'id' => 'product-material', 'label' => 'Material', 'required' => true],
-            ['name' => 'cost_price', 'id' => 'product-cost-price', 'label' => 'Custo unitário', 'type' => 'number', 'prefix' => 'R$', 'min' => 0, 'step' => 0.01, 'required' => true],
-            ['name' => 'width_mm', 'id' => 'product-width', 'label' => 'Largura (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
-            ['name' => 'length_mm', 'id' => 'product-length', 'label' => 'Comprimento (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
-            ['name' => 'warehouse_id', 'id' => 'product-warehouse', 'label' => 'Armazém inicial', 'type' => 'select', 'options' => $warehouses->mapWithKeys(fn ($warehouse) => [$warehouse->warehouse_id => $warehouse->warehouse_name])->all(), 'required' => true, 'createOnly' => true],
-            ['name' => 'product_condition', 'id' => 'product-condition', 'label' => 'Condição do estoque', 'type' => 'select', 'options' => ['Novo' => 'Novo', 'Reforma' => 'Reforma', 'Descarte' => 'Descarte'], 'required' => true, 'createOnly' => true],
-            ['name' => 'theoretical_balance', 'id' => 'product-balance', 'label' => 'Saldo inicial', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true, 'createOnly' => true],
-        ];
-        $inventoryColumns = [
-            ['key' => 'warehouse', 'label' => 'Armazém'],
-            ['key' => 'product_condition', 'label' => 'Condição'],
-            ['key' => 'theoretical_balance', 'label' => 'Saldo teórico'],
-            ['key' => 'status', 'label' => 'Situação', 'type' => 'status'],
-        ];
+    $columns = [
+    ['key' => 'code', 'label' => 'Cód.'], ['key' => 'name', 'label' => 'Nome do Produto'],
+    ['key' => 'category', 'label' => 'Categoria'],
+    ['key' => 'measure', 'label' => 'Medida'],
+    ['key' => 'material', 'label' => 'Material'], ['key' => 'cost_price_display', 'label' => 'Custo'],
+    ['key' => 'actions', 'label' => 'Ações', 'type' => 'actions', 'idKey' => 'id', 'actions' => [
+    ['name' => 'view', 'label' => 'Ver detalhes', 'icon' => 'eye'],
+    ['name' => 'edit', 'label' => 'Editar produto', 'icon' => 'pencil-simple'],
+    ['name' => 'delete', 'label' => 'Excluir produto', 'icon' => 'trash'],
+    ]],
+    ];
+    $rows = $products->map(fn ($product) => [
+    'id' => $product->product_id,
+    'product_id' => $product->product_id,
+    'code' => $product->sku,
+    'name' => $product->product_name,
+    'sku' => $product->sku,
+    'product_name' => $product->product_name,
+    'category' => $product->category,
+    'type' => $product->inventory->pluck('product_condition')->unique()->implode(', ') ?: '—',
+    'measure' => $product->width_mm.' × '.$product->length_mm.' mm',
+    'location' => $product->inventory->first()?->warehouse?->warehouse_name ?? '—',
+    'material' => $product->material,
+    'cost_price' => $product->cost_price,
+    'cost_price_display' => 'R$ '.number_format((float) $product->cost_price, 2, ',', '.'),
+    'width_mm' => $product->width_mm,
+    'length_mm' => $product->length_mm,
+    'theoretical_balance' => $product->inventory_sum_theoretical_balance ?? 0,
+    'warehouse_id' => $product->inventory->first()?->warehouse_id,
+    'product_condition' => $product->inventory->first()?->product_condition ?? 'Novo',
+    'updated_at' => $product->updated_at,
+    'inventory' => $product->inventory->map(fn ($stock) => [
+    'warehouse_id' => $stock->warehouse_id,
+    'warehouse' => $stock->warehouse?->warehouse_name,
+    'product_condition' => $stock->product_condition,
+    'theoretical_balance' => $stock->theoretical_balance,
+    ])->values(),
+    '_data' => [
+    'search' => implode(' ', [$product->sku, $product->product_name, $product->category, $product->material]),
+    'update-url' => route('products.update', $product),
+    'delete-url' => route('products.destroy', $product),
+    ],
+    ])->all();
+    $fields = [
+    ['name' => 'sku', 'id' => 'product-sku', 'label' => 'SKU gerado pelo sistema', 'readonly' => true, 'value' => 'Gerado ao cadastrar'],
+    ['name' => 'product_name', 'id' => 'product-name', 'label' => 'Produto', 'required' => true],
+    ['name' => 'category', 'id' => 'product-category', 'label' => 'Categoria', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'Descartável' => 'Descartável', 'Não Standard' => 'Não Standard'], 'required' => true],
+    ['name' => 'material', 'id' => 'product-material', 'label' => 'Material', 'required' => true],
+    ['name' => 'cost_price', 'id' => 'product-cost-price', 'label' => 'Custo unitário', 'type' => 'number', 'prefix' => 'R$', 'min' => 0, 'step' => 0.01, 'required' => true],
+    ['name' => 'width_mm', 'id' => 'product-width', 'label' => 'Largura (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
+    ['name' => 'length_mm', 'id' => 'product-length', 'label' => 'Comprimento (mm)', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
+    ['name' => 'warehouse_id', 'id' => 'product-warehouse', 'label' => 'Armazém inicial', 'type' => 'select', 'options' => $warehouses->mapWithKeys(fn ($warehouse) => [$warehouse->warehouse_id => $warehouse->warehouse_name])->all(), 'required' => true, 'createOnly' => true],
+    ['name' => 'product_condition', 'id' => 'product-condition', 'label' => 'Condição do estoque', 'type' => 'select', 'options' => ['Novo' => 'Novo', 'Reforma' => 'Reforma', 'Descarte' => 'Descarte'], 'required' => true, 'createOnly' => true],
+    ['name' => 'theoretical_balance', 'id' => 'product-balance', 'label' => 'Saldo inicial', 'type' => 'number', 'min' => 0, 'step' => 1, 'required' => true, 'createOnly' => true],
+    ];
+    $inventoryColumns = [
+    ['key' => 'warehouse', 'label' => 'Armazém'],
+    ['key' => 'product_condition', 'label' => 'Condição'],
+    ['key' => 'theoretical_balance', 'label' => 'Saldo teórico'],
+    ['key' => 'status', 'label' => 'Situação', 'type' => 'status'],
+    ];
     @endphp
 
     <div class="products-page" data-product-catalog data-validation-errors="{{ $errors->any() ? 'true' : 'false' }}" data-old-record-id="{{ old('_record_id', '') }}">
-        <div class="page-head"><h1>Produtos</h1></div>
+        <div class="page-head">
+            <h1>Produtos</h1>
+        </div>
         @if ($errors->any()) <p class="products-error" role="alert">{{ $errors->first() }}</p> @endif
         @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
         @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
         <section class="products-panel" aria-labelledby="products-list-title">
             <header class="products-panel__header">
-                <div><h2 id="products-list-title">Listagem de Produtos</h2><p>Gerencie todos os produtos do seu catálogo.</p></div>
+                <div>
+                    <h2 id="products-list-title">Listagem de Produtos</h2>
+                    <p>Gerencie todos os produtos do seu catálogo.</p>
+                </div>
                 <div class="products-panel__actions">
                     <button class="products-warehouses" type="button" data-warehouses-open aria-label="Abrir gerenciamento de armazéns"><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
                     <x-buttons.button class="products-create" data-product-create><x-icons.icon name="plus" size="sm" /> Novo Produto</x-buttons.button>
@@ -83,8 +88,12 @@
             <div class="products-panel__body">
                 <x-filters.filter-bar class="products-filters" label="Filtrar produtos" data-product-filters>
                     <label class="products-search"><x-icons.icon name="magnifying-glass" size="sm" /><span class="sr-only">Buscar produto</span><input type="search" placeholder="Buscar produto..." data-product-search></label>
-                    <label>Categoria<select data-product-category><option value="">Todas as categorias</option><option>PBR</option><option>Descartável</option><option>Não Standard</option></select></label>
-                    <label>Condição<select data-product-type><option value="">Todas as condições</option>@foreach ($products->flatMap(fn ($product) => $product->inventory->pluck('product_condition'))->unique()->sort() as $condition)<option>{{ $condition }}</option>@endforeach</select></label>
+                    <label>Categoria<select data-product-category>
+                            <option value="">Todas as categorias</option>
+                            <option>PBR</option>
+                            <option>Descartável</option>
+                            <option>Não Standard</option>
+                        </select></label>
                 </x-filters.filter-bar>
                 <x-tables.table :columns="$columns" :rows="$rows" variant="spreadsheet" caption="Listagem de produtos" />
                 <footer class="products-footer">
@@ -119,7 +128,7 @@
                             <select name="dest_warehouse_id" required>
                                 <option value="">Selecione um armazém</option>
                                 @foreach ($warehouses as $warehouse)
-                                    <option value="{{ $warehouse->warehouse_id }}">{{ $warehouse->warehouse_name }}</option>
+                                <option value="{{ $warehouse->warehouse_id }}">{{ $warehouse->warehouse_name }}</option>
                                 @endforeach
                             </select>
                         </label>
@@ -152,8 +161,25 @@
         </x-dialogs.modal>
         <x-dialogs.modal label="Armazéns" class="products-modal products-warehouses-modal" data-warehouses-modal>
             <section class="jemp-dialog jemp-dialog--large jemp-details-dialog" role="dialog" aria-modal="true" aria-label="Armazéns">
-                <header class="jemp-dialog__header"><div><h2 class="jemp-dialog__title">Armazéns</h2><p class="jemp-dialog__description">Consulte e gerencie os armazéns cadastrados.</p></div><button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button></header>
-                <div class="jemp-details-dialog__body"><p data-warehouses-error role="alert" hidden></p><table class="jemp-table"><thead><tr><th>Armazém</th><th>Descrição</th><th>Ações</th></tr></thead><tbody data-warehouses-rows></tbody></table></div>
+                <header class="jemp-dialog__header">
+                    <div>
+                        <h2 class="jemp-dialog__title">Armazéns</h2>
+                        <p class="jemp-dialog__description">Consulte e gerencie os armazéns cadastrados.</p>
+                    </div><button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button>
+                </header>
+                <div class="jemp-details-dialog__body">
+                    <p data-warehouses-error role="alert" hidden></p>
+                    <table class="jemp-table">
+                        <thead>
+                            <tr>
+                                <th>Armazém</th>
+                                <th>Descrição</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody data-warehouses-rows></tbody>
+                    </table>
+                </div>
                 <form class="jemp-form-dialog jemp-form-dialog--grid" data-warehouse-form>
                     <h3 data-warehouse-form-title>Novo armazém</h3><input type="hidden" name="warehouse_id">
                     <label>Nome<input name="warehouse_name" maxlength="100" required></label>

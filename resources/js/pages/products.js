@@ -193,12 +193,10 @@ if (catalog) {
     function renderRows() {
         const query = normalize(find('search').value.trim());
         const category = find('category').value;
-        const type = find('type').value;
         const filtered = rows.filter((row) => {
             const product = JSON.parse(row.dataset.record);
             return normalize(row.dataset.search).includes(query)
-                && (!category || product.category === category)
-                && (!type || (product.inventory ?? []).some((stock) => stock.product_condition === type));
+                && (!category || product.category === category);
         });
         const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
         currentPage = Math.min(currentPage, totalPages);
@@ -281,7 +279,7 @@ if (catalog) {
         });
     });
 
-    for (const name of ['search', 'category', 'type']) {
+    for (const name of ['search', 'category']) {
         find(name).addEventListener(name === 'search' ? 'input' : 'change', () => {
             currentPage = 1;
             renderRows();

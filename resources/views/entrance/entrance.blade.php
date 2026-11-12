@@ -19,8 +19,8 @@
             ['key' => 'condition', 'label' => 'Condição'],
             ['key' => 'quantity', 'label' => 'Qtd'],
             ['key' => 'destination', 'label' => 'Destino'],
-            ['key' => 'fiscal', 'label' => 'Documento fiscal'],
-            ['key' => 'invoice_id', 'label' => 'ID NF-e'],
+            ['key' => 'fiscal', 'label' => 'Possui NF?'],
+            ['key' => 'invoice_id', 'label' => 'N° da NF'],
             ['key' => 'justification', 'label' => 'Justificação'],
         ];
         $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
@@ -31,7 +31,7 @@
             ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
             ['name' => 'dest_warehouse_id', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um armazém'] + $locations],
             ['name' => 'is_fiscal', 'label' => 'Possui documento fiscal?', 'type' => 'select', 'value' => '0', 'options' => ['0' => 'Não', '1' => 'Sim'], 'required' => true],
-            ['name' => 'invoice_id', 'label' => 'ID da nota fiscal', 'type' => 'select', 'options' => ['' => 'Selecione uma NF-e'] + $invoiceOptions],
+            ['name' => 'invoice_id', 'label' => 'N° da NF', 'type' => 'select', 'options' => ['' => 'Selecione uma NF-e'] + $invoiceOptions],
             ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
         ];
     @endphp

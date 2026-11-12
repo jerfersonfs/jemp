@@ -17,17 +17,17 @@
             ['key' => 'date', 'label' => 'Data e hora'],
             ['key' => 'product', 'label' => 'Produto'], ['key' => 'condition', 'label' => 'Condição'], ['key' => 'fiscal', 'label' => 'Documento fiscal'],
             ['key' => 'quantity', 'label' => 'Qtd. saída'], ['key' => 'warehouse', 'label' => 'Armazém de origem'],
-            ['key' => 'invoice_id', 'label' => 'ID NF-e'], ['key' => 'justification', 'label' => 'Justificação'],
+            ['key' => 'invoice_id', 'label' => 'N° da NF'], ['key' => 'justification', 'label' => 'Justificação'],
         ];
         $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $exitFormFields = [
-            ['name' => 'date', 'label' => 'Data da saída', 'type' => 'date', 'required' => true, 'readonly' => true],
+            ['name' => 'date', 'label' => 'Data e hora da saída', 'type' => 'datetime-local', 'required' => true, 'readonly' => true],
             ['name' => 'product_id', 'label' => 'Produto', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um produto'] + $productOptions],
             ['name' => 'product_condition', 'label' => 'Condição', 'type' => 'select', 'required' => true, 'options' => ['Novo' => 'Novo', 'Reforma' => 'Reforma', 'Descarte' => 'Descarte']],
             ['name' => 'quantity', 'label' => 'Quantidade de saída', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
             ['name' => 'origin_warehouse_id', 'label' => 'Armazém', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione um armazém'] + $locations],
             ['name' => 'is_fiscal', 'label' => 'Possui documento fiscal?', 'type' => 'select', 'value' => '0', 'options' => ['0' => 'Não', '1' => 'Sim'], 'required' => true],
-            ['name' => 'invoice_id', 'label' => 'ID da nota fiscal', 'type' => 'select', 'options' => ['' => 'Selecione uma NF-e'] + $invoiceOptions],
+            ['name' => 'invoice_id', 'label' => 'N° da NF', 'type' => 'select', 'options' => ['' => 'Selecione uma NF-e'] + $invoiceOptions],
             ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
         ];
     @endphp

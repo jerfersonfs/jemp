@@ -8,7 +8,50 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
     const form = dialog?.querySelector('[data-customer-form]');
     const documentType = form?.querySelector('[data-customer-document-type]');
     const documentInput = form?.querySelector('[data-customer-document]');
+    const contactInput = form?.querySelector('[data-customer-contact]');
     const documentDigits = (value) => String(value ?? '').replace(/\D/g, '');
+    const formatCustomerContact = (value) => {
+        let digits = documentDigits(value);
+        if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+            digits = digits.slice(2);
+        }
+        digits = digits.slice(0, 11);
+        if (!digits) return '';
+        if (digits.length <= 2) return digits;
+
+        if (digits.length < 10) {
+            const firstPartLength = digits.length > 8 ? 5 : 4;
+            if (digits.length <= firstPartLength) return digits;
+            return `${digits.slice(0, firstPartLength)}-${digits.slice(firstPartLength)}`;
+        }
+
+        const areaCode = digits.slice(0, 2);
+        const number = digits.slice(2);
+        const firstPartLength = digits.length > 10 ? 5 : 4;
+        if (number.length <= firstPartLength) return `(${areaCode}) ${number}`;
+
+        return `(${areaCode}) ${number.slice(0, firstPartLength)}-${number.slice(firstPartLength)}`;
+    };
+    const syncCustomerContact = (input = contactInput) => {
+        if (!input) return;
+
+        const previousValue = input.value;
+        const previousCaret = input.selectionStart ?? previousValue.length;
+        const digitsBeforeCaret = documentDigits(previousValue.slice(0, previousCaret)).length;
+        const formattedValue = formatCustomerContact(previousValue);
+        input.value = formattedValue;
+
+        if (document.activeElement !== input || typeof input.setSelectionRange !== 'function') return;
+
+        let nextCaret = 0;
+        let digitsCounted = 0;
+        while (nextCaret < formattedValue.length && digitsCounted < digitsBeforeCaret) {
+            if (/\d/.test(formattedValue[nextCaret])) digitsCounted += 1;
+            nextCaret += 1;
+        }
+        while (nextCaret < formattedValue.length && /\D/.test(formattedValue[nextCaret])) nextCaret += 1;
+        input.setSelectionRange(nextCaret, nextCaret);
+    };
     const formatCustomerDocument = (value, type) => {
         const digits = documentDigits(value).slice(0, type === 'cnpj' ? 14 : 11);
         if (type === 'cnpj') {
@@ -33,6 +76,11 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
     };
     documentInput?.addEventListener('input', () => syncCustomerDocument());
     documentType?.addEventListener('change', () => syncCustomerDocument());
+    contactInput?.addEventListener('input', () => syncCustomerContact());
+    rows.forEach((row) => {
+        const contactCell = row.querySelector('[data-customer-contact-display]');
+        if (contactCell) contactCell.textContent = formatCustomerContact(contactCell.textContent);
+    });
     const title = dialog?.querySelector('#customer-dialog-title');
     const editDialog = dialog?.querySelector('[data-customer-edit-dialog]');
     const detailsLayer = document.querySelector('[data-customer-details-layer]');
@@ -95,6 +143,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
             }
         }
         syncCustomerDocument(true);
+        syncCustomerContact();
         dialog.hidden = false;
         document.body.classList.add('customers-dialog-open');
         dialog.querySelector('input:not([type="hidden"])')?.focus();
@@ -198,7 +247,9 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
                 const term = document.createElement('dt');
                 term.textContent = label;
                 const description = document.createElement('dd');
-                description.textContent = customer[detailKeys[index]] || '—';
+                description.textContent = detailKeys[index] === 'customer_contact'
+                    ? formatCustomerContact(customer.customer_contact) || '—'
+                    : customer[detailKeys[index]] || '—';
                 item.append(term, description);
                 grid.append(item);
             });
