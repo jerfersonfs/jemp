@@ -4,6 +4,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemController;
+use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockMovementController;
@@ -17,8 +18,7 @@ Route::get('/user', function (Request $request) {
 
 // Os nomes recebem prefixo próprio para não sobrescrever os nomes das rotas web.
 Route::name('api.')->group(function (): void {
-    Route::post('/invoices/import', [InvoiceController::class, 'importXml']);
-    Route::post('/inventories/remove-stock', [InventoryController::class, 'removeStock'])
+    Route::post('/inventories/remove-stock', [MovementController::class, 'storeExit'])
         ->name('inventories.remove-stock');
     Route::apiResource('products', ProductController::class)->parameters(['products' => 'produto']);
     Route::apiResource('customers', CustomerController::class)->parameters(['customers' => 'cliente']);
@@ -26,7 +26,7 @@ Route::name('api.')->group(function (): void {
     Route::apiResource('invoice-items', InvoiceItemController::class);
     Route::apiResource('stock-movements', StockMovementController::class);
     Route::apiResource('warehouses', WarehouseController::class);
-    Route::apiResource('invoices', InvoiceController::class);
+    Route::apiResource('invoices', InvoiceController::class)->except(['update', 'destroy']);
 });
 
 // Endpoints de Relatórios e Filtros

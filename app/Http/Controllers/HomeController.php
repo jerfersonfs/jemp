@@ -10,6 +10,7 @@ class HomeController extends Controller
 {
     public function index(): View
     {
+        Invoice::refreshOverdueStatuses();
         $received = (float) DB::table('invoice_items as ii')
             ->join('invoices as i', 'i.invoice_id', '=', 'ii.invoice_id')
             ->where('i.payment_status', 'Paga')
@@ -25,7 +26,7 @@ class HomeController extends Controller
             ->sum(DB::raw('ii.quantity * ii.unit_price'));
         $receivables = $receivableQuery
             ->with('items')
-            ->orderByRaw("CASE WHEN payment_status = 'Vencida' OR due_date < CURRENT_DATE THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN payment_status = 'Vencida' THEN 0 ELSE 1 END")
             ->orderBy('due_date')
             ->limit(5)
             ->get()
@@ -34,8 +35,8 @@ class HomeController extends Controller
                 'reference' => 'NF-e '.str_pad((string) $invoice->invoice_number, 4, '0', STR_PAD_LEFT),
                 'description' => 'Vencimento: '.$invoice->due_date->format('d/m/Y'),
                 'details' => [['label' => 'Valor', 'value' => 'R$ '.number_format($invoice->calculatedAmount(), 2, ',', '.')]],
-                'status' => $invoice->payment_status === 'Vencida' || $invoice->due_date->isPast() ? 'Vencida' : 'A vencer',
-                'variant' => $invoice->payment_status === 'Vencida' || $invoice->due_date->isPast() ? 'danger' : 'warning',
+                'status' => $invoice->payment_status === 'Vencida' ? 'Vencida' : 'A vencer',
+                'variant' => $invoice->payment_status === 'Vencida' ? 'danger' : 'warning',
             ])->all();
 
         $criticalQuery = DB::table('inventory as i')

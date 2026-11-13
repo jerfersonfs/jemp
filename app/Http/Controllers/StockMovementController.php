@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Inventory;
-use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreStockMovementRequest;
 use App\Models\StockMovement;
+use App\StockLedger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockMovementController extends Controller
 {
+    public function __construct(private readonly StockLedger $stockLedger) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -51,29 +53,12 @@ class StockMovementController extends Controller
                 $originWarehouseId = $data['origin_warehouse_id'] ?? null;
                 $condition = $data['product_condition'];
 
-                if ($type === 'Saída' || $type === 'Transferência') {
-                    $inventoryOrigin = Inventory::where('warehouse_id', $originWarehouseId)
-                        ->where('product_id', $productId)
-                        ->where('product_condition', $condition)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (!$inventoryOrigin || $inventoryOrigin->theoretical_balance < $qty) {
-                        throw new \Exception('Saldo insuficiente no armazém de origem.');
-                    }
-
-                    $inventoryOrigin->decrement('theoretical_balance', $qty);
+                if ($type === 'Transferência') {
+                    $this->stockLedger->change((int) $productId, (int) $originWarehouseId, $condition, -(int) $qty);
                 }
-
                 if ($type === 'Entrada' || $type === 'Transferência') {
-                    $inventoryDest = Inventory::firstOrCreate(
-                        ['warehouse_id' => $destWarehouseId, 'product_id' => $productId, 'product_condition' => $condition],
-                        ['theoretical_balance' => 0]
-                    );
-
-                    $inventoryDest->increment('theoretical_balance', $qty);
+                    $this->stockLedger->change((int) $productId, (int) $destWarehouseId, $condition, (int) $qty);
                 }
-
                 $createdMovement = StockMovement::create($data);
                 $createdMovement->load([
                     'product', 'originWarehouse', 'destinationWarehouse', 'user', 'invoice',
@@ -84,13 +69,13 @@ class StockMovementController extends Controller
 
             return response()->json([
                 'message' => 'Movimentação registrada e saldo atualizado com sucesso.',
-                'data' => $movement
+                'data' => $movement,
             ], 201);
 
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Falha ao processar movimentação.',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 422);
         }
     }

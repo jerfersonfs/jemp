@@ -1,3 +1,5 @@
+import { initializeMovementBalances } from './movement-balances.js';
+
 function initializeMovementList(list) {
     const panel = list.closest('.content-panel');
     const pageRoot = list.closest('.jemp-shell__page') ?? document;
@@ -10,6 +12,7 @@ function initializeMovementList(list) {
     const formDialog = pageRoot.querySelector('[data-movement-dialog="form"]');
     const detailDialog = pageRoot.querySelector('[data-movement-dialog="details"]');
     const recordForm = formDialog?.querySelector('form');
+    const stockBalances = initializeMovementBalances(recordForm);
     const fiscalField = recordForm?.elements.namedItem('is_fiscal');
     const invoiceField = recordForm?.elements.namedItem('invoice_id');
     const syncFiscalFields = () => {
@@ -50,6 +53,7 @@ function initializeMovementList(list) {
 
     const closeDialog = () => {
         if (!activeLayer) return;
+        if (formDialog && activeLayer.contains(formDialog)) stockBalances.clear();
         activeLayer.hidden = true;
         document.body.classList.remove('movement-dialog-open');
         activeTrigger?.focus();
@@ -147,6 +151,7 @@ function initializeMovementList(list) {
             }
             syncFiscalFields();
             openDialog(formDialog, createTrigger);
+            stockBalances.refresh();
             return;
         }
 

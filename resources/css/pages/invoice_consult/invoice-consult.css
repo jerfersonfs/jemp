@@ -103,3 +103,25 @@ body.invoice-dialog-open { overflow:hidden; }
 .invoice-import-dialog label { display: grid; gap: 8px; color: var(--color-secondary); }
 .invoice-import-dialog input, .invoice-import-dialog select { min-height: 42px; padding: 8px 12px; border: 1px solid #cddfdd; border-radius: 6px; background: white; font: inherit; }
 .invoice-import-dialog [data-invoice-import-feedback][data-error="true"] { color: var(--color-danger); }
+.invoice-import-dialog { width: min(1120px, calc(100vw - 32px)); }
+.invoice-import-dialog [hidden] { display: none !important; }
+.invoice-import-dialog fieldset { display: grid; min-width: 0; gap: 16px; padding: 0; border: 0; }
+.invoice-import-dialog legend { margin-bottom: 16px; color: var(--color-primary); font-weight: 700; }
+.invoice-import-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding: 16px; background: var(--color-surface); border-radius: 8px; }
+.invoice-import-summary dt { font-size: .8rem; color: var(--color-caption); }
+.invoice-import-summary dd { margin: 4px 0 0; color: var(--color-secondary); font-weight: 600; overflow-wrap: anywhere; }
+.invoice-import-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.invoice-import-fields label, .invoice-import-fields input, .invoice-import-fields select { min-width: 0; width: 100%; }
+.invoice-import-links { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+.invoice-import-links a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
+.invoice-import-help { margin: 0; color: var(--color-caption); font-size: .8rem; line-height: 1.5; }
+.invoice-import-items { min-width: 960px; }
+.invoice-import-items select { min-width: 210px; max-width: 290px; }
+.invoice-import-items tr[data-insufficient="true"] [data-import-balance], [data-import-stock-summary][data-error="true"] { color: var(--color-danger); }
+.invoice-import-dialog .jemp-dialog__footer { display: flex; flex-wrap: wrap; gap: 8px; padding-inline: 0; }
+.invoice-item-source { display: block; color: var(--color-caption); font-size: .75rem; overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+    .invoice-import-fields, .invoice-import-summary { grid-template-columns: minmax(0,1fr); }
+    .invoice-import-dialog form { padding: 16px; }
+    .invoice-import-dialog .jemp-dialog__footer button { flex: 1 1 160px; }
+}

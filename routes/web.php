@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoiceXmlController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
@@ -25,10 +27,15 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/clientes', [CustomerController::class, 'index'])->name('customers.index');
     Route::resource('clientes', CustomerController::class)->only(['store', 'update', 'destroy'])->names('customers');
     Route::get('/consulta-nfe', [SaleController::class, 'invoices'])->name('invoice-consult.index');
+    Route::post('/api/invoices/import/preview', [InvoiceXmlController::class, 'preview'])->name('invoice-import.preview');
+    Route::post('/api/invoices/import', [InvoiceXmlController::class, 'store'])->name('invoice-import.store');
+    Route::match(['put', 'patch'], '/api/invoices/{invoice}', [InvoiceController::class, 'update'])->name('api.invoices.update');
+    Route::delete('/api/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('api.invoices.destroy');
     Route::get('/vendas', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/entradas', [MovementController::class, 'entries'])->name('entrance.index');
+    Route::get('/movimentacoes/saldos', [MovementController::class, 'balances'])->name('movements.balances');
     Route::post('/entradas', [MovementController::class, 'storeEntry'])->name('entrance.store');
-    Route::get('/saidas', [MovementController::class, 'exits'])->name('exits.index');
+    Route::get('/saidas', fn () => redirect()->route('sales.index'))->name('exits.index');
     Route::post('/saidas', [MovementController::class, 'storeExit'])->name('exits.store');
     Route::get('/internas', [MovementController::class, 'transfers'])->name('internal.index');
     Route::post('/internas', [MovementController::class, 'storeTransfer'])->name('internal.store');

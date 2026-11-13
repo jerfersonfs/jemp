@@ -152,6 +152,12 @@
 .movement-dialog-layer [data-movement-dialog="confirm"] { width: min(100%, 32rem); }
 .movement-dialog-layer [data-movement-dialog="confirm"] .jemp-confirmation__title { color: var(--color-danger); }
 .movement-dialog-open { overflow: hidden; }
+.movement-stock-balances { grid-column: 1 / -1; display: grid; min-width: 0; gap: .75rem; padding: 1rem; border: 1px solid color-mix(in srgb, var(--color-primary) 22%, white); border-radius: .75rem; background: var(--color-surface); }
+.movement-stock-balances__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; }
+.movement-stock-balances input[readonly] { width: 100%; min-width: 0; color: var(--color-secondary); font-weight: 700; background: white; }
+.movement-stock-balances__footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.movement-stock-balances__footer p { margin: 0; color: var(--color-caption); font-size: var(--font-size-caption); line-height: 1.5; }
+.movement-stock-balances__footer button { flex-shrink: 0; }
 
 @media (max-width: 900px) {
     .exit-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

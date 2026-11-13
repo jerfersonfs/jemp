@@ -21,12 +21,13 @@
             </header>
             <div class="sales-table-wrap">
                 <table class="sales-table">
-                    <thead><tr><th>Número</th><th>Série</th><th>Cliente</th><th>Emissão</th><th>Unidades</th><th>Situação</th><th>Total calculado</th></tr></thead>
+                    <thead><tr><th>Número</th><th>Série</th><th>CNPJ emitente</th><th>Cliente</th><th>Emissão</th><th>Unidades</th><th>Situação</th><th>Total calculado</th></tr></thead>
                     <tbody>
                         @forelse ($invoices as $invoice)
                             <tr>
                                 <td>{{ $invoice['number'] }}</td>
                                 <td>{{ $invoice['series'] }}</td>
+                                <td>{{ $invoice['issuer_document'] }}</td>
                                 <td>{{ $invoice['customer'] }}</td>
                                 <td>{{ $invoice['date'] }}</td>
                                 <td>{{ $invoice['items'] }}</td>
@@ -34,7 +35,7 @@
                                 <td>R$ {{ number_format($invoice['total'], 2, ',', '.') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="7">Nenhuma nota fiscal encontrada.</td></tr>
+                            <tr><td colspan="8">Nenhuma nota fiscal encontrada.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

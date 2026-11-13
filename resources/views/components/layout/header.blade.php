@@ -8,7 +8,6 @@
         'invoice-consult' => 'Consulta NF-e',
         'sales' => 'Vendas',
         'entrance' => 'Entradas',
-        'exits' => 'Saídas',
         'internal' => 'Internas',
         'reports' => 'Relatórios',
     ];

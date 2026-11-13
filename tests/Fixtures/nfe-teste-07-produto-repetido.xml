@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ARQUIVO FICTICIO PARA TESTE DO JEMP. SEM VALOR FISCAL. NAO ENVIAR A SEFAZ. -->
+<NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+  <infNFe versao="4.00" Id="NFe35261199999999000191550990009100041789100059">
+    <ide><cUF>35</cUF><cNF>78910005</cNF><natOp>VENDA FICTICIA - TESTE JEMP</natOp><mod>55</mod><serie>99</serie><nNF>910004</nNF><dhEmi>2026-11-13T10:00:00-03:00</dhEmi><tpNF>1</tpNF><tpEmis>1</tpEmis><cDV>9</cDV><tpAmb>2</tpAmb><finNFe>1</finNFe></ide>
+    <emit><CNPJ>99999999000191</CNPJ><xNome>EMITENTE FICTICIO TESTE JEMP SEM VALOR FISCAL</xNome></emit>
+    <dest><CNPJ>88888888888888</CNPJ><xNome>Enzo Alberti</xNome></dest>
+    <det nItem="1"><prod><cProd>EXT-PAL-001</cProd><cEAN>SEM GTIN</cEAN><xProd>PALETE FICTICIO XML A LOTE 1</xProd><NCM>44152000</NCM><CFOP>5102</CFOP><uCom>UN</uCom><qCom>2.0000</qCom><vUnCom>50.0000000000</vUnCom><vProd>100.00</vProd><indTot>1</indTot></prod></det>
+    <det nItem="2"><prod><cProd>EXT-PAL-001</cProd><cEAN>SEM GTIN</cEAN><xProd>PALETE FICTICIO XML A LOTE 2</xProd><NCM>44152000</NCM><CFOP>5102</CFOP><uCom>UN</uCom><qCom>3.0000</qCom><vUnCom>55.0000000000</vUnCom><vProd>165.00</vProd><indTot>1</indTot></prod></det>
+    <total><ICMSTot><vProd>265.00</vProd><vDesc>0.00</vDesc><vFrete>0.00</vFrete><vSeg>0.00</vSeg><vOutro>0.00</vOutro><vNF>265.00</vNF></ICMSTot></total>
+    <cobr><dup><nDup>001</nDup><dVenc>2026-12-13</dVenc><vDup>265.00</vDup></dup></cobr>
+    <pag><detPag><tPag>17</tPag><vPag>265.00</vPag></detPag></pag>
+    <infAdic><infCpl>TESTE JEMP SEM VALOR FISCAL. CENARIO: SOMAR QUANTIDADES DO MESMO PRODUTO. Associar produtos internos e verificar saldo antes de confirmar.</infCpl></infAdic>
+  </infNFe>
+</NFe>

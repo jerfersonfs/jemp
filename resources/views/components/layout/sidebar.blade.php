@@ -8,11 +8,9 @@
         ],
         [
             ['page' => 'invoice-consult', 'route' => 'invoice-consult.index', 'label' => 'Consulta NF-e', 'icon' => 'note-pencil'],
-            ['page' => 'sales', 'route' => 'sales.index', 'label' => 'Vendas', 'icon' => 'handshake'],
         ],
         [
             ['page' => 'entrance', 'route' => 'entrance.index', 'label' => 'Entradas', 'icon' => 'tray-arrow-down'],
-            ['page' => 'exits', 'route' => 'exits.index', 'label' => 'Saídas', 'icon' => 'tray-arrow-up'],
             ['page' => 'internal', 'route' => 'internal.index', 'label' => 'Internas', 'icon' => 'arrows-left-right'],
         ],
         [

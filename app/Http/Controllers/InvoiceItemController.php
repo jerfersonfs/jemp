@@ -28,6 +28,7 @@ class InvoiceItemController extends Controller
     {
         $invoiceItem = DB::transaction(function () use ($request): InvoiceItem {
             $data = $request->validated();
+            Invoice::query()->whereKey($data['invoice_id'])->lockForUpdate()->firstOrFail()->assertItemsEditable();
             $product = Product::query()->findOrFail($data['product_id']);
             $invoiceItem = InvoiceItem::create($data + ['unit_price' => $product->cost_price]);
             $invoiceItem->invoice->recalculateAmount();
@@ -60,6 +61,11 @@ class InvoiceItemController extends Controller
             $data = $request->validated();
             $previousInvoiceId = $invoiceItem->invoice_id;
             $nextInvoiceId = $data['invoice_id'] ?? $previousInvoiceId;
+            $invoices = Invoice::query()->whereIn('invoice_id', [$previousInvoiceId, $nextInvoiceId])
+                ->orderBy('invoice_id')->lockForUpdate()->get();
+            foreach ($invoices as $invoice) {
+                $invoice->assertItemsEditable();
+            }
             $nextProductId = $data['product_id'] ?? $invoiceItem->product_id;
 
             if ((int) $nextProductId !== (int) $invoiceItem->product_id) {
@@ -88,6 +94,7 @@ class InvoiceItemController extends Controller
     {
         DB::transaction(function () use ($invoiceItem): void {
             $invoiceId = $invoiceItem->invoice_id;
+            Invoice::query()->whereKey($invoiceId)->lockForUpdate()->firstOrFail()->assertItemsEditable();
             $invoiceItem->delete();
             Invoice::query()->findOrFail($invoiceId)->recalculateAmount();
         });

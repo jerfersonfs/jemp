@@ -8,8 +8,8 @@ use App\Models\Product;
 use App\Models\Warehouse;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SaleController extends Controller
@@ -56,18 +56,22 @@ class SaleController extends Controller
     /** @return Collection<int, array<string, int|float|string>> */
     private function invoiceRows(bool $forConsult = false): Collection
     {
+        Invoice::refreshOverdueStatuses();
+
         return Invoice::query()
             ->with(['customer', 'items.product'])
+            ->withExists(['stockMovements as has_stock_exit' => fn ($query) => $query->where('movement_type', 'Saída')])
             ->latest('issue_date')
             ->get()
             ->map(function (Invoice $invoice) use ($forConsult): array {
                 $total = $invoice->calculatedAmount();
                 $customerName = $invoice->customer?->customer_name ?? '—';
 
-                if (!$forConsult) {
+                if (! $forConsult) {
                     return [
                         'number' => $invoice->invoice_number,
                         'series' => $invoice->invoice_serie,
+                        'issuer_document' => $invoice->issuer_document ?: 'Não informado',
                         'customer' => $customerName,
                         'date' => $invoice->issue_date->format('d/m/Y'),
                         'items' => $invoice->items->sum('quantity'),
@@ -83,6 +87,8 @@ class SaleController extends Controller
                     'product_id' => (string) $item->product_id,
                     'product' => $item->product?->product_name ?? 'Produto',
                     'sku' => $item->product?->sku ?? '—',
+                    'external_code' => $item->external_code,
+                    'external_description' => $item->external_description,
                     'quantity' => (int) $item->quantity,
                     'unit_price' => number_format((float) $item->unit_price, 2, '.', ''),
                     'unit_price_display' => 'R$ '.number_format((float) $item->unit_price, 2, ',', '.'),
@@ -91,6 +97,11 @@ class SaleController extends Controller
 
                 return [
                     'id' => $id,
+                    'items_locked' => $invoice->itemsAreLocked(),
+                    'issuer_document_raw' => $invoice->issuer_document,
+                    'imported_xml' => $invoice->access_key !== null,
+                    'issuer_document' => $invoice->issuer_document ?: 'Não informado',
+                    'access_key' => $invoice->access_key,
                     'customer_id' => (string) $invoice->customer_id,
                     'number' => (string) $invoice->invoice_number,
                     'series' => (string) $invoice->invoice_serie,

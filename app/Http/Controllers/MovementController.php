@@ -4,17 +4,50 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Warehouse;
+use App\StockLedger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class MovementController extends Controller
 {
+    public function __construct(private readonly StockLedger $stockLedger) {}
+
     public function entries(): View
     {
         return $this->page('Entrada', 'entrance.entrance', 'entrance');
+    }
+
+    public function balances(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,product_id'],
+            'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
+            'warehouse_ids' => ['required', 'array', 'min:1', 'max:2'],
+            'warehouse_ids.*' => ['required', 'integer', 'distinct', 'exists:warehouses,warehouse_id'],
+        ], [
+            'product_id.required' => 'Selecione um produto para consultar o saldo.',
+            'product_id.exists' => 'O produto selecionado não existe.',
+            'product_condition.in' => 'Selecione uma condição válida para consultar o saldo.',
+            'warehouse_ids.required' => 'Selecione um armazém para consultar o saldo.',
+            'warehouse_ids.*.exists' => 'Um dos armazéns selecionados não existe.',
+        ]);
+        $warehouseIds = array_map('intval', $data['warehouse_ids']);
+        $balances = DB::table('inventory')->where('product_id', $data['product_id'])
+            ->where('product_condition', $data['product_condition'])
+            ->whereIn('warehouse_id', $warehouseIds)->pluck('theoretical_balance', 'warehouse_id');
+
+        return response()->json([
+            'product_id' => (int) $data['product_id'],
+            'product_condition' => $data['product_condition'],
+            'balances' => array_map(fn (int $warehouseId): array => [
+                'warehouse_id' => $warehouseId, 'balance' => (int) $balances->get($warehouseId, 0),
+            ], $warehouseIds),
+        ])->header('Cache-Control', 'no-store, private');
     }
 
     public function exits(): View
@@ -41,14 +74,9 @@ class MovementController extends Controller
 
     public function storeExit(Request $request): RedirectResponse
     {
-        $data = $request->validate($this->commonRules() + [
-            'origin_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+        throw ValidationException::withMessages([
+            'invoice_id' => 'As saídas são registradas automaticamente ao importar uma NF-e de venda. Abra Consulta NF-e para concluir a operação.',
         ]);
-        $data['dest_warehouse_id'] = null;
-
-        $this->createMovement($data, 'Saída');
-
-        return redirect()->route('exits.index')->with('status', 'Saída registrada com sucesso.');
     }
 
     public function storeTransfer(Request $request): RedirectResponse
@@ -88,7 +116,7 @@ class MovementController extends Controller
                 ->orderByDesc('invoice_id')
                 ->get(['invoice_id', 'invoice_number', 'invoice_serie'])
                 ->mapWithKeys(fn ($invoice): array => [
-                    (string) $invoice->invoice_id => $invoice->invoice_number . ' / ' . $invoice->invoice_serie,
+                    (string) $invoice->invoice_id => $invoice->invoice_number.' / '.$invoice->invoice_serie,
                 ])
                 ->all(),
             'locations' => Warehouse::query()->orderBy('warehouse_name')->get()->mapWithKeys(
@@ -126,12 +154,12 @@ class MovementController extends Controller
             Product::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
 
             if ($direction === 'Entrada') {
-                $this->changeInventory($productId, $destinationWarehouseId, $condition, $quantity);
+                $this->stockLedger->change($productId, $destinationWarehouseId, $condition, $quantity);
             } elseif ($direction === 'Saída') {
-                $this->changeInventory($productId, $originWarehouseId, $condition, -$quantity);
+                $this->stockLedger->change($productId, $originWarehouseId, $condition, -$quantity);
             } else {
-                $this->changeInventory($productId, $originWarehouseId, $condition, -$quantity);
-                $this->changeInventory($productId, $destinationWarehouseId, $condition, $quantity);
+                $this->stockLedger->change($productId, $originWarehouseId, $condition, -$quantity);
+                $this->stockLedger->change($productId, $destinationWarehouseId, $condition, $quantity);
             }
 
             DB::table('stock_movements')->insert([
@@ -150,47 +178,5 @@ class MovementController extends Controller
                 'updated_at' => now(),
             ]);
         });
-    }
-
-    private function changeInventory(int $productId, ?int $warehouseId, string $condition, int $change): void
-    {
-        if ($warehouseId === null) {
-            throw ValidationException::withMessages(['warehouse_id' => 'Selecione um armazém.']);
-        }
-
-        $inventory = DB::table('inventory')
-            ->where('product_id', $productId)
-            ->where('warehouse_id', $warehouseId)
-            ->where('product_condition', $condition)
-            ->lockForUpdate()
-            ->first();
-
-        if ($inventory === null && $change < 0) {
-            throw ValidationException::withMessages(['quantity' => 'Não há saldo deste produto e condição no armazém selecionado.']);
-        }
-
-        if ($inventory === null) {
-            DB::table('inventory')->insert([
-                'warehouse_id' => $warehouseId,
-                'product_id' => $productId,
-                'product_condition' => $condition,
-                'theoretical_balance' => $change,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return;
-        }
-
-        $newBalance = (int) $inventory->theoretical_balance + $change;
-        if ($newBalance < 0) {
-            throw ValidationException::withMessages(['quantity' => 'A quantidade informada excede o saldo disponível no armazém.']);
-        }
-
-        DB::table('inventory')
-            ->where('product_id', $productId)
-            ->where('warehouse_id', $warehouseId)
-            ->where('product_condition', $condition)
-            ->update(['theoretical_balance' => $newBalance, 'updated_at' => now()]);
     }
 }

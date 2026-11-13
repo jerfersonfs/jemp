@@ -53,7 +53,9 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                             <div class="customers-table__actions">
                                 <button class="customers-table__action customers-table__action--view" type="button" data-customer-view aria-label="Ver detalhes de {{ $customer->customer_name }}" title="Ver detalhes"><i class="ph ph-eye" aria-hidden="true"></i></button>
                                 <button class="customers-table__action customers-table__action--edit" type="button" data-customer-edit aria-label="Editar cliente {{ $customer->customer_name }}" title="Editar cliente"><i class="ph ph-pencil-simple-line" aria-hidden="true"></i></button>
-                                <button class="customers-table__action customers-table__action--delete" type="button" data-customer-delete aria-label="Excluir cliente {{ $customer->customer_name }}" title="Excluir cliente"><i class="ph ph-trash" aria-hidden="true"></i></button>
+                                @if ($customer->invoices->isEmpty())
+                                    <button class="customers-table__action customers-table__action--delete" type="button" data-customer-delete aria-label="Excluir cliente {{ $customer->customer_name }}" title="Excluir cliente"><i class="ph ph-trash" aria-hidden="true"></i></button>
+                                @endif
                             </div>
                         </td>
                     </tr>

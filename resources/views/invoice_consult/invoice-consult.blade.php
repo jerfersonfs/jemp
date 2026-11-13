@@ -3,6 +3,7 @@
     $columns = [
         ['key'=>'number','label'=>'Nº da nota'],
         ['key'=>'series','label'=>'Série'],
+        ['key'=>'issuer_document','label'=>'CNPJ emitente'],
         ['key'=>'issuer','label'=>'Cliente'],
         ['key'=>'issue_date','label'=>'Emissão','class'=>'invoice-issued-date'],
         ['key'=>'due_date','label'=>'Vencimento'],
@@ -46,6 +47,7 @@
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
             <div class="invoice-page-head__actions">
+                <button class="invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML de venda</button>
                 <!--
             <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
                 <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
@@ -89,17 +91,7 @@
             <p class="invoice-table-caption">Consulte os registros e os itens de cada nota fiscal.</p>
         </section>
 
-        <div class="invoice-dialog-layer" data-invoice-import-layer role="presentation" hidden>
-            <section class="jemp-dialog jemp-dialog--large invoice-import-dialog" role="dialog" aria-modal="true" aria-label="Importar nota fiscal XML">
-                <header class="jemp-dialog__header"><div><h2 class="jemp-dialog__title">Importar NF-e por XML</h2><p class="jemp-dialog__description">Selecione o arquivo XML e o armazém que receberá os itens.</p></div><button class="jemp-dialog__close" type="button" data-invoice-import-close aria-label="Fechar">×</button></header>
-                <form data-invoice-import-form enctype="multipart/form-data">
-                    <label>Arquivo XML da NF-e<input type="file" name="xml_file" accept=".xml,application/xml,text/xml" required></label>
-                    <label>Armazém de destino<select name="warehouse_id" required><option value="">Selecione um armazém</option>@foreach ($warehouses as $warehouse)<option value="{{ $warehouse->warehouse_id }}">{{ $warehouse->warehouse_name }}</option>@endforeach</select></label>
-                    <p data-invoice-import-feedback role="status" hidden></p>
-                    <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-invoice-import-close>Cancelar</button><button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">Importar XML</button></footer>
-                </form>
-            </section>
-        </div>
+        @include('invoice_consult.import-xml')
 
         <div class="invoice-dialog-layer" data-dialog-layer="invoice-create" data-invoice-mode="create" role="presentation" hidden>
             <x-dialogs.form-dialog class="invoice-form-dialog" title="Cadastrar nota fiscal" description="Informe o número e os dados da nota. A data de emissão é preenchida pelo sistema; o total será calculado pelos itens." action="#" method="POST" size="large" submit-label="Cadastrar nota fiscal" :fields="$createFields" />
@@ -108,6 +100,7 @@
         @foreach ($invoiceRows as $invoice)
             @php
                 $editFields = [
+                    ['name'=>'issuer_document','id'=>'invoice-edit-'.$invoice['id'].'-issuer','label'=>'CNPJ do emitente','type'=>'text','value'=>$invoice['issuer_document_raw'],'placeholder'=>'Informe para notas antigas','disabled'=>$invoice['imported_xml']],
                     ['name'=>'invoice_number','id'=>'invoice-edit-'.$invoice['id'].'-number','label'=>'Número da nota','type'=>'number','value'=>$invoice['number'],'required'=>true,'min'=>1],
                     ['name'=>'invoice_serie','id'=>'invoice-edit-'.$invoice['id'].'-series','label'=>'Série','type'=>'number','value'=>$invoice['series'],'required'=>true,'min'=>1],
                     ['name'=>'customer_id','id'=>'invoice-edit-'.$invoice['id'].'-customer','label'=>'Cliente','type'=>'select','value'=>$invoice['customer_id'],'options'=>[''=>'Selecione um cliente'] + $customerOptions,'required'=>true],
@@ -119,10 +112,19 @@
                     ['name'=>'payment_status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Situação','type'=>'select','value'=>$invoice['status'],'options'=>$statusOptions,'required'=>true],
                     ['name'=>'payment_date','id'=>'invoice-edit-'.$invoice['id'].'-payment-date','label'=>'Data de pagamento','type'=>'date','value'=>$invoice['payment_date_iso']],
                 ];
+                if ($invoice['imported_xml']) {
+                    $editFields = [
+                        ['name'=>'payment_status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Pagamento','type'=>'select',
+                         'value'=>$invoice['status'] === 'Paga' ? 'Paga' : 'A vencer','options'=>['A vencer'=>'Não paga','Paga'=>'Paga'],'required'=>true],
+                    ];
+                }
                 $detailSections = [
                     ['id'=>'invoice-data','label'=>'Dados da nota','details'=>[
                         ['label'=>'Número','value'=>$invoice['number']],
                         ['label'=>'Série','value'=>$invoice['series']],
+                        ['label'=>'CNPJ emitente','value'=>$invoice['issuer_document']],
+                        ['label'=>'Chave de acesso','value'=>$invoice['access_key'] ?? '—'],
+                        ['label'=>'Estoque','value'=>$invoice['items_locked'] ? 'Saída registrada · itens bloqueados' : 'Sem baixa automática por XML'],
                         ['label'=>'Cliente','value'=>$invoice['issuer']],
                         ['label'=>'CNPJ / CPF','value'=>$invoice['document']],
                         ['label'=>'Emissão','value'=>$invoice['issue_date']],
@@ -131,15 +133,17 @@
                         ['label'=>'Valor total calculado pelos itens','value'=>$invoice['total']],
                         ['label'=>'Situação','value'=>$invoice['status']],
                     ]],
-                    ['id'=>'invoice-items','label'=>'Itens da nota','items'=>$invoice['items']],
+                    ['id'=>'invoice-items','label'=>'Itens da nota','items'=>$invoice['items'],'items_locked'=>$invoice['items_locked']],
                 ];
             @endphp
 
             <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['details_target'] }}" role="presentation" hidden>
                 <x-dialogs.details-dialog id="{{ $invoice['details_target'] }}-tabs" title="Nota fiscal {{ $invoice['number'] }}" description="Consulte os dados e os itens desta nota fiscal." :sections="$detailSections">
                     <x-slot:footer>
-                        <button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['add_item_target'] }}">Adicionar item</button>
-                        <button class="jemp-dialog__button jemp-dialog__button--secondary invoice-edit-data-button" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">Editar dados</button>
+                        @unless ($invoice['items_locked'])
+                            <button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['add_item_target'] }}">Adicionar item</button>
+                        @endunless
+                        <button class="jemp-dialog__button jemp-dialog__button--secondary invoice-edit-data-button" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">{{ $invoice['imported_xml'] ? 'Alterar situação' : 'Editar dados' }}</button>
                     </x-slot:footer>
                 </x-dialogs.details-dialog>
             </div>
@@ -174,7 +178,7 @@
                 </section>
             </div>
             <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['edit_target'] }}" data-invoice-mode="edit" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
-                    <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" title="Editar nota fiscal {{ $invoice['number'] }}" description="Atualize os dados da nota. O total permanece calculado pelos itens." action="#" method="PUT" size="large" submit-label="Salvar alterações" :fields="$editFields" />
+                    <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" :title="($invoice['imported_xml'] ? 'Pagamento da nota fiscal ' : 'Editar nota fiscal ').$invoice['number']" :description="$invoice['imported_xml'] ? 'Os dados e os itens importados são somente para leitura. Ao marcar como paga, a data de pagamento é registrada automaticamente. Notas não pagas ficam vencidas após o vencimento.' : 'Atualize os dados da nota. O total permanece calculado pelos itens.'" action="#" method="PUT" size="large" :submit-label="$invoice['imported_xml'] ? 'Salvar situação' : 'Salvar alterações'" :fields="$editFields" />
             </div>
         @endforeach
         <div class="invoice-dialog-layer" data-dialog-layer="invoice-item-delete-confirm" data-invoice-item-confirm-layer role="presentation" hidden>
