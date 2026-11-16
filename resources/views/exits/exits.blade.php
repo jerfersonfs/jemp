@@ -33,13 +33,11 @@
     @endphp
 
     <div class="page-head movement-page__head"><div><h1>Saídas</h1></div></div>
-    @if (session('status')) <p class="movement-feedback" role="status">{{ session('status') }}</p> @endif
-    @if ($errors->any()) <p class="movement-feedback movement-feedback--error" role="alert">{{ $errors->first() }}</p> @endif
     <x-cards.panel class="exit-panel movement-panel movement-panel--exits" variant="mint" title="Histórico de Saídas" description="Acompanhe e gerencie as saídas registradas no estoque.">
         <x-slot:actions><button class="btn btn-primary movement-action-button" type="button" data-dialog-open="movement-form" aria-label="Cadastrar nova saída"><x-icons.icon name="plus" size="sm" color="white" /> Nova Saída</button></x-slot:actions>
         <x-slot:filters>
             <x-filters.filter-bar class="movement-filter-bar" label="Filtrar saídas" data-movement-filter-form>
-                <div class="movement-search"><x-inputs.input name="search" type="search" size="sm" placeholder="Buscar produto ou documento..." aria-label="Buscar saídas" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input></div>
+                <x-inputs.input name="search" label="Buscar produto ou documento" type="search" size="sm" placeholder="Buscar produto ou documento..." aria-label="Buscar saídas" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input>
                 <x-inputs.input name="type" label="Tipo" type="select" size="sm" :options="['' => 'Todos os tipos', 'Saída' => 'Saída']" data-movement-filter="type" />
                 <x-inputs.input name="warehouse" label="Armazém" type="select" size="sm" :options="['' => 'Todos os armazéns'] + $locations" data-movement-filter="warehouse" />
             </x-filters.filter-bar>

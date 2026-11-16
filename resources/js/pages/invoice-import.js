@@ -1,4 +1,5 @@
-import { showFeedback } from '../components/feedback.js';
+import { requestJson } from '../components/loading.js';
+import { reloadWithFeedback, showFeedback } from '../components/feedback.js';
 
 export function initializeInvoiceImport(page) {
     const layer = page.querySelector('[data-invoice-import-layer]');
@@ -120,8 +121,8 @@ export function initializeInvoiceImport(page) {
         });
     }
 
-    async function readResponse(response) {
-        const result = await response.json().catch(() => ({}));
+    async function submitXml(url, payload) {
+        const { response, data: result } = await requestJson(url, { method: 'POST', headers: headers(), body: payload });
         if (!response.ok) {
             throw new Error(Object.values(result.errors || {}).flat().join(' ') || result.message || 'Não foi possível processar o XML.');
         }
@@ -136,7 +137,7 @@ export function initializeInvoiceImport(page) {
         try {
             const payload = new FormData();
             payload.append('xml_file', file.files[0]);
-            document = await readResponse(await fetch(form.dataset.previewUrl, { method: 'POST', headers: headers(), body: payload }));
+            document = await submitXml(form.dataset.previewUrl, payload);
             const invoice = document.invoice;
             const values = {
                 number: invoice.number + ' / ' + invoice.series, issue_date: invoice.issue_date.split('-').reverse().join('/'),
@@ -179,9 +180,8 @@ export function initializeInvoiceImport(page) {
         });
         setBusy(true, 'Importando a nota e registrando a baixa…');
         try {
-            const result = await readResponse(await fetch(form.dataset.importUrl, { method: 'POST', headers: headers(), body: payload }));
-            sessionStorage.setItem('invoice-page-feedback', result.message);
-            window.location.reload();
+            const result = await submitXml(form.dataset.importUrl, payload);
+            reloadWithFeedback(result.message);
         } catch (error) {
             showFeedback(error.message, 'error');
             setBusy(false);

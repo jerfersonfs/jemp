@@ -1,19 +1,18 @@
+import { showFeedback } from '../components/feedback.js';
+import { requestJson } from '../components/loading.js';
+
 const catalog = document.querySelector('[data-product-catalog]');
 
 if (catalog) {
     const warehousesModal = catalog.querySelector('[data-warehouses-modal]');
     const warehouseForm = catalog.querySelector('[data-warehouse-form]');
     const warehouseRows = catalog.querySelector('[data-warehouses-rows]');
-    const warehouseError = catalog.querySelector('[data-warehouses-error]');
     const csrf = catalog.querySelector('input[name="_token"]')?.value ?? document.querySelector('meta[name="csrf-token"]')?.content;
     const warehousesUrl = '/api/warehouses';
-    const showWarehouseError = (message = '') => { warehouseError.textContent = message; warehouseError.hidden = !message; };
     async function loadWarehouses() {
-        showWarehouseError();
         try {
-            const response = await fetch(warehousesUrl, { headers: { Accept: 'application/json' } });
+            const { response, data } = await requestJson(warehousesUrl, { headers: { Accept: 'application/json' } });
             if (!response.ok) throw new Error('Não foi possível carregar os armazéns.');
-            const data = await response.json();
             warehouseRows.replaceChildren();
             for (const warehouse of data) {
                 const row = document.createElement('tr');
@@ -49,37 +48,58 @@ if (catalog) {
                         warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Editar armazém';
                     } else if (window.confirm('Excluir o armazém “' + button.dataset.name + '”?')) {
                         try {
-                            const response = await fetch(warehousesUrl + '/' + button.dataset.id, {
+                            const { response, data } = await requestJson(warehousesUrl + '/' + button.dataset.id, {
                                 method: 'DELETE',
                                 headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
                             });
-                            if (!response.ok) {
-                                showWarehouseError('Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.');
-                            } else {
-                                loadWarehouses();
-                            }
-                        } catch {
-                            showWarehouseError('Não foi possível conectar para excluir o armazém.');
+                            if (!response.ok) throw new Error('Não foi possível excluir. O armazém pode ter estoque ou movimentações vinculadas.');
+                            showFeedback(data?.message || 'Armazém excluído com sucesso.');
+                            await loadWarehouses();
+                        } catch (error) {
+                            showFeedback(error.message, 'error');
                         }
                     }
                 });
             }
-        } catch (error) { showWarehouseError(error.message); }
+        } catch (error) {
+            showFeedback(error.message, 'error');
+        }
     }
     catalog.querySelector('[data-warehouses-open]').addEventListener('click', () => { warehousesModal.showModal(); loadWarehouses(); });
-    catalog.querySelector('[data-warehouse-reset]').addEventListener('click', () => { warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém'; });
-    warehouseForm.addEventListener('submit', async event => {
-        event.preventDefault(); showWarehouseError();
+    function resetWarehouseForm() {
+        warehouseForm.reset();
+        warehouseForm.elements.warehouse_id.value = '';
+        warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém';
+    }
+
+    catalog.querySelector('[data-warehouse-reset]').addEventListener('click', resetWarehouseForm);
+    warehouseForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const submit = warehouseForm.querySelector('[type="submit"]');
+        if (submit.disabled) return;
         const id = warehouseForm.elements.warehouse_id.value;
-        const body = Object.fromEntries(new FormData(warehouseForm)); delete body.warehouse_id;
-        try { const response = await fetch(id ? `${warehousesUrl}/${id}` : warehousesUrl, { method: id ? 'PUT' : 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.message ?? 'Falha ao salvar armazém.'); warehouseForm.reset(); warehouseForm.elements.warehouse_id.value = ''; warehouseForm.querySelector('[data-warehouse-form-title]').textContent = 'Novo armazém'; loadWarehouses(); } catch (error) { showWarehouseError(error.message); }
+        const body = Object.fromEntries(new FormData(warehouseForm));
+        delete body.warehouse_id;
+        submit.disabled = true;
+        try {
+            const { response, data } = await requestJson(id ? `${warehousesUrl}/${id}` : warehousesUrl, {
+                method: id ? 'PUT' : 'POST',
+                headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify(body),
+            });
+            if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(' ') || data.message || 'Falha ao salvar armazém.');
+            showFeedback(data.message || 'Armazém salvo com sucesso.');
+            resetWarehouseForm();
+            await loadWarehouses();
+        } catch (error) {
+            showFeedback(error.message, 'error');
+        } finally {
+            submit.disabled = false;
+        }
     });
     const formModal = catalog.querySelector('[data-product-form-modal]');
     const detailsModal = catalog.querySelector('[data-product-details-modal]');
     const deleteModal = catalog.querySelector('[data-product-delete-modal]');
-    const stockForm = detailsModal.querySelector('[data-product-stock-form]');
-    const stockOpen = detailsModal.querySelector('[data-product-stock-open]');
-    const stockCancel = detailsModal.querySelector('[data-product-stock-cancel]');
     const form = formModal.querySelector('form');
     const deleteForm = deleteModal.querySelector('[data-product-delete-form]');
     const tableBody = catalog.querySelector('tbody');
@@ -161,10 +181,6 @@ if (catalog) {
         });
         const body = detailsModal.querySelector('tbody');
         body.replaceChildren();
-        stockForm.reset();
-        stockForm.hidden = true;
-        stockForm.elements.namedItem('product_id').value = product.product_id;
-        stockForm.querySelector('[data-product-stock-name]').textContent = product.product_name;
         for (const stock of (product.inventory ?? [])) {
             const row = document.createElement('tr');
             for (const value of [stock.warehouse ?? '—', stock.product_condition, `${stock.theoretical_balance} un.`]) {
@@ -180,15 +196,6 @@ if (catalog) {
         }
         detailsModal.showModal();
     }
-
-    stockOpen.addEventListener('click', () => {
-        stockForm.hidden = false;
-        stockForm.querySelector('[name="quantity"]').focus();
-    });
-    stockCancel.addEventListener('click', () => {
-        stockForm.hidden = true;
-        stockOpen.focus();
-    });
 
     function renderRows() {
         const query = normalize(find('search').value.trim());
@@ -300,9 +307,6 @@ if (catalog) {
             currentPage = Number(button.dataset.page);
             renderRows();
         }
-    });
-    find('notice').querySelector('.jemp-notice__close')?.addEventListener('click', () => {
-        find('notice').hidden = true;
     });
 
     if (catalog.dataset.validationErrors === 'true') {

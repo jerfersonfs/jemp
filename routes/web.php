@@ -31,11 +31,10 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/api/invoices/import', [InvoiceXmlController::class, 'store'])->name('invoice-import.store');
     Route::match(['put', 'patch'], '/api/invoices/{invoice}', [InvoiceController::class, 'update'])->name('api.invoices.update');
     Route::delete('/api/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('api.invoices.destroy');
-    Route::get('/vendas', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/entradas', [MovementController::class, 'entries'])->name('entrance.index');
     Route::get('/movimentacoes/saldos', [MovementController::class, 'balances'])->name('movements.balances');
     Route::post('/entradas', [MovementController::class, 'storeEntry'])->name('entrance.store');
-    Route::get('/saidas', fn () => redirect()->route('sales.index'))->name('exits.index');
+    Route::get('/saidas', fn () => redirect()->route('invoice-consult.index'))->name('exits.index');
     Route::post('/saidas', [MovementController::class, 'storeExit'])->name('exits.store');
     Route::get('/internas', [MovementController::class, 'transfers'])->name('internal.index');
     Route::post('/internas', [MovementController::class, 'storeTransfer'])->name('internal.store');

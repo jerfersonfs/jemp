@@ -314,10 +314,7 @@ class LegacySchemaIntegrationTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->get(route('sales.index'))
-            ->assertOk()
-            ->assertSee('Cliente NF')
-            ->assertSee('25,00');
+        $this->get('/vendas')->assertNotFound();
         $this->get(route('invoice-consult.index'))
             ->assertOk()
             ->assertSee('42')

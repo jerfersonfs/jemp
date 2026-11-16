@@ -1,15 +1,11 @@
+import { requestJson } from '../components/loading.js';
 import { initializeInvoiceImport } from './invoice-import.js';
-import { showFeedback } from '../components/feedback.js';
+import { reloadWithFeedback, showFeedback } from '../components/feedback.js';
 
 const page = document.querySelector('[data-invoice-page]');
 
 if (page) {
     initializeInvoiceImport(page);
-    const pendingFeedback = sessionStorage.getItem('invoice-page-feedback');
-    if (pendingFeedback) {
-        sessionStorage.removeItem('invoice-page-feedback');
-        showFeedback(pendingFeedback, 'success');
-    }
     const filterForm = page.querySelector('[data-invoice-filter]');
     const rows = [...page.querySelectorAll('[data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');
@@ -148,14 +144,12 @@ if (page) {
             const item = pendingItemDelete;
             closeDialog({ restoreFocus: false });
             try {
-                const response = await fetch('/api/invoice-items/' + item.id, {
+                const { response, data: result } = await requestJson('/api/invoice-items/' + item.id, {
                     method: 'DELETE',
                     headers: { Accept: 'application/json' },
                 });
-                const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Não foi possível excluir o item.');
-                sessionStorage.setItem('invoice-page-feedback', 'Item excluído da nota fiscal.');
-                window.location.reload();
+                reloadWithFeedback('Item excluído da nota fiscal.');
             } catch (error) {
                 showFeedback(error.message, 'error');
             }
@@ -229,12 +223,11 @@ if (page) {
                 const method = ['edit', 'item-edit'].includes(invoiceMode) ? 'PUT' : 'POST';
 
                 try {
-                    const response = await fetch(endpoint, {
+                    const { response, data: result } = await requestJson(endpoint, {
                         method,
                         headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(payload._token ? { 'X-CSRF-TOKEN': payload._token } : {}) },
                         body: JSON.stringify(payload),
                     });
-                    const result = await response.json();
                     if (!response.ok) {
                         const validationMessage = Object.values(result.errors || {}).flat().join(' ');
                         throw new Error(validationMessage || result.message || 'Não foi possível salvar a nota fiscal.');
@@ -243,9 +236,8 @@ if (page) {
                     const message = ['item', 'item-edit'].includes(invoiceMode)
                         ? invoiceMode === 'item-edit' ? 'Item da nota fiscal atualizado com sucesso.' : 'Item adicionado à nota fiscal com sucesso.'
                         : invoiceMode === 'edit' ? 'Nota fiscal atualizada com sucesso.' : 'Nota fiscal cadastrada com sucesso.';
-                    sessionStorage.setItem('invoice-page-feedback', message);
                     closeDialog();
-                    window.location.reload();
+                    reloadWithFeedback(message);
                 } catch (error) {
                     showFeedback(error.message, 'error');
                 }
@@ -266,8 +258,5 @@ if (page) {
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
-    page.querySelectorAll('.jemp-notice__close').forEach((button) => {
-        button.addEventListener('click', () => button.closest('.jemp-notice')?.remove());
-    });
     applyFilters();
 }

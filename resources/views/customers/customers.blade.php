@@ -20,20 +20,21 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
             <button class="btn btn-primary customers-add" type="button" data-customer-open><i class="ph ph-plus" aria-hidden="true"></i> Adicionar Cliente</button>
         </header>
 
-        <div class="customers-search">
-            <label class="customers-search__input"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><span class="jemp-visually-hidden">Buscar clientes</span><input type="search" placeholder="Buscar por nome, documento, contato ou e-mail..." data-customer-search></label>
-            <label class="customers-search__filter"><i class="ph ph-funnel" aria-hidden="true"></i><span class="jemp-visually-hidden">Filtrar condição de pagamento</span><select data-customer-payment>
-                    <option value="">Todas as condições</option>@foreach ($customers->pluck('customer_payment_terms')->filter()->unique()->sort() as $paymentTerms)<option value="{{ $paymentTerms }}">{{ $paymentTerms }}</option>@endforeach
-                </select></label>
-        </div>
+        <x-filters.filter-bar class="customers-search" label="Filtrar clientes" :wide-search="true" data-customer-filters>
+            <x-inputs.input id="customer-search" label="Buscar cliente" type="search" placeholder="Buscar por nome, documento, contato ou e-mail..." data-customer-search>
+                <x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading>
+            </x-inputs.input>
+            <x-inputs.input id="customer-payment-filter" label="Condição de pagamento" type="select"
+                :options="['' => 'Todas as condições'] + $customers->pluck('customer_payment_terms', 'customer_payment_terms')->filter()->sort()->all()" data-customer-payment />
+        </x-filters.filter-bar>
 
-        <div class="customers-table-scroll" role="region" aria-label="Lista de clientes" tabindex="0">
+        <div class="jemp-table-scroll customers-table-scroll" role="region" aria-label="Lista de clientes" tabindex="0">
             <table class="customers-table">
                 <thead>
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Cliente <span>↕</span></th>
-                        <th scope="col">Documento <span>↕</span></th>
+                        <th scope="col">Cliente </th>
+                        <th scope="col">Documento </th>
                         <th scope="col">Contato</th>
                         <th scope="col">E-mail</th>
                         <th scope="col">Condição de pagamento</th>
@@ -108,5 +109,4 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
             <x-dialogs.confirmation title="Excluir cliente?" message="Esta ação não poderá ser desfeita." confirm-label="Excluir cliente" cancel-label="Cancelar" data-customer-confirm-dialog />
         </form>
     </div>
-    @if (session('status')) <p class="customers-note" role="status">{{ session('status') }}</p> @endif
 </x-layouts.app>

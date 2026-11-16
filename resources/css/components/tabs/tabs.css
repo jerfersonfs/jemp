@@ -4,6 +4,7 @@
 }
 
 .jemp-tabset__list {
+    box-shadow: var(--shadow-control);
     display: flex;
     min-width: 0;
     gap: var(--spacing-lg);
@@ -65,11 +66,14 @@
 }
 
 .jemp-tabset--pills .jemp-tabset__list {
+    padding: .25rem;
+    box-shadow: none;
     gap: var(--spacing-sm);
     border-bottom: 0;
 }
 
 .jemp-tabset--pills .jemp-tabset__tab {
+    box-shadow: var(--shadow-control);
     min-height: 2.75rem;
     border: 1px solid transparent;
     border-radius: .5rem;

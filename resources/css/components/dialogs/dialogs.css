@@ -189,7 +189,7 @@
     font-weight: 600;
     line-height: 1.25;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    box-shadow: var(--shadow-control);
     transition: background-color var(--motion-fast) var(--motion-ease-standard), border-color var(--motion-fast) var(--motion-ease-standard), box-shadow var(--motion-fast) var(--motion-ease-standard), transform var(--motion-fast) var(--motion-ease-standard);
 }
 
@@ -412,6 +412,7 @@
 }
 
 .jemp-tabs>label {
+    box-shadow: var(--shadow-control);
     border: 1px solid color-mix(in srgb, var(--color-primary) 24%, white);
     border-radius: .5rem .5rem 0 0;
     background: white;

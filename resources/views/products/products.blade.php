@@ -71,9 +71,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
         <div class="page-head">
             <h1>Produtos</h1>
         </div>
-        @if ($errors->any()) <p class="products-error" role="alert">{{ $errors->first() }}</p> @endif
-        @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
-        @if (session('error')) <p class="products-error" role="alert">{{ session('error') }}</p> @endif
         <section class="products-panel" aria-labelledby="products-list-title">
             <header class="products-panel__header">
                 <div>
@@ -81,19 +78,17 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                     <p>Gerencie todos os produtos do seu catálogo.</p>
                 </div>
                 <div class="products-panel__actions">
-                    <button class="products-warehouses" type="button" data-warehouses-open aria-label="Abrir gerenciamento de armazéns"><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
+                    <button class="btn btn-secondary products-warehouses" type="button" data-warehouses-open aria-label="Abrir gerenciamento de armazéns"><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
                     <x-buttons.button class="products-create" data-product-create><x-icons.icon name="plus" size="sm" /> Novo Produto</x-buttons.button>
                 </div>
             </header>
             <div class="products-panel__body">
-                <x-filters.filter-bar class="products-filters" label="Filtrar produtos" data-product-filters>
-                    <label class="products-search"><x-icons.icon name="magnifying-glass" size="sm" /><span class="sr-only">Buscar produto</span><input type="search" placeholder="Buscar produto..." data-product-search></label>
-                    <label>Categoria<select data-product-category>
-                            <option value="">Todas as categorias</option>
-                            <option>PBR</option>
-                            <option>Descartável</option>
-                            <option>Não Standard</option>
-                        </select></label>
+                <x-filters.filter-bar class="products-filters" label="Filtrar produtos" :wide-search="true" data-product-filters>
+                    <x-inputs.input id="product-search" label="Buscar produto" type="search" placeholder="Buscar produto..." data-product-search>
+                        <x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading>
+                    </x-inputs.input>
+                    <x-inputs.input id="product-category-filter" label="Categoria" type="select"
+                        :options="['' => 'Todas as categorias', 'PBR' => 'PBR', 'Descartável' => 'Descartável', 'Não Standard' => 'Não Standard']" data-product-category />
                 </x-filters.filter-bar>
                 <x-tables.table :columns="$columns" :rows="$rows" variant="spreadsheet" caption="Listagem de produtos" />
                 <footer class="products-footer">
@@ -111,41 +106,7 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                 <section class="products-inventory" aria-labelledby="products-inventory-title">
                     <div class="products-inventory__header">
                         <h3 id="products-inventory-title">Inventário do produto</h3>
-                        <button class="products-stock-add" type="button" data-product-stock-open>Adicionar estoque</button>
                     </div>
-                    <form class="products-stock-form" action="{{ route('entrance.store') }}" method="POST" data-product-stock-form hidden>
-                        @csrf
-                        <input type="hidden" name="product_id" data-product-stock-id>
-                        <p class="products-stock-form__product">Entrada para <strong data-product-stock-name></strong></p>
-                        <label>Condição
-                            <select name="product_condition" required>
-                                <option value="Novo">Novo</option>
-                                <option value="Reforma">Reforma</option>
-                                <option value="Descarte">Descarte</option>
-                            </select>
-                        </label>
-                        <label>Armazém de destino
-                            <select name="dest_warehouse_id" required>
-                                <option value="">Selecione um armazém</option>
-                                @foreach ($warehouses as $warehouse)
-                                <option value="{{ $warehouse->warehouse_id }}">{{ $warehouse->warehouse_name }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>Data e hora
-                            <input name="date" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required>
-                        </label>
-                        <label>Quantidade
-                            <input name="quantity" type="number" min="1" step="1" required>
-                        </label>
-                        <label>Justificativa
-                            <textarea name="movement_justification" maxlength="255" rows="2"></textarea>
-                        </label>
-                        <div class="products-stock-form__actions">
-                            <button type="button" class="btn btn-secondary" data-product-stock-cancel>Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Registrar entrada</button>
-                        </div>
-                    </form>
                     <x-tables.table :columns="$inventoryColumns" caption="Inventário por barracão" />
                 </section>
             </x-dialogs.details-dialog>
@@ -168,17 +129,18 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                     </div><button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button>
                 </header>
                 <div class="jemp-details-dialog__body">
-                    <p data-warehouses-error role="alert" hidden></p>
-                    <table class="jemp-table">
-                        <thead>
-                            <tr>
-                                <th>Armazém</th>
-                                <th>Descrição</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody data-warehouses-rows></tbody>
-                    </table>
+                    <div class="jemp-table-scroll">
+                        <table class="jemp-table">
+                            <thead>
+                                <tr>
+                                    <th>Armazém</th>
+                                    <th>Descrição</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody data-warehouses-rows></tbody>
+                        </table>
+                    </div>
                 </div>
                 <form class="jemp-form-dialog jemp-form-dialog--grid" data-warehouse-form>
                     <h3 data-warehouse-form-title>Novo armazém</h3><input type="hidden" name="warehouse_id">
@@ -189,6 +151,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                 <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>Fechar</button></footer>
             </section>
         </x-dialogs.modal>
-        <div class="products-notice" @if (!session('status')) hidden @endif data-product-notice><x-dialogs.alert variant="success" :message="session('status', '')" /></div>
+
     </div>
 </x-layouts.app>

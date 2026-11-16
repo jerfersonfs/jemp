@@ -40,6 +40,14 @@
     --radius-card: 0.75rem;
     --radius-pill: 999px;
 
+    /* Superfícies e sombras dos componentes */
+    --filter-surface: color-mix(in srgb, var(--color-background) 75%, white);
+    --surface-border: color-mix(in srgb, var(--color-subheading) 32%, white);
+    --shadow-control: 0 1px 3px color-mix(in srgb, var(--color-secondary) 12%, transparent);
+    --shadow-surface: 0 2px 4px color-mix(in srgb, var(--color-secondary) 8%, transparent),
+        0 5px 14px color-mix(in srgb, var(--color-secondary) 5%, transparent);
+    --shadow-hover: 0 3px 8px color-mix(in srgb, var(--color-secondary) 16%, transparent);
+
     /* Movimento */
     --motion-fast: 140ms;
     --motion-normal: 200ms;

@@ -1,4 +1,5 @@
 document.querySelectorAll('[data-customers-list]').forEach((list) => {
+    list.querySelector('[data-customer-filters]').addEventListener('submit', (event) => event.preventDefault());
     const queryInput = list.querySelector('[data-customer-search]');
     const paymentFilter = list.querySelector('[data-customer-payment]');
     const rows = [...list.querySelectorAll('[data-customer-row]')];

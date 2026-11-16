@@ -218,7 +218,7 @@ class InvoiceXmlImportTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
         $data = $this->catalog();
-        $this->get('/saidas')->assertRedirect(route('sales.index'));
+        $this->get('/saidas')->assertRedirect(route('invoice-consult.index'));
         $this->postJson('/saidas', [])->assertUnprocessable()->assertJsonValidationErrors('invoice_id');
         $this->postJson('/api/inventories/remove-stock', [])->assertUnprocessable();
         $this->postJson('/api/stock-movements', [
@@ -458,7 +458,7 @@ class InvoiceXmlImportTest extends TestCase
         $linkedPage = $this->get('/clientes')->assertOk()
             ->assertSee('aria-label="Ver detalhes de '.$linkedCustomer->customer_name.'"', false)
             ->assertSee('aria-label="Editar cliente '.$linkedCustomer->customer_name.'"', false)
-            ->assertDontSee('href="'.route('sales.index').'"', false)
+            ->assertDontSee('href="'.url('/vendas').'"', false)
             ->assertSee('href="'.route('invoice-consult.index').'"', false);
         $this->assertSame(0, $countDeleteButtons($linkedPage->getContent(), $linkedCustomer->customer_id));
         $this->assertSame(1, $countDeleteButtons($linkedPage->getContent(), $freeCustomer->customer_id));

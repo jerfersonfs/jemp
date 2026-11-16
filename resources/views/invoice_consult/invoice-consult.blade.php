@@ -47,7 +47,7 @@
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
             <div class="invoice-page-head__actions">
-                <button class="invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML de venda</button>
+                <button class="btn btn-secondary invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML de venda</button>
                 <!--
             <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
                 <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
@@ -72,19 +72,15 @@
                 <span class="invoice-demo-tag">Notas registradas</span>
             </div>
 
-            <form class="invoice-filters" action="{{ route('invoice-consult.index') }}" method="GET" role="search" aria-label="Filtros de notas fiscais" data-invoice-filter>
-                <label class="invoice-filter invoice-filter--search">
-                    <span>Buscar nota fiscal</span>
-                    <span class="invoice-filter__control"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input type="search" name="search" placeholder="Número, série, cliente, CNPJ ou produto" autocomplete="off"></span>
-                </label>
-                <label class="invoice-filter"><span>Emissão a partir de</span><input type="date" name="from"></label>
-                <label class="invoice-filter"><span>Até</span><input type="date" name="to"></label>
-                <label class="invoice-filter">
-                    <span>Situação</span>
-                    <select name="status"><option value="all">Todas as situações</option>@foreach ($statusOptions as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
-                </label>
-                <button class="invoice-filter-reset" type="reset" data-invoice-reset>Limpar</button>
-            </form>
+            <x-filters.filter-bar class="invoice-filters" :action="route('invoice-consult.index')" label="Filtros de notas fiscais" data-invoice-filter>
+                <x-inputs.input id="invoice-search" name="search" type="search" label="Buscar nota fiscal" placeholder="Número, série, cliente, CNPJ ou produto" autocomplete="off">
+                    <x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading>
+                </x-inputs.input>
+                <x-inputs.input name="from" type="date" label="Emissão a partir de" />
+                <x-inputs.input name="to" type="date" label="Até" />
+                <x-inputs.input name="status" type="select" label="Situação" :options="['all' => 'Todas as situações'] + $statusOptions" />
+                <x-buttons.button class="invoice-filter-reset" variant="secondary" type="reset" data-invoice-reset>Limpar</x-buttons.button>
+            </x-filters.filter-bar>
 
             <x-tables.table class="invoice-table" variant="rounded" caption="Notas fiscais cadastradas" :columns="$columns" :rows="$invoiceRows" :status-variants="$statusVariants" empty-message="Nenhuma nota fiscal cadastrada." />
             <p class="invoice-no-results" role="status" data-invoice-no-results hidden>Nenhuma nota fiscal encontrada com os filtros selecionados.</p>

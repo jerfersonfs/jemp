@@ -10,7 +10,7 @@
             </header>
 
             <div class="login-story__copy">
-                <h1><span>Gestão que</span><span>movimenta</span><span>o seu negócio.</span></h1>
+                <h1><span>Gestão que</span> <span>movimenta</span> <span>o seu negócio.</span></h1>
                 <p>Estoque, notas fiscais e muito mais,<br class="login-story__desktop-break"> em um só lugar.</p>
             </div>
 
@@ -27,7 +27,7 @@
             <div class="login-art__header" aria-hidden="true">
                 <span class="login-art__rule"></span>
                 <span class="login-art__dash"></span>
-                <span class="login-art__modules">Estoque<br>Notas fiscais<br>Resultados</span>
+                <span class="login-art__modules">Estoque<br> Notas fiscais<br> Resultados</span>
             </div>
             <div class="login-art__caption" aria-hidden="true">
                 <span>Tecnologia</span>
@@ -35,11 +35,10 @@
                 <span class="login-art__caption-muted">mais simples</span>
             </div>
         </section>
-
         <section class="login-card" aria-labelledby="login-title">
             <a class="login-card__brand" href="{{ route('login') }}" aria-label="JEMP, página de login">
                 <img class="login-card__brand-image" src="{{ asset('images/logo_oficial.png') }}" alt="JEMP">
-                <span class="login-card__tagline">Sistema de gerenciamento<br>de estoque e notas fiscais</span>
+                <span class="login-card__tagline">Jornada Eletronica de<br>Mercadoria e Produtos</span>
             </a>
 
             <h1 class="login-card__accessible-title" id="login-title">Acesse sua conta</h1>
@@ -66,21 +65,19 @@
                         </button>
                     </div>
                 </div>
+                <!--
                 <div class="login-form__options"><span></span><button type="button" data-password-help>Esqueceu sua
-                        senha?</button></div>
+                        senha?</button>
+                </div>
+-->
                 <x-buttons.button type="submit" class="login-form__submit">Entrar</x-buttons.button>
                 @error('email')
-                    <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
+                <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
                 @enderror
                 @error('password')
-                    <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
+                <p class="login-form__notice is-submitted" role="alert">{{ $message }}</p>
                 @enderror
             </form>
-
-            <footer class="login-card__footer">
-                <strong>JEMP v1.0.0</strong>
-                <span>Todos os direitos reservados.</span>
-            </footer>
         </section>
     </main>
 </x-layouts.app>

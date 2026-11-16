@@ -1,3 +1,4 @@
+import { requestJson } from '../components/loading.js';
 import { showFeedback } from '../components/feedback.js';
 
 export function initializeMovementBalances(form) {
@@ -38,8 +39,7 @@ export function initializeMovementBalances(form) {
         status.textContent = 'Consultando saldos atuais…';
 
         try {
-            const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store', signal: request.signal });
-            const result = await response.json().catch(() => ({}));
+            const { response, data: result } = await requestJson(url, { headers: { Accept: 'application/json' }, cache: 'no-store', signal: request.signal });
             if (pending !== request) return;
             if (!response.ok) {
                 if (response.status === 401 || response.status === 419) throw new Error('Sua sessão expirou. Recarregue a página e entre novamente.');

@@ -28,11 +28,6 @@
                     <label>Pagamento<select name="payment_status" required><option value="A vencer">Não paga</option><option value="Paga">Paga</option></select></label>
                     <label data-import-payment-date hidden>Data do pagamento<input type="date" name="payment_date" disabled></label>
                 </div>
-                <div class="invoice-import-links">
-                    <a href="{{ route('products.index') }}" target="_blank" rel="noopener">Abrir cadastro de produtos ↗</a>
-                    <a href="{{ route('customers.index') }}" target="_blank" rel="noopener">Abrir cadastro de clientes ↗</a>
-                    <a href="{{ route('entrance.index') }}" target="_blank" rel="noopener">Registrar entrada de estoque ↗</a>
-                </div>
                 <p class="invoice-import-help">Cadastros novos são independentes da nota. Depois de cadastrá-los ou registrar entradas, use “Atualizar cadastros”.</p>
                 <div class="invoice-items-table-wrap" role="region" aria-label="Associação dos produtos do XML" tabindex="0">
                     <table class="invoice-items-table invoice-import-items">
