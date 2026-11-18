@@ -1,5 +1,5 @@
 import { requestJson } from '../components/loading.js';
-import { reloadWithFeedback, showFeedback } from '../components/feedback.js';
+import { reloadWithFeedback } from '../components/feedback.js';
 
 export function initializeInvoiceImport(page) {
     const layer = page.querySelector('[data-invoice-import-layer]');
@@ -8,13 +8,14 @@ export function initializeInvoiceImport(page) {
     if (!form || !openButton) return;
 
     const file = form.elements.namedItem('xml_file');
+    const dropzone = form.querySelector('[data-import-dropzone]');
+    const filename = form.querySelector('[data-import-filename]');
     const review = form.querySelector('[data-import-review]');
-    const previewButton = form.querySelector('[data-import-preview]');
-    const refreshButton = form.querySelector('[data-import-refresh]');
     const confirmButton = form.querySelector('[data-import-confirm]');
     const loading = form.querySelector('[data-import-loading]');
     const body = form.querySelector('[data-import-items]');
     const summary = form.querySelector('[data-import-stock-summary]');
+    const errorNotice = form.querySelector('[data-import-error]');
     const customer = form.elements.namedItem('customer_id');
     const paymentDate = form.elements.namedItem('payment_date');
     let document = null;
@@ -31,22 +32,23 @@ export function initializeInvoiceImport(page) {
         form.setAttribute('aria-busy', String(value));
         file.disabled = value;
         review.disabled = value || !document;
-        previewButton.disabled = value;
-        refreshButton.disabled = value;
         layer.querySelectorAll('[data-invoice-import-close]').forEach((button) => { button.disabled = value; });
         updateStock();
     }
 
     function resetReview() {
         document = null;
+        dropzone.hidden = false;
+        dropzone.classList.remove('is-dragging');
+        filename.textContent = file.files[0]?.name || '';
         selected.clear();
         body.replaceChildren();
         review.hidden = true;
         review.disabled = true;
         confirmButton.hidden = true;
-        refreshButton.hidden = true;
-        previewButton.hidden = false;
         summary.textContent = '';
+        errorNotice.hidden = true;
+        errorNotice.textContent = '';
     }
 
     function syncPaymentDate() {
@@ -79,12 +81,13 @@ export function initializeInvoiceImport(page) {
         });
         const missingProduct = document.items.some((item) => !selected.get(item.line_number));
         const ready = !missingProduct && Boolean(warehouseId) && Boolean(customer.value) && !insufficient;
-        summary.textContent = missingProduct ? 'Associe todos os itens a produtos do JEMP.'
-            : !customer.value ? 'Cadastre ou selecione o cliente com o CPF/CNPJ destinatário do XML.'
-                : !warehouseId ? 'Escolha o armazém de origem para conferir os saldos.'
-                    : insufficient ? 'Saldo insuficiente. Registre as entradas reais e atualize os cadastros. Nenhuma baixa será feita enquanto houver falta.'
-                        : 'Saldos disponíveis para os itens selecionados. Confira os dados de pagamento antes de confirmar.';
-        summary.dataset.error = String(insufficient);
+        summary.textContent = insufficient
+            ? 'Saldo insuficiente. Registre as entradas necessárias e abra uma nova importação para conferir os saldos. A importação ficará bloqueada enquanto houver falta.'
+            : missingProduct ? 'Associe todos os itens a produtos do JEMP.'
+                : !customer.value ? 'Cadastre ou selecione o cliente com o CPF/CNPJ destinatário do XML.'
+                    : !warehouseId ? 'Escolha o armazém de origem para conferir os saldos.'
+                        : 'Saldos disponíveis. Confira os dados de pagamento antes de confirmar.';
+        summary.dataset.tone = insufficient ? 'error' : ready ? 'success' : 'warning';
         confirmButton.disabled = busy || !ready;
     }
 
@@ -94,7 +97,7 @@ export function initializeInvoiceImport(page) {
             const row = window.document.createElement('tr');
             row.dataset.lineNumber = String(item.line_number);
             [String(item.line_number) + ' · ' + item.external_code, item.description].forEach((text) => {
-                const cell = row.insertCell(); cell.textContent = text;
+                row.insertCell().textContent = text;
             });
             const select = window.document.createElement('select');
             select.setAttribute('aria-label', 'Produto para o item ' + item.line_number + ', código ' + item.external_code);
@@ -115,7 +118,9 @@ export function initializeInvoiceImport(page) {
                 updateStock();
             });
             row.insertCell().append(select);
-            [String(item.quantity), currency(item.unit_price), currency(item.subtotal)].forEach((text) => { row.insertCell().textContent = text; });
+            [String(item.quantity), currency(item.unit_price), currency(item.subtotal)].forEach((text) => {
+                row.insertCell().textContent = text;
+            });
             row.insertCell().dataset.importBalance = '';
             body.append(row);
         });
@@ -133,6 +138,7 @@ export function initializeInvoiceImport(page) {
         if (busy || !file.files[0]) { if (!busy) file.reportValidity(); return; }
         const keepFinancial = document !== null;
         const previousCustomer = customer.value;
+        errorNotice.hidden = true;
         setBusy(true);
         try {
             const payload = new FormData();
@@ -159,15 +165,19 @@ export function initializeInvoiceImport(page) {
             }
             review.disabled = false;
             review.hidden = false;
-            previewButton.hidden = true;
-            refreshButton.hidden = false;
+            file.closest('label').hidden = true;
             confirmButton.hidden = false;
             renderItems();
             syncPaymentDate();
         } catch (error) {
-            showFeedback(error.message, 'error');
+            file.value = '';
+            resetReview();
+            errorNotice.textContent = error.message;
+            errorNotice.hidden = false;
+            errorNotice.scrollIntoView({ block: 'nearest' });
         } finally {
             setBusy(false);
+            if (document) customer.focus();
         }
     }
 
@@ -178,12 +188,15 @@ export function initializeInvoiceImport(page) {
             payload.append(`items[${index}][line_number]`, String(item.line_number));
             payload.append(`items[${index}][product_id]`, selected.get(item.line_number) || '');
         });
+        errorNotice.hidden = true;
         setBusy(true, 'Importando a nota e registrando a baixa…');
         try {
             const result = await submitXml(form.dataset.importUrl, payload);
             reloadWithFeedback(result.message);
         } catch (error) {
-            showFeedback(error.message, 'error');
+            errorNotice.textContent = error.message;
+            errorNotice.hidden = false;
+            errorNotice.scrollIntoView({ block: 'nearest' });
             setBusy(false);
         }
     }
@@ -197,9 +210,40 @@ export function initializeInvoiceImport(page) {
         layer.hidden = true; form.reset(); resetReview(); syncPaymentDate();
         window.document.body.classList.remove('invoice-dialog-open'); openButton.focus();
     }));
-    file.addEventListener('change', resetReview);
-    previewButton.addEventListener('click', preview);
-    refreshButton.addEventListener('click', preview);
+    function selectFile() {
+        if (busy) return;
+        resetReview();
+        if (file.files.length && !/\.xml$/i.test(file.files[0].name)) {
+            file.value = '';
+            filename.textContent = '';
+            errorNotice.textContent = 'Selecione um arquivo com extensão .xml.';
+            errorNotice.hidden = false;
+            return;
+        }
+        if (file.files.length) preview();
+    }
+
+    file.addEventListener('change', selectFile);
+    dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = busy ? 'none' : 'copy';
+        if (!busy) dropzone.classList.add('is-dragging');
+    });
+    dropzone.addEventListener('dragleave', (event) => {
+        if (!dropzone.contains(event.relatedTarget)) dropzone.classList.remove('is-dragging');
+    });
+    dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('is-dragging');
+        if (busy) return;
+        if (event.dataTransfer.files.length !== 1) {
+            errorNotice.textContent = 'Anexe um arquivo XML por vez.';
+            errorNotice.hidden = false;
+            return;
+        }
+        file.files = event.dataTransfer.files;
+        selectFile();
+    });
     confirmButton.addEventListener('click', confirmImport);
     form.addEventListener('submit', (event) => { event.preventDefault(); if (document) confirmImport(); else preview(); });
     ['warehouse_id', 'product_condition', 'customer_id'].forEach((name) => form.elements.namedItem(name).addEventListener('change', updateStock));

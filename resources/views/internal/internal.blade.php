@@ -29,7 +29,7 @@
     ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
     ['name' => 'origin_warehouse_id', 'label' => 'Origem', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione a origem'] + $locations],
     ['name' => 'dest_warehouse_id', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione o destino'] + $locations],
-    ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
+    ['name' => 'movement_justification', 'label' => 'Justificativa', 'type' => 'textarea'],
     ];
     @endphp
 

@@ -54,6 +54,12 @@
     text-align: left;
 }
 
+.jemp-table thead {
+    background: var(--filter-surface);
+    box-shadow: 0 0 0 calc(var(--spacing-xs) + 3px) var(--filter-surface);
+    clip-path: inset(calc(-1 * (var(--spacing-xs) + 3px)) calc(-1 * var(--spacing-xs)) 0);
+}
+
 .jemp-table th {
     padding: .75rem var(--spacing-sm);
     color: var(--color-heading);

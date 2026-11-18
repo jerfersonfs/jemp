@@ -48,11 +48,6 @@
             </div>
             <div class="invoice-page-head__actions">
                 <button class="btn btn-secondary invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML de venda</button>
-                <!--
-            <button class="button invoice-create-button" type="button" data-dialog-open="invoice-create">
-                <i class="ph ph-plus" aria-hidden="true"></i>Adicionar nota fiscal
-            </button>
--->
             </div>
         </header>
 
@@ -69,7 +64,6 @@
                     <span class="invoice-panel__icon" aria-hidden="true"><i class="ph ph-receipt"></i></span>
                     <div><h2 id="invoice-list-title">Lista de Notas Fiscais</h2><p>Visualize, filtre e consulte os dados das notas fiscais.</p></div>
                 </div>
-                <span class="invoice-demo-tag">Notas registradas</span>
             </div>
 
             <x-filters.filter-bar class="invoice-filters" :action="route('invoice-consult.index')" label="Filtros de notas fiscais" data-invoice-filter>
@@ -84,7 +78,14 @@
 
             <x-tables.table class="invoice-table" variant="rounded" caption="Notas fiscais cadastradas" :columns="$columns" :rows="$invoiceRows" :status-variants="$statusVariants" empty-message="Nenhuma nota fiscal cadastrada." />
             <p class="invoice-no-results" role="status" data-invoice-no-results hidden>Nenhuma nota fiscal encontrada com os filtros selecionados.</p>
-            <p class="invoice-table-caption">Consulte os registros e os itens de cada nota fiscal.</p>
+            <footer class="movement-table-footer">
+                <span class="movement-table-footer__summary" data-invoice-pagination-summary aria-live="polite"></span>
+                <nav class="movement-pagination" aria-label="Paginação de notas fiscais">
+                    <button class="btn btn-secondary" type="button" data-invoice-previous disabled><x-icons.icon name="caret-left" size="sm" /> Anterior</button>
+                    <span class="movement-pagination__current" data-invoice-current aria-live="polite">1 / 1</span>
+                    <button class="btn btn-secondary" type="button" data-invoice-next disabled>Próximo <x-icons.icon name="caret-right" size="sm" /></button>
+                </nav>
+            </footer>
         </section>
 
         @include('invoice_consult.import-xml')

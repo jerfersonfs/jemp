@@ -70,7 +70,9 @@
                                         $dialogTarget = data_get($row, $column['targetKey'] ?? '') ?? ($column['target'] ?? null);
                                     @endphp
                                     @if ($dialogTarget)
-                                        <button class="jemp-table__detail" type="button" data-dialog-open="{{ $dialogTarget }}">{{ $column['detailLabel'] ?? 'Ver detalhes' }}</button>
+                                        <div class="jemp-table__actions">
+                                            <button class="jemp-table__action" type="button" data-dialog-open="{{ $dialogTarget }}" aria-label="{{ $column['detailLabel'] ?? 'Ver detalhes' }}" title="{{ $column['detailLabel'] ?? 'Ver detalhes' }}"><x-icons.icon name="eye" size="sm" /></button>
+                                        </div>
                                     @endif
                                 @elseif (($column['type'] ?? null) === 'actions')
                                     <div class="jemp-table__actions">

@@ -21,7 +21,7 @@
             ['key' => 'destination', 'label' => 'Destino'],
             ['key' => 'fiscal', 'label' => 'Possui NF?'],
             ['key' => 'invoice_id', 'label' => 'N° da NF'],
-            ['key' => 'justification', 'label' => 'Justificação'],
+            ['key' => 'justification', 'label' => 'Justificativa'],
         ];
         $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $entryFormFields = [

@@ -7,9 +7,16 @@
     margin: auto;
     padding: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     border: 0;
     border-radius: .75rem;
     background: transparent;
+}
+
+[class$="-dialog-layer"],
+[class$="-dialog-layer"] .jemp-dialog,
+.jemp-details-dialog__body {
+    overscroll-behavior: contain;
 }
 
 .jemp-modal[open] {

@@ -377,8 +377,20 @@ html.jemp-sidebar-precollapsed .jemp-sidebar__footer { justify-content: center; 
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none;
     }
+}
+
+/* Keep modal backdrops fixed to the viewport and lock the actual page scroller. */
+html:has(dialog:modal, [class$="-dialog-layer"]:not([hidden])),
+body:has(dialog:modal, [class$="-dialog-layer"]:not([hidden])) {
+    overflow: hidden;
+}
+
+body:has(dialog:modal, [class$="-dialog-layer"]:not([hidden])) .jemp-shell__page {
+    animation: none;
+    transform: none;
+    overflow: hidden;
 }
 
 .jemp-shell__backdrop {

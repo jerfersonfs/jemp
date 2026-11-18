@@ -7,10 +7,14 @@ const page = document.querySelector('[data-invoice-page]');
 if (page) {
     initializeInvoiceImport(page);
     const filterForm = page.querySelector('[data-invoice-filter]');
-    const rows = [...page.querySelectorAll('[data-table-row]')];
+    const rows = [...page.querySelectorAll('.invoice-table [data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');
     const dialogLayers = [...page.querySelectorAll('[data-dialog-layer]')];
     const itemConfirmLayer = page.querySelector('[data-invoice-item-confirm-layer]');
+    const previousButton = page.querySelector('[data-invoice-previous]');
+    const nextButton = page.querySelector('[data-invoice-next]');
+    const pageSize = 10;
+    let currentPage = 1;
     let pendingItemDelete = null;
     let activeLayer = null;
     let activeTrigger = null;
@@ -69,14 +73,30 @@ if (page) {
             if (matches) visibleRows.push(row);
         });
 
-        if (noResults) noResults.hidden = visibleRows.length > 0;
+        const totalPages = Math.max(1, Math.ceil(visibleRows.length / pageSize));
+        currentPage = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * pageSize;
+        visibleRows.forEach((row, index) => { row.hidden = index < start || index >= start + pageSize; });
+        previousButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+        page.querySelector('[data-invoice-current]').textContent = currentPage + ' / ' + totalPages;
+        page.querySelector('[data-invoice-pagination-summary]').textContent =
+            'Mostrando ' + (visibleRows.length ? start + 1 : 0) + '–' + Math.min(start + pageSize, visibleRows.length) + ' de ' + visibleRows.length + ' notas fiscais';
+        if (noResults) noResults.hidden = visibleRows.length > 0 || rows.length === 0;
         updateSummary(visibleRows);
     }
 
-    filterForm?.addEventListener('input', applyFilters);
-    filterForm?.addEventListener('change', applyFilters);
-    filterForm?.addEventListener('submit', (event) => { event.preventDefault(); applyFilters(); });
-    filterForm?.addEventListener('reset', () => window.requestAnimationFrame(applyFilters));
+    function resetPagination() {
+        currentPage = 1;
+        applyFilters();
+    }
+
+    previousButton.addEventListener('click', () => { currentPage = Math.max(1, currentPage - 1); applyFilters(); });
+    nextButton.addEventListener('click', () => { currentPage += 1; applyFilters(); });
+    filterForm?.addEventListener('input', resetPagination);
+    filterForm?.addEventListener('change', resetPagination);
+    filterForm?.addEventListener('submit', (event) => { event.preventDefault(); resetPagination(); });
+    filterForm?.addEventListener('reset', () => window.requestAnimationFrame(resetPagination));
 
     function closeDialog({ restoreFocus = true } = {}) {
         if (!activeLayer) return;
