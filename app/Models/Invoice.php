@@ -17,6 +17,8 @@ class Invoice extends Model
     /** @use HasFactory<InvoiceFactory> */
     use HasFactory;
 
+    public const PAYMENT_METHODS = ['Dinheiro', 'PIX', 'Cartão de crédito', 'Cartão de débito', 'Boleto', 'Transferência bancária', 'Cheque', 'Outros'];
+
     protected $primaryKey = 'invoice_id';
 
     protected static function booted(): void

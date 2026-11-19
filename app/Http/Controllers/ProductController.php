@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -43,19 +42,7 @@ class ProductController extends Controller
 
         try {
             $product = DB::transaction(function () use ($data): Product {
-                $temporarySku = 'TMP-'.Str::random(8);
-                $product = Product::query()->create([
-                    ...$this->productData($data),
-                    'sku' => $temporarySku,
-                ]);
-                $product->update([
-                    'sku' => $this->generateSku(
-                        $data['category'],
-                        (int) $data['length_mm'],
-                        (int) $data['width_mm'],
-                        $product->product_id,
-                    ),
-                ]);
+                $product = Product::query()->create($this->productData($data));
 
                 if (isset($data['warehouse_id'])) {
                     DB::table('inventory')->insert([
@@ -87,7 +74,7 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $produto): RedirectResponse|JsonResponse
     {
-        $data = $request->validate($this->rules());
+        $data = $request->validate($this->rules(produto: $produto));
         $this->assertSpecificationIsAvailable($data, $produto);
 
         try {
@@ -151,6 +138,7 @@ class ProductController extends Controller
     private function productData(array $data): array
     {
         return [
+            'sku' => $data['sku'],
             'category' => $data['category'],
             'product_name' => $data['product_name'],
             'material' => $data['material'],
@@ -158,17 +146,6 @@ class ProductController extends Controller
             'length_mm' => $data['length_mm'],
             'width_mm' => $data['width_mm'],
         ];
-    }
-
-    private function generateSku(string $category, int $lengthMm, int $widthMm, int $sequence): string
-    {
-        $categoryCode = match ($category) {
-            'PBR' => 'PBR',
-            'Descartável' => 'DESC',
-            'Não Standard' => 'NS',
-        };
-
-        return sprintf('%s-%dX%d-%03d', $categoryCode, $lengthMm, $widthMm, $sequence);
     }
 
     /** @param array<string, mixed> $data */
@@ -191,9 +168,10 @@ class ProductController extends Controller
     }
 
     /** @return array<string, array<int, mixed>> */
-    private function rules(bool $includeInitialInventory = false): array
+    private function rules(bool $includeInitialInventory = false, ?Product $produto = null): array
     {
         $rules = [
+            'sku' => ['required', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($produto?->product_id, 'product_id')],
             'product_name' => ['required', 'string', 'max:150'],
             'category' => ['required', Rule::in(['PBR', 'Descartável', 'Não Standard'])],
             'material' => ['required', 'string', 'max:100'],

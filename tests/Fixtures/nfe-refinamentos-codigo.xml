@@ -10,6 +10,6 @@
     <total><ICMSTot><vProd>190.00</vProd><vDesc>0.00</vDesc><vFrete>0.00</vFrete><vSeg>0.00</vSeg><vOutro>0.00</vOutro><vNF>190.00</vNF></ICMSTot></total>
     <cobr><dup><nDup>001</nDup><dVenc>2026-12-13</dVenc><vDup>190.00</vDup></dup></cobr>
     <pag><detPag><tPag>15</tPag><vPag>190.00</vPag></detPag></pag>
-    <infAdic><infCpl>TESTE JEMP SEM VALOR FISCAL. Associar produtos internos manualmente.</infCpl></infAdic>
+    <infAdic><infCpl>TESTE JEMP SEM VALOR FISCAL. Teste de reconhecimento automatico por codigo.</infCpl></infAdic>
   </infNFe>
 </NFe>

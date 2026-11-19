@@ -103,6 +103,8 @@ body.invoice-dialog-open { overflow:hidden; }
 .invoice-import-dialog legend { margin-bottom: 16px; color: var(--color-primary); font-weight: 700; }
 .invoice-import-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding: 16px; background: var(--color-surface); border-radius: 8px; }
 .invoice-import-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.invoice-import-payment-terms { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.invoice-import-dialog .invoice-import-payment { border-top: 1px solid #cddfdd; padding-top: 16px; }
 .invoice-import-fields label, .invoice-import-fields input, .invoice-import-fields select { min-width: 0; width: 100%; }
 .invoice-import-links { display: flex; flex-wrap: wrap; gap: 12px 20px; }
 .invoice-import-links a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
@@ -118,7 +120,8 @@ body.invoice-dialog-open { overflow:hidden; }
 }
 
 .invoice-import-summary > div { display: grid; align-content: start; min-width: 0; gap: 8px; }
-.invoice-import-readonly {
+.invoice-import-readonly,
+.invoice-import-dialog input.invoice-import-readonly {
     min-height: 42px;
     margin: 0;
     padding: 8px 12px;
@@ -205,3 +208,8 @@ body.invoice-dialog-open { overflow:hidden; }
 }
 .invoice-xml-dropzone:has(input:disabled) { opacity: .65; }
 .invoice-xml-dropzone__input:disabled { cursor: wait; }
+
+/* Conferência automática dos produtos do XML. */
+.invoice-import-items tr[data-product-warning="true"] { background: var(--warning-bg, #fff4d6); }
+.invoice-import-items td small { display: block; margin-top: .35rem; }
+.invoice-import-items [data-import-balance] { font-weight: 700; }

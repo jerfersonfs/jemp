@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Invoice;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateInvoiceRequest extends FormRequest
 {
@@ -48,9 +49,10 @@ class UpdateInvoiceRequest extends FormRequest
     {
         $invoice = $this->route('invoice');
         if ($invoice instanceof Invoice && $invoice->access_key !== null) {
-            $rules = ['payment_status' => ['required', 'in:A vencer,Paga']];
+            $rules = ['payment_status' => ['required', 'in:A vencer,Paga'],
+                'payment_method' => ['exclude_unless:payment_status,Paga', 'required_if:payment_status,Paga', Rule::in(Invoice::PAYMENT_METHODS)]];
             foreach (['issuer_document', 'customer_id', 'invoice_id', 'invoice_number', 'invoice_serie', 'issue_date',
-                'due_date', 'payment_method', 'delivery_driver', 'payment_terms_days', 'payment_date', 'amount',
+                'due_date', 'delivery_driver', 'payment_terms_days', 'payment_date', 'amount',
                 'access_key', 'stock_posted_at', 'created_at', 'updated_at', 'items'] as $field) {
                 $rules[$field] = ['missing'];
             }
@@ -80,6 +82,8 @@ class UpdateInvoiceRequest extends FormRequest
         if ($invoice instanceof Invoice && $invoice->access_key !== null) {
             return [
                 'missing' => 'Os dados da nota importada são somente para leitura. Altere apenas a situação do pagamento.',
+                'payment_method.required_if' => 'Escolha a forma de pagamento para uma nota paga.',
+                'payment_method.in' => 'Escolha uma das formas de pagamento disponíveis.',
                 'payment_status.required' => 'Informe se a nota está paga ou não paga.',
                 'payment_status.in' => 'Escolha paga ou não paga. A situação vencida é definida automaticamente pela data.',
             ];

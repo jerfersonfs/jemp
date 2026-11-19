@@ -5,7 +5,7 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
 <x-layouts.app title="Produtos · JEMP" page="products">
     @php
     $columns = [
-    ['key' => 'code', 'label' => 'Cód.'], ['key' => 'name', 'label' => 'Nome do Produto'],
+    ['key' => 'code', 'label' => 'SKU'], ['key' => 'name', 'label' => 'Nome do Produto'],
     ['key' => 'category', 'label' => 'Categoria'],
     ['key' => 'measure', 'label' => 'Medida'],
     ['key' => 'material', 'label' => 'Material'], ['key' => 'cost_price_display', 'label' => 'Custo'],
@@ -48,7 +48,7 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
     ],
     ])->all();
     $fields = [
-    ['name' => 'sku', 'id' => 'product-sku', 'label' => 'SKU gerado pelo sistema', 'readonly' => true, 'value' => 'Gerado ao cadastrar'],
+    ['name' => 'sku', 'id' => 'product-sku', 'label' => 'Código do produto', 'required' => true, 'placeholder' => 'Ex.: 008 ou PAL-001'],
     ['name' => 'product_name', 'id' => 'product-name', 'label' => 'Produto', 'required' => true],
     ['name' => 'category', 'id' => 'product-category', 'label' => 'Categoria', 'type' => 'select', 'options' => ['PBR' => 'PBR', 'Descartável' => 'Descartável', 'Não Standard' => 'Não Standard'], 'required' => true],
     ['name' => 'material', 'id' => 'product-material', 'label' => 'Material', 'required' => true],
@@ -102,7 +102,7 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
             <x-dialogs.form-dialog title="Novo produto" description="Informe os dados do produto para o catálogo." submit-label="Cadastrar produto" cancel-label="Cancelar" layout="grid" :fields="$fields" :action="route('products.store')" />
         </x-dialogs.modal>
         <x-dialogs.modal label="Detalhes do produto" class="products-modal products-modal--details" data-product-details-modal>
-            <x-dialogs.details-dialog title="Detalhes do produto" :details="collect(['SKU', 'Produto', 'Categoria', 'Material', 'Custo unitário', 'Largura (mm)', 'Comprimento (mm)', 'Saldo total'])->map(fn ($label) => ['label' => $label, 'value' => '—'])->all()">
+            <x-dialogs.details-dialog title="Detalhes do produto" :details="collect(['Código do produto', 'Produto', 'Categoria', 'Material', 'Custo unitário', 'Largura (mm)', 'Comprimento (mm)', 'Saldo total'])->map(fn ($label) => ['label' => $label, 'value' => '—'])->all()">
                 <section class="products-inventory" aria-labelledby="products-inventory-title">
                     <div class="products-inventory__header">
                         <h3 id="products-inventory-title">Inventário do produto</h3>

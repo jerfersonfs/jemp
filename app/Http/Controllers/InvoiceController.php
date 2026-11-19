@@ -45,9 +45,10 @@ class InvoiceController extends Controller
             $data = $request->validated();
             if ($locked->access_key !== null) {
                 if (! in_array($data['payment_status'] ?? null, ['A vencer', 'Paga'], true)
-                    || array_diff(array_keys($data), ['payment_status']) !== []) {
+                    || array_diff(array_keys($data), ['payment_status', 'payment_method']) !== []) {
                     throw ValidationException::withMessages(['payment_status' => 'Altere apenas se a nota importada está paga ou não paga.']);
                 }
+                $locked->payment_method = $data['payment_status'] === 'Paga' ? $data['payment_method'] : '';
                 $locked->changePaymentState($data['payment_status'] === 'Paga');
 
                 return $locked->fresh();

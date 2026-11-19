@@ -113,6 +113,7 @@
                     $editFields = [
                         ['name'=>'payment_status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Pagamento','type'=>'select',
                          'value'=>$invoice['status'] === 'Paga' ? 'Paga' : 'A vencer','options'=>['A vencer'=>'Não paga','Paga'=>'Paga'],'required'=>true],
+                        ['name'=>'payment_method','id'=>'invoice-edit-'.$invoice['id'].'-payment-method','label'=>'Forma de pagamento','type'=>'select','value'=>$invoice['payment_method'],'options'=>[''=>'Selecione'] + array_combine(\App\Models\Invoice::PAYMENT_METHODS, \App\Models\Invoice::PAYMENT_METHODS),'required'=>true],
                     ];
                 }
                 $detailSections = [
@@ -174,7 +175,7 @@
                     </form>
                 </section>
             </div>
-            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['edit_target'] }}" data-invoice-mode="edit" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
+            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['edit_target'] }}" data-invoice-mode="edit" data-imported-xml="{{ $invoice['imported_xml'] ? 'true' : 'false' }}" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
                     <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" :title="($invoice['imported_xml'] ? 'Pagamento da nota fiscal ' : 'Editar nota fiscal ').$invoice['number']" :description="$invoice['imported_xml'] ? 'Os dados e os itens importados são somente para leitura. Ao marcar como paga, a data de pagamento é registrada automaticamente. Notas não pagas ficam vencidas após o vencimento.' : 'Atualize os dados da nota. O total permanece calculado pelos itens.'" action="#" method="PUT" size="large" :submit-label="$invoice['imported_xml'] ? 'Salvar situação' : 'Salvar alterações'" :fields="$editFields" />
             </div>
         @endforeach

@@ -5,6 +5,7 @@ namespace App;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use SimpleXMLElement;
@@ -17,16 +18,16 @@ class InvoiceXmlImporter
     {
         $document = $this->parse($contents);
         $this->assertAvailable($document);
-        $mappings = DB::table('product_xml_mappings')->where('issuer_document', $document['issuer_document'])->get();
         $products = Product::query()->with('inventory')->orderBy('product_name')->get();
         $customers = Customer::query()->orderBy('customer_name')->get();
 
         return [
             'invoice' => collect($document)->except('items')->all(),
-            'items' => array_map(function (array $item) use ($mappings): array {
-                $mapping = $mappings->first(fn ($mapping): bool => $mapping->external_code === $item['external_code']);
+            'items' => array_map(function (array $item) use ($products): array {
+                $product = $products->first(fn (Product $product): bool => $product->sku === $item['external_code']);
 
-                return $item + ['product_id' => $mapping?->product_id];
+                return $item + ['product_id' => $product?->product_id,
+                    'description_mismatch' => $product !== null && mb_strtolower(trim($product->product_name)) !== mb_strtolower(trim($item['description']))];
             }, $document['items']),
             'customer_id' => $customers->first(fn (Customer $customer): bool => $this->digits($customer->customer_document) === $document['recipient_document'])?->customer_id,
             'customers' => $customers->map(fn (Customer $customer): array => [
@@ -48,15 +49,16 @@ class InvoiceXmlImporter
         $document = $this->parse($contents);
         $customer = Customer::query()->findOrFail($data['customer_id']);
         $this->ensure($this->digits($customer->customer_document) === $document['recipient_document'], 'O CPF/CNPJ do cliente selecionado deve ser o destinatário do XML.', 'customer_id');
-        $this->ensure($data['due_date'] >= $document['issue_date'], 'O vencimento não pode ser anterior à emissão.', 'due_date');
-        $choices = collect($data['items'])->keyBy('line_number');
-        $this->ensure($choices->count() === count($document['items']), 'Associe todos os itens do XML exatamente uma vez.', 'items');
+        $issueDate = Carbon::parse($document['issue_date'])->startOfDay();
+        $this->ensure((int) $data['payment_terms_days'] <= $issueDate->diffInDays(Carbon::parse('9999-12-31')), 'O prazo resulta em uma data de vencimento inválida.', 'payment_terms_days');
+        $data['due_date'] = $issueDate->addDays((int) $data['payment_terms_days'])->toDateString();
+        $products = Product::query()->whereIn('sku', array_column($document['items'], 'external_code'))->get();
         $byExternalCode = [];
         $quantities = [];
         foreach ($document['items'] as &$item) {
-            $choice = $choices->get($item['line_number']);
-            $this->ensure($choice !== null, 'A associação contém linhas diferentes das linhas do XML.', 'items');
-            $item['product_id'] = (int) $choice['product_id'];
+            $product = $products->first(fn (Product $product): bool => $product->sku === $item['external_code']);
+            $this->ensure($product !== null, "Produto de código {$item['external_code']} não cadastrado no JEMP. Cadastre-o antes de importar.", 'items');
+            $item['product_id'] = $product->product_id;
             $codeKey = 'code:'.$item['external_code'];
             $this->ensure(! isset($byExternalCode[$codeKey]) || $byExternalCode[$codeKey]['product_id'] === $item['product_id'], 'Um mesmo código do emitente deve apontar para o mesmo produto em todas as linhas.', 'items');
             $byExternalCode[$codeKey] = $item;
@@ -67,6 +69,10 @@ class InvoiceXmlImporter
 
         return DB::transaction(function () use ($document, $data, $userId, $quantities, $byExternalCode): Invoice {
             $this->assertAvailable($document);
+            $lockedProducts = Product::query()->whereIn('product_id', array_keys($quantities))->orderBy('product_id')->lockForUpdate()->get();
+            foreach ($document['items'] as $item) {
+                $this->ensure($lockedProducts->contains(fn (Product $product): bool => $product->product_id === $item['product_id'] && $product->sku === $item['external_code']), 'O cadastro do produto mudou. Reabra o XML para conferir os códigos.', 'items');
+            }
             foreach ($quantities as $productId => $quantity) {
                 $this->stockLedger->change((int) $productId, (int) $data['warehouse_id'], $data['product_condition'], -$quantity);
             }
@@ -75,7 +81,7 @@ class InvoiceXmlImporter
                 'issuer_document' => $document['issuer_document'], 'access_key' => $document['access_key'],
                 'invoice_number' => $document['number'], 'invoice_serie' => $document['series'],
                 'customer_id' => $data['customer_id'], 'issue_date' => $document['issue_date'],
-                'due_date' => $data['due_date'], 'payment_method' => $data['payment_method'],
+                'due_date' => $data['due_date'], 'payment_method' => $data['payment_status'] === 'Paga' ? $data['payment_method'] : '',
                 'payment_terms_days' => $data['payment_terms_days'], 'payment_status' => $data['payment_status'],
                 'payment_date' => $data['payment_status'] === 'Paga' ? $data['payment_date'] : null,
                 'amount' => $document['amount'], 'stock_posted_at' => now(),

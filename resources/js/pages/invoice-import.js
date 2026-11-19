@@ -57,6 +57,11 @@ export function initializeInvoiceImport(page) {
         paymentDate.disabled = !paid;
         paymentDate.required = paid;
         if (!paid) paymentDate.value = '';
+        const method = form.elements.namedItem('payment_method');
+        method.closest('label').hidden = !paid;
+        method.disabled = !paid;
+        method.required = paid;
+
     }
 
     function updateStock() {
@@ -75,7 +80,7 @@ export function initializeInvoiceImport(page) {
             const stock = product?.inventory.find((item) => String(item.warehouse_id) === warehouseId && item.condition === condition);
             const balance = Number(stock?.balance || 0);
             const missing = Boolean(product && warehouseId && balance < totals.get(String(product.id)));
-            row.querySelector('[data-import-balance]').textContent = !product || !warehouseId ? 'Selecione a origem e o produto' : `${balance} un.${missing ? ' · insuficiente' : ''}`;
+            row.querySelector('[data-import-balance]').textContent = !product ? 'Produto não cadastrado' : !warehouseId ? 'Selecione a origem' : `${balance} un.${missing ? ' · insuficiente' : ''}`;
             row.dataset.insufficient = String(missing);
             insufficient ||= missing;
         });
@@ -83,7 +88,7 @@ export function initializeInvoiceImport(page) {
         const ready = !missingProduct && Boolean(warehouseId) && Boolean(customer.value) && !insufficient;
         summary.textContent = insufficient
             ? 'Saldo insuficiente. Registre as entradas necessárias e abra uma nova importação para conferir os saldos. A importação ficará bloqueada enquanto houver falta.'
-            : missingProduct ? 'Associe todos os itens a produtos do JEMP.'
+            : missingProduct ? 'Há códigos não cadastrados no JEMP. Cadastre os produtos e reabra o XML antes de importar.'
                 : !customer.value ? 'Cadastre ou selecione o cliente com o CPF/CNPJ destinatário do XML.'
                     : !warehouseId ? 'Escolha o armazém de origem para conferir os saldos.'
                         : 'Saldos disponíveis. Confira os dados de pagamento antes de confirmar.';
@@ -99,25 +104,16 @@ export function initializeInvoiceImport(page) {
             [String(item.line_number) + ' · ' + item.external_code, item.description].forEach((text) => {
                 row.insertCell().textContent = text;
             });
-            const select = window.document.createElement('select');
-            select.setAttribute('aria-label', 'Produto para o item ' + item.line_number + ', código ' + item.external_code);
-            select.dataset.externalCode = item.external_code;
-            select.required = true;
-            select.add(new Option('Selecione um produto', ''));
-            document.products.forEach((product) => select.add(new Option(product.sku + ' · ' + product.name, String(product.id))));
-            const wanted = selected.get(item.line_number) || String(item.product_id || '');
-            select.value = wanted;
-            selected.set(item.line_number, select.value);
-            select.addEventListener('change', () => {
-                document.items.filter((other) => other.external_code === item.external_code).forEach((other) => {
-                    selected.set(other.line_number, select.value);
-                    body.querySelectorAll('tr').forEach((candidate) => {
-                        if (Number(candidate.dataset.lineNumber) === other.line_number) candidate.querySelector('select').value = select.value;
-                    });
-                });
-                updateStock();
-            });
-            row.insertCell().append(select);
+            const product = document.products.find((candidate) => candidate.id === item.product_id);
+            selected.set(item.line_number, product ? String(product.id) : '');
+            row.dataset.productWarning = String(!product || item.description_mismatch);
+            const result = row.insertCell();
+            result.textContent = product ? product.sku + ' · ' + product.name : 'Código não cadastrado no JEMP';
+            if (item.description_mismatch) {
+                const warning = window.document.createElement('small');
+                warning.textContent = 'Descrição diferente: confira. O código coincide e a importação está liberada.';
+                result.append(warning);
+            }
             [String(item.quantity), currency(item.unit_price), currency(item.subtotal)].forEach((text) => {
                 row.insertCell().textContent = text;
             });
@@ -146,9 +142,10 @@ export function initializeInvoiceImport(page) {
             document = await submitXml(form.dataset.previewUrl, payload);
             const invoice = document.invoice;
             const values = {
-                number: invoice.number + ' / ' + invoice.series, issue_date: invoice.issue_date.split('-').reverse().join('/'),
-                issuer: invoice.issuer_name + ' · ' + invoice.issuer_document,
-                recipient: invoice.recipient_name + ' · ' + invoice.recipient_document, amount: currency(invoice.amount),
+                number: invoice.number, series: invoice.series, issue_date: invoice.issue_date.split('-').reverse().join('/'),
+                issuer_name: invoice.issuer_name, issuer_document: invoice.issuer_document,
+                recipient_name: invoice.recipient_name, recipient_document: invoice.recipient_document,
+                amount: currency(invoice.amount),
             };
             form.querySelectorAll('[data-import-value]').forEach((element) => { element.textContent = values[element.dataset.importValue] || ''; });
             customer.replaceChildren(new Option('Selecione o cliente destinatário', ''));
@@ -168,6 +165,7 @@ export function initializeInvoiceImport(page) {
             file.closest('label').hidden = true;
             confirmButton.hidden = false;
             renderItems();
+            syncDueDate();
             syncPaymentDate();
         } catch (error) {
             file.value = '';
@@ -184,10 +182,6 @@ export function initializeInvoiceImport(page) {
     async function confirmImport() {
         if (busy || !document || !form.reportValidity()) return;
         const payload = new FormData(form);
-        document.items.forEach((item, index) => {
-            payload.append(`items[${index}][line_number]`, String(item.line_number));
-            payload.append(`items[${index}][product_id]`, selected.get(item.line_number) || '');
-        });
         errorNotice.hidden = true;
         setBusy(true, 'Importando a nota e registrando a baixa…');
         try {
@@ -248,9 +242,17 @@ export function initializeInvoiceImport(page) {
     form.addEventListener('submit', (event) => { event.preventDefault(); if (document) confirmImport(); else preview(); });
     ['warehouse_id', 'product_condition', 'customer_id'].forEach((name) => form.elements.namedItem(name).addEventListener('change', updateStock));
     form.elements.namedItem('payment_status').addEventListener('change', syncPaymentDate);
-    form.elements.namedItem('due_date').addEventListener('change', () => {
-        if (!document || !form.elements.namedItem('due_date').value) return;
-        const days = (Date.parse(form.elements.namedItem('due_date').value) - Date.parse(document.invoice.issue_date)) / 86400000;
-        form.elements.namedItem('payment_terms_days').value = String(Math.max(0, Math.round(days)));
-    });
+    function syncDueDate() {
+        if (!document) return;
+        const field = form.elements.namedItem('payment_terms_days');
+        const due = form.elements.namedItem('due_date');
+        const days = Number(field.value);
+        const date = new Date(document.invoice.issue_date + 'T00:00:00Z');
+        date.setUTCDate(date.getUTCDate() + days);
+        const valid = field.value !== '' && Number.isInteger(days) && days >= 0
+            && Number.isFinite(date.getTime()) && date.getUTCFullYear() <= 9999;
+        field.setCustomValidity(valid ? '' : 'Informe um prazo que resulte em uma data válida.');
+        due.value = valid ? date.toISOString().slice(0, 10) : '';
+    }
+    form.elements.namedItem('payment_terms_days').addEventListener('input', syncDueDate);
 }

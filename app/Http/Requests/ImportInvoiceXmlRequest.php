@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Invoice;
 use Illuminate\Validation\Rule;
 
 class ImportInvoiceXmlRequest extends PreviewInvoiceXmlRequest
@@ -12,14 +13,12 @@ class ImportInvoiceXmlRequest extends PreviewInvoiceXmlRequest
             'customer_id' => ['required', 'integer', 'exists:customers,customer_id'],
             'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
             'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
-            'due_date' => ['required', 'date_format:Y-m-d'],
-            'payment_method' => ['required', 'string', 'max:50'],
+            'due_date' => ['sometimes', 'date_format:Y-m-d'],
+            'payment_method' => ['exclude_unless:payment_status,Paga', 'required_if:payment_status,Paga', Rule::in(Invoice::PAYMENT_METHODS)],
             'payment_terms_days' => ['required', 'integer', 'min:0', 'max:2147483647'],
             'payment_status' => ['required', Rule::in(['A vencer', 'Paga'])],
             'payment_date' => ['nullable', 'required_if:payment_status,Paga', 'prohibited_unless:payment_status,Paga', 'date_format:Y-m-d'],
-            'items' => ['required', 'array', 'min:1', 'max:990'],
-            'items.*.line_number' => ['required', 'integer', 'min:1', 'max:990', 'distinct'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,product_id'],
+            'items' => ['prohibited'],
         ];
     }
 
@@ -27,9 +26,9 @@ class ImportInvoiceXmlRequest extends PreviewInvoiceXmlRequest
     {
         return parent::messages() + [
             'required' => 'Preencha :attribute.', 'exists' => 'O cadastro selecionado em :attribute não existe.',
-            'items.required' => 'Associe todos os produtos do XML.',
-            'items.*.product_id.required' => 'Escolha um produto do JEMP para cada item do XML.',
-            'items.*.line_number.distinct' => 'Cada linha do XML deve ser associada uma única vez.',
+            'items.prohibited' => 'Os produtos são identificados automaticamente pelo código do XML.',
+            'payment_method.required_if' => 'Escolha a forma de pagamento para uma nota paga.',
+            'payment_method.in' => 'Escolha uma das formas de pagamento disponíveis.',
             'payment_date.required_if' => 'Informe a data de pagamento para uma nota paga.',
             'payment_date.prohibited_unless' => 'A data de pagamento só deve ser informada para uma nota paga.',
             'payment_status.in' => 'Escolha paga ou não paga. A situação vencida é definida automaticamente pela data.',

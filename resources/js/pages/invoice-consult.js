@@ -219,6 +219,12 @@ if (page) {
             };
             const syncPaymentDate = () => {
                 const isPaid = paymentStatus?.value === 'Paga';
+                if (layer.dataset.importedXml === 'true') {
+                    const method = form.elements.namedItem('payment_method');
+                    method.closest('.jemp-form-dialog__field').hidden = !isPaid;
+                    method.disabled = !isPaid;
+                    method.required = isPaid;
+                }
                 if (paymentDateField) paymentDateField.hidden = !isPaid;
                 if (paymentDate) {
                     paymentDate.required = isPaid;
