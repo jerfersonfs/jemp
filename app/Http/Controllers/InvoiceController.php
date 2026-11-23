@@ -6,74 +6,92 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Product;
+use App\SalePayment;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class InvoiceController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
-        Invoice::refreshOverdueStatuses();
 
-        return InvoiceResource::collection(Invoice::with('items')->get());
+        return InvoiceResource::collection(Invoice::with(['items', 'payment'])->get());
     }
 
     public function store(StoreInvoiceRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $invoice = DB::transaction(fn (): Invoice => Invoice::query()->create(array_merge($data, [
-            'issue_date' => $data['issue_date'] ?? now()->toDateString(),
-            'payment_status' => $data['payment_status'] ?? 'A vencer', 'amount' => 0,
-        ])));
+        $invoice = DB::transaction(function () use ($data): Invoice {
+            $invoice = Invoice::create(['customer_id' => $data['customer_id'], 'invoice_number' => $data['invoice_number'],
+                'invoice_serie' => $data['invoice_serie'], 'issue_date' => $data['issue_date'], 'delivery_driver' => $data['delivery_driver'] ?? null, 'amount' => 0]);
+            $products = Product::whereKey(array_column($data['items'], 'product_id'))->sharedLock()->get()->keyBy('product_id');
+            $total = 0;
+            foreach ($data['items'] as $item) {
+                $product = $products->get($item['product_id']) ?? throw ValidationException::withMessages(['items' => 'Produto indisponível.']);
+                $price = (string) $product->cost_price;
+                $total += SalePayment::cents($price) * (int) $item['quantity'];
+                if ($total > 9999999999) {
+                    throw ValidationException::withMessages(['items' => 'O valor total excede o limite da nota.']);
+                }
+                $invoice->items()->create(['product_id' => $item['product_id'], 'quantity' => $item['quantity'], 'unit_price' => $price]);
+            }
+            $invoice->amount = number_format($total / 100, 2, '.', '');
+            $invoice->save();
+            SalePayment::record($invoice, $data);
 
-        return response()->json(new InvoiceResource($invoice->load('items')), 201);
+            return $invoice;
+        });
+
+        return response()->json(new InvoiceResource($invoice->load(['items', 'payment'])), 201);
     }
 
     public function show(Invoice $invoice): InvoiceResource
     {
-        Invoice::refreshOverdueStatuses();
 
-        return new InvoiceResource($invoice->refresh()->load('items'));
+        return new InvoiceResource($invoice->refresh()->load(['items', 'payment']));
     }
 
     public function update(UpdateInvoiceRequest $request, Invoice $invoice): InvoiceResource
     {
-        $invoice = DB::transaction(function () use ($request, $invoice): Invoice {
-            $locked = Invoice::query()->whereKey($invoice->invoice_id)->lockForUpdate()->firstOrFail();
-            $data = $request->validated();
-            if ($locked->access_key !== null) {
-                if (! in_array($data['payment_status'] ?? null, ['A vencer', 'Paga'], true)
-                    || array_diff(array_keys($data), ['payment_status', 'payment_method']) !== []) {
-                    throw ValidationException::withMessages(['payment_status' => 'Altere apenas se a nota importada está paga ou não paga.']);
-                }
-                $locked->payment_method = $data['payment_status'] === 'Paga' ? $data['payment_method'] : '';
-                $locked->changePaymentState($data['payment_status'] === 'Paga');
-
-                return $locked->fresh();
+        $data = $request->validated();
+        if (isset($data['payment_status'])) {
+            if ($data['payment_status'] === 'Paga') {
+                SalePayment::receive($invoice, $data['payment_method'], Payment::today());
+            } elseif ($invoice->is_cancelled || $invoice->payment?->paid_at !== null) {
+                abort(409, 'Esta venda já está encerrada.');
             }
-            $number = $data['invoice_number'] ?? $locked->invoice_number;
-            $series = $data['invoice_serie'] ?? $locked->invoice_serie;
-            $issuer = $data['issuer_document'] ?? $locked->issuer_document;
-            if (Invoice::query()->where('invoice_number', $number)->where('invoice_serie', $series)
-                ->where('issuer_document', $issuer)->where('invoice_id', '!=', $locked->invoice_id)->exists()) {
-                throw ValidationException::withMessages(['invoice_number' => 'Já existe uma nota deste emitente com o mesmo número e série.']);
-            }
-            $locked->update($data);
+        } else {
+            $invoice->update($data);
+        }
 
-            return $locked->fresh();
-        });
+        return new InvoiceResource($invoice->load('payment'));
+    }
 
-        return new InvoiceResource($invoice);
+    public function settle(Request $request, Invoice $invoice): JsonResponse
+    {
+        $data = $request->validate([
+            'amount' => ['missing'], 'amount_due' => ['missing'], 'installment_number' => ['missing'],
+            'paid_at' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.Payment::today()],
+            'payment_method' => ['required', Rule::in(Payment::METHODS)],
+        ]);
+
+        $payment = SalePayment::receive($invoice, $data['payment_method'], $data['paid_at']);
+
+        return response()->json(['message' => 'Recebimento registrado.', 'data' => $payment]);
     }
 
     public function destroy(Invoice $invoice): JsonResponse
     {
         DB::transaction(function () use ($invoice): void {
             $locked = Invoice::query()->whereKey($invoice->invoice_id)->lockForUpdate()->firstOrFail();
-            if ($locked->access_key !== null || $locked->stockMovements()->exists()) {
-                throw ValidationException::withMessages(['invoice_id' => 'Notas importadas ou vinculadas a movimentações de estoque não podem ser excluídas.']);
+            if ($locked->payment()->exists() || $locked->access_key !== null || $locked->stockMovements()->exists()) {
+                throw ValidationException::withMessages(['invoice_id' => 'Notas com pagamento registrado ou movimentação de estoque não podem ser excluídas.']);
             }
             $locked->delete();
         });

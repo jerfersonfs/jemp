@@ -1,4 +1,5 @@
 import { requestJson } from '../components/loading.js';
+import { initializeManualInvoice } from './sale-payment.js';
 import { initializeInvoiceImport } from './invoice-import.js';
 import { reloadWithFeedback, showFeedback } from '../components/feedback.js';
 
@@ -6,16 +7,15 @@ const page = document.querySelector('[data-invoice-page]');
 
 if (page) {
     initializeInvoiceImport(page);
+    initializeManualInvoice(page);
     const filterForm = page.querySelector('[data-invoice-filter]');
     const rows = [...page.querySelectorAll('.invoice-table [data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');
     const dialogLayers = [...page.querySelectorAll('[data-dialog-layer]')];
-    const itemConfirmLayer = page.querySelector('[data-invoice-item-confirm-layer]');
     const previousButton = page.querySelector('[data-invoice-previous]');
     const nextButton = page.querySelector('[data-invoice-next]');
     const pageSize = 10;
     let currentPage = 1;
-    let pendingItemDelete = null;
     let activeLayer = null;
     let activeTrigger = null;
     let fallbackTrigger = null;
@@ -100,9 +100,7 @@ if (page) {
 
     function closeDialog({ restoreFocus = true } = {}) {
         if (!activeLayer) return;
-        const closingItemConfirm = activeLayer === itemConfirmLayer;
         activeLayer.hidden = true;
-        if (closingItemConfirm) pendingItemDelete = null;
         document.body.classList.remove('invoice-dialog-open');
         if (restoreFocus) {
             const triggerIsHidden = activeTrigger?.closest("[data-dialog-layer]")?.hidden;
@@ -129,145 +127,30 @@ if (page) {
     }
 
     page.querySelectorAll('[data-dialog-open]').forEach((trigger) => {
-        trigger.addEventListener('click', () => {
-            const target = trigger.dataset.dialogOpen;
-            const layer = dialogLayers.find((candidate) => candidate.dataset.dialogLayer === target);
-            if (layer) {
-                if (layer.querySelector('[data-invoice-item-form]')) {
-                    const form = layer.querySelector('[data-invoice-item-form]');
-                    form?.reset();
-                    delete layer.dataset.itemId;
-                    layer.querySelector('[data-item-dialog-title]').textContent = 'Adicionar item à nota';
-                    layer.querySelector('[data-item-submit-label]').textContent = 'Cadastrar item';
-                    syncItemPrice(form);
-                    layer.dataset.invoiceMode = 'item';
-                }
-                openDialog(layer, trigger);
-            }
-        });
+        const layer = dialogLayers.find((candidate) => candidate.dataset.dialogLayer === trigger.dataset.dialogOpen);
+        if (layer) trigger.addEventListener('click', () => openDialog(layer, trigger));
     });
 
-    function syncItemPrice(form) {
-        if (!form) return;
-        const product = form.elements.product_id?.selectedOptions[0];
-        const price = form.elements.unit_price;
-        if (price) price.value = product?.dataset.unitPrice ?? '';
-    }
+    dialogLayers.forEach((layer) => layer.addEventListener('click', (event) => {
+        if (event.target.closest('[data-dialog-dismiss]')) closeDialog();
+    }));
 
-    page.querySelectorAll('[data-invoice-item-form]').forEach((form) => {
-        form.elements.product_id?.addEventListener('change', () => syncItemPrice(form));
-    });
-
-    page.addEventListener('click', async (event) => {
-        const confirmDelete = event.target.closest('[data-invoice-item-confirm-layer] [data-movement-confirm]');
-        if (confirmDelete && pendingItemDelete) {
-            const item = pendingItemDelete;
-            closeDialog({ restoreFocus: false });
+    page.querySelectorAll('[data-financial-form]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button.disabled) return;
+            button.disabled = true;
             try {
-                const { response, data: result } = await requestJson('/api/invoice-items/' + item.id, {
-                    method: 'DELETE',
-                    headers: { Accept: 'application/json' },
+                const { response, data } = await requestJson(form.action, {
+                    method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(form),
                 });
-                if (!response.ok) throw new Error(result.message || 'Não foi possível excluir o item.');
-                reloadWithFeedback('Item excluído da nota fiscal.');
+                if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(' ') || data.message);
+                reloadWithFeedback(data.message || 'Nota fiscal cadastrada.');
             } catch (error) {
                 showFeedback(error.message, 'error');
+                button.disabled = false;
             }
-            return;
-        }
-
-        const action = event.target.closest('[data-invoice-item-action]');
-        if (!action) return;
-        const detailLayer = action.closest('[data-dialog-layer]');
-        const itemLayerId = detailLayer?.querySelector('[data-dialog-open][data-dialog-open^="invoice-add-item-"]')?.dataset.dialogOpen;
-        const itemLayer = dialogLayers.find((layer) => layer.dataset.dialogLayer === itemLayerId);
-        if (!itemLayer) return;
-
-        if (action.dataset.invoiceItemAction === 'edit') {
-            const form = itemLayer.querySelector('[data-invoice-item-form]');
-            form.elements.product_id.value = action.dataset.productId;
-            form.elements.quantity.value = action.dataset.quantity;
-            form.elements.unit_price.value = action.dataset.unitPrice;
-            itemLayer.dataset.itemId = action.dataset.itemId;
-            itemLayer.dataset.invoiceMode = 'item-edit';
-            itemLayer.querySelector('[data-item-dialog-title]').textContent = 'Editar item da nota';
-            itemLayer.querySelector('[data-item-submit-label]').textContent = 'Salvar alterações';
-            openDialog(itemLayer, action);
-            return;
-        }
-
-        pendingItemDelete = { id: action.dataset.itemId, label: action.dataset.itemLabel };
-        const message = itemConfirmLayer?.querySelector('.jemp-confirmation__message');
-        if (message) {
-            message.textContent = 'Confirma excluir o item “' + pendingItemDelete.label + '” desta nota fiscal? Esta ação não poderá ser desfeita.';
-        }
-        openDialog(itemConfirmLayer, action);
-    });
-
-    dialogLayers.forEach((layer) => {
-        layer.addEventListener('click', (event) => {
-            if (event.target.closest('[data-dialog-dismiss], .jemp-dialog__close')) closeDialog();
-        });
-        layer.querySelectorAll('form').forEach((form) => {
-            const paymentStatus = form.querySelector('[name="payment_status"]');
-            const paymentDate = form.querySelector('[name="payment_date"]');
-            const paymentDateField = paymentDate?.closest('.jemp-form-dialog__field');
-            const customerSelect = form.querySelector('[name="customer_id"]');
-            const customerDocument = form.querySelector('[name="customer_document_preview"]');
-            const syncCustomerDocument = () => {
-                if (customerDocument) customerDocument.value = customerSelect?.selectedOptions[0]?.dataset.customerDocument || '';
-            };
-            const syncPaymentDate = () => {
-                const isPaid = paymentStatus?.value === 'Paga';
-                if (layer.dataset.importedXml === 'true') {
-                    const method = form.elements.namedItem('payment_method');
-                    method.closest('.jemp-form-dialog__field').hidden = !isPaid;
-                    method.disabled = !isPaid;
-                    method.required = isPaid;
-                }
-                if (paymentDateField) paymentDateField.hidden = !isPaid;
-                if (paymentDate) {
-                    paymentDate.required = isPaid;
-                    if (!isPaid) paymentDate.value = '';
-                }
-            };
-            customerSelect?.addEventListener('change', syncCustomerDocument);
-            paymentStatus?.addEventListener('change', syncPaymentDate);
-            syncCustomerDocument();
-            syncPaymentDate();
-
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const invoiceMode = layer.dataset.invoiceMode;
-                const payload = Object.fromEntries(new FormData(form).entries());
-                if (['item', 'item-edit'].includes(invoiceMode)) delete payload.unit_price;
-                const invoiceId = layer.dataset.invoiceId;
-                const endpoint = invoiceMode === 'item-edit'
-                    ? `/api/invoice-items/${layer.dataset.itemId}`
-                    : invoiceMode === 'item' ? '/api/invoice-items'
-                    : invoiceMode === 'edit' ? `/api/invoices/${invoiceId}` : '/api/invoices';
-                const method = ['edit', 'item-edit'].includes(invoiceMode) ? 'PUT' : 'POST';
-
-                try {
-                    const { response, data: result } = await requestJson(endpoint, {
-                        method,
-                        headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(payload._token ? { 'X-CSRF-TOKEN': payload._token } : {}) },
-                        body: JSON.stringify(payload),
-                    });
-                    if (!response.ok) {
-                        const validationMessage = Object.values(result.errors || {}).flat().join(' ');
-                        throw new Error(validationMessage || result.message || 'Não foi possível salvar a nota fiscal.');
-                    }
-
-                    const message = ['item', 'item-edit'].includes(invoiceMode)
-                        ? invoiceMode === 'item-edit' ? 'Item da nota fiscal atualizado com sucesso.' : 'Item adicionado à nota fiscal com sucesso.'
-                        : invoiceMode === 'edit' ? 'Nota fiscal atualizada com sucesso.' : 'Nota fiscal cadastrada com sucesso.';
-                    closeDialog();
-                    reloadWithFeedback(message);
-                } catch (error) {
-                    showFeedback(error.message, 'error');
-                }
-            });
         });
     });
 

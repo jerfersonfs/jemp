@@ -38,6 +38,7 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
     'inventory' => $product->inventory->map(fn ($stock) => [
     'warehouse_id' => $stock->warehouse_id,
     'warehouse' => $stock->warehouse?->warehouse_name,
+    'stock_status' => $stock->stock_status,
     'product_condition' => $stock->product_condition,
     'theoretical_balance' => $stock->theoretical_balance,
     ])->values(),
@@ -75,7 +76,11 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
             <header class="products-panel__header">
                 <div>
                     <h2 id="products-list-title">Listagem de Produtos</h2>
-                    <p>Gerencie todos os produtos do seu catálogo.</p>
+                    @if (request('estoque') === 'baixo')
+                        <p>Produtos com estoque crítico. <a href="{{ route('products.index') }}">Ver todos os produtos</a></p>
+                    @else
+                        <p>Gerencie todos os produtos do seu catálogo.</p>
+                    @endif
                 </div>
                 <div class="products-panel__actions">
                     <button class="btn btn-secondary products-warehouses" type="button" data-warehouses-open aria-label="Abrir gerenciamento de armazéns"><i class="ph ph-warehouse" aria-hidden="true"></i> Armazéns</button>
@@ -111,6 +116,8 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                 </section>
             </x-dialogs.details-dialog>
             <template data-product-stock-available><x-status.badge label="Em estoque" variant="success" /></template>
+            <template data-product-stock-low><x-status.badge label="Estoque baixo" variant="warning" /></template>
+            <template data-product-stock-ineligible><x-status.badge label="Fora de venda" variant="neutral" /></template>
             <template data-product-stock-empty><x-status.badge label="Sem estoque" variant="danger" /></template>
         </x-dialogs.modal>
         <x-dialogs.modal label="Excluir produto?" class="products-modal products-modal--delete" data-product-delete-modal>

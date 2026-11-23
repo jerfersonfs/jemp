@@ -13,29 +13,11 @@
         ['key'=>'details_target','label'=>'Ações','type'=>'detail','targetKey'=>'details_target','detailLabel'=>'Ver detalhes'],
     ];
     $statusVariants = ['Pendente'=>'info','A vencer'=>'warning','Vencida'=>'danger','Paga'=>'success'];
-    $statusOptions = ['A vencer'=>'A vencer','Vencida'=>'Vencida','Paga'=>'Paga','Cancelada'=>'Cancelada'];
-    $customerOptions = $customers->mapWithKeys(fn ($customer) => [
-        $customer->customer_id => [
-            'label' => $customer->customer_name.' · '.$customer->customer_document,
-            'document' => $customer->customer_document,
-        ],
-    ])->all();
+    $statusOptions = ['A vencer'=>'A vencer','Vencida'=>'Vencida','Paga'=>'Paga','Cancelada'=>'Cancelada','Sem pagamento cadastrado'=>'Sem pagamento cadastrado'];
     $totalInvoices = count($invoiceRows);
     $dueSoonCount = count(array_filter($invoiceRows, fn ($invoice) => $invoice['status'] === 'A vencer'));
     $overdueCount = count(array_filter($invoiceRows, fn ($invoice) => $invoice['status'] === 'Vencida'));
     $paidCount = count(array_filter($invoiceRows, fn ($invoice) => $invoice['status'] === 'Paga'));
-    $createFields = [
-        ['name'=>'invoice_number','id'=>'invoice-create-number','label'=>'Número da nota','type'=>'number','required'=>true,'min'=>1],
-        ['name'=>'invoice_serie','id'=>'invoice-create-series','label'=>'Série','type'=>'number','required'=>true,'min'=>1,'value'=>1],
-        ['name'=>'customer_id','id'=>'invoice-create-customer','label'=>'Cliente','type'=>'select','options'=>[''=>'Selecione um cliente'] + $customerOptions,'required'=>true],
-        ['name'=>'customer_document_preview','id'=>'invoice-create-document','label'=>'CPF / CNPJ','type'=>'text','placeholder'=>'Preenchido pelo cliente selecionado','readonly'=>true],
-        ['name'=>'issue_date_preview','id'=>'invoice-create-issue-date','label'=>'Data de emissão','type'=>'text','value'=>now()->format('d/m/Y'),'disabled'=>true],
-        ['name'=>'due_date','id'=>'invoice-create-due-date','label'=>'Vencimento','type'=>'date','required'=>true],
-        ['name'=>'payment_method','id'=>'invoice-create-payment-method','label'=>'Forma de pagamento','type'=>'text','required'=>true],
-        ['name'=>'payment_terms_days','id'=>'invoice-create-payment-terms','label'=>'Prazo de pagamento (dias)','type'=>'number','value'=>0,'required'=>true,'min'=>0],
-        ['name'=>'payment_status','id'=>'invoice-create-status','label'=>'Situação','type'=>'select','value'=>'A vencer','options'=>$statusOptions,'required'=>true],
-        ['name'=>'payment_date','id'=>'invoice-create-payment-date','label'=>'Data de pagamento','type'=>'date'],
-    ];
 @endphp
 
 <x-layouts.app title="Notas fiscais · JEMP" page="invoice-consult">
@@ -47,6 +29,7 @@
                 <p class="invoice-page-description">Gerencie e consulte todas as suas notas fiscais.</p>
             </div>
             <div class="invoice-page-head__actions">
+                <button class="btn btn-secondary" type="button" data-dialog-open="invoice-create">Nova nota manual</button>
                 <button class="btn btn-secondary invoice-import-button" type="button" data-invoice-import-open><i class="ph ph-upload-simple" aria-hidden="true"></i>Importar XML de venda</button>
             </div>
         </header>
@@ -90,39 +73,16 @@
 
         @include('invoice_consult.import-xml')
 
-        <div class="invoice-dialog-layer" data-dialog-layer="invoice-create" data-invoice-mode="create" role="presentation" hidden>
-            <x-dialogs.form-dialog class="invoice-form-dialog" title="Cadastrar nota fiscal" description="Informe o número e os dados da nota. A data de emissão é preenchida pelo sistema; o total será calculado pelos itens." action="#" method="POST" size="large" submit-label="Cadastrar nota fiscal" :fields="$createFields" />
-        </div>
-
+        @include('invoice_consult.manual')
         @foreach ($invoiceRows as $invoice)
             @php
-                $editFields = [
-                    ['name'=>'issuer_document','id'=>'invoice-edit-'.$invoice['id'].'-issuer','label'=>'CNPJ do emitente','type'=>'text','value'=>$invoice['issuer_document_raw'],'placeholder'=>'Informe para notas antigas','disabled'=>$invoice['imported_xml']],
-                    ['name'=>'invoice_number','id'=>'invoice-edit-'.$invoice['id'].'-number','label'=>'Número da nota','type'=>'number','value'=>$invoice['number'],'required'=>true,'min'=>1],
-                    ['name'=>'invoice_serie','id'=>'invoice-edit-'.$invoice['id'].'-series','label'=>'Série','type'=>'number','value'=>$invoice['series'],'required'=>true,'min'=>1],
-                    ['name'=>'customer_id','id'=>'invoice-edit-'.$invoice['id'].'-customer','label'=>'Cliente','type'=>'select','value'=>$invoice['customer_id'],'options'=>[''=>'Selecione um cliente'] + $customerOptions,'required'=>true],
-                    ['name'=>'customer_document_preview','id'=>'invoice-edit-'.$invoice['id'].'-document','label'=>'CPF / CNPJ','type'=>'text','value'=>$invoice['document'],'readonly'=>true],
-                    ['name'=>'issue_date_preview','id'=>'invoice-edit-'.$invoice['id'].'-issue-date','label'=>'Data de emissão','type'=>'text','value'=>$invoice['issue_date'],'disabled'=>true],
-                    ['name'=>'due_date','id'=>'invoice-edit-'.$invoice['id'].'-due-date','label'=>'Vencimento','type'=>'date','value'=>$invoice['due_date_iso'],'required'=>true],
-                    ['name'=>'payment_method','id'=>'invoice-edit-'.$invoice['id'].'-payment-method','label'=>'Forma de pagamento','type'=>'text','value'=>$invoice['payment_method'],'required'=>true],
-                    ['name'=>'payment_terms_days','id'=>'invoice-edit-'.$invoice['id'].'-payment-terms','label'=>'Prazo de pagamento (dias)','type'=>'number','value'=>$invoice['payment_terms_days'],'required'=>true,'min'=>0],
-                    ['name'=>'payment_status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Situação','type'=>'select','value'=>$invoice['status'],'options'=>$statusOptions,'required'=>true],
-                    ['name'=>'payment_date','id'=>'invoice-edit-'.$invoice['id'].'-payment-date','label'=>'Data de pagamento','type'=>'date','value'=>$invoice['payment_date_iso']],
-                ];
-                if ($invoice['imported_xml']) {
-                    $editFields = [
-                        ['name'=>'payment_status','id'=>'invoice-edit-'.$invoice['id'].'-status','label'=>'Pagamento','type'=>'select',
-                         'value'=>$invoice['status'] === 'Paga' ? 'Paga' : 'A vencer','options'=>['A vencer'=>'Não paga','Paga'=>'Paga'],'required'=>true],
-                        ['name'=>'payment_method','id'=>'invoice-edit-'.$invoice['id'].'-payment-method','label'=>'Forma de pagamento','type'=>'select','value'=>$invoice['payment_method'],'options'=>[''=>'Selecione'] + array_combine(\App\Models\Invoice::PAYMENT_METHODS, \App\Models\Invoice::PAYMENT_METHODS),'required'=>true],
-                    ];
-                }
                 $detailSections = [
                     ['id'=>'invoice-data','label'=>'Dados da nota','details'=>[
                         ['label'=>'Número','value'=>$invoice['number']],
                         ['label'=>'Série','value'=>$invoice['series']],
                         ['label'=>'CNPJ emitente','value'=>$invoice['issuer_document']],
                         ['label'=>'Chave de acesso','value'=>$invoice['access_key'] ?? '—'],
-                        ['label'=>'Estoque','value'=>$invoice['items_locked'] ? 'Saída registrada · itens bloqueados' : 'Sem baixa automática por XML'],
+                        ['label'=>'Estoque','value'=>$invoice['imported_xml'] ? 'Saída registrada' : 'Sem baixa automática por XML'],
                         ['label'=>'Cliente','value'=>$invoice['issuer']],
                         ['label'=>'CNPJ / CPF','value'=>$invoice['document']],
                         ['label'=>'Emissão','value'=>$invoice['issue_date']],
@@ -131,56 +91,15 @@
                         ['label'=>'Valor total calculado pelos itens','value'=>$invoice['total']],
                         ['label'=>'Situação','value'=>$invoice['status']],
                     ]],
-                    ['id'=>'invoice-items','label'=>'Itens da nota','items'=>$invoice['items'],'items_locked'=>$invoice['items_locked']],
+                    ['id'=>'invoice-items','label'=>'Itens da nota','items'=>$invoice['items'],'items_locked'=>true],
                 ];
             @endphp
 
             <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['details_target'] }}" role="presentation" hidden>
                 <x-dialogs.details-dialog id="{{ $invoice['details_target'] }}-tabs" title="Nota fiscal {{ $invoice['number'] }}" description="Consulte os dados e os itens desta nota fiscal." :sections="$detailSections">
-                    <x-slot:footer>
-                        @unless ($invoice['items_locked'])
-                            <button class="jemp-dialog__button jemp-dialog__button--primary" type="button" data-dialog-open="{{ $invoice['add_item_target'] }}">Adicionar item</button>
-                        @endunless
-                        <button class="jemp-dialog__button jemp-dialog__button--secondary invoice-edit-data-button" type="button" data-dialog-open="{{ $invoice['edit_target'] }}">{{ $invoice['imported_xml'] ? 'Alterar situação' : 'Editar dados' }}</button>
-                    </x-slot:footer>
+                    @include('invoice_consult.payment-detail')
                 </x-dialogs.details-dialog>
             </div>
-            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['add_item_target'] }}" data-invoice-mode="item" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
-                <section class="jemp-dialog invoice-item-dialog" role="dialog" aria-modal="true" aria-label="Adicionar item à nota fiscal {{ $invoice['number'] }}">
-                    <header class="jemp-dialog__header">
-                        <div><h2 class="jemp-dialog__title" data-item-dialog-title>Adicionar item à nota</h2><p class="jemp-dialog__description">Escolha o produto e informe a quantidade. O preço é preenchido pelo cadastro do produto.</p></div>
-                        <button class="jemp-dialog__close" type="button" data-dialog-dismiss aria-label="Fechar">×</button>
-                    </header>
-                    <form data-invoice-item-form>
-                        <input type="hidden" name="invoice_id" value="{{ $invoice['id'] }}">
-                        <label>Produto
-                            <select name="product_id" required>
-                                <option value="">Selecione um produto</option>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->product_id }}" data-unit-price="{{ $product->cost_price }}">{{ $product->product_name }} · {{ $product->sku }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>Quantidade
-                            <input type="number" name="quantity" min="1" step="1" required>
-                        </label>
-                        <label>Valor unitário (R$)
-                            <input type="number" name="unit_price" min="0" step="0.01" readonly required aria-describedby="invoice-item-price-help">
-                            <small id="invoice-item-price-help">Valor definido pelo cadastro do produto.</small>
-                        </label>
-                        <footer class="jemp-dialog__footer">
-                            <button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-dialog-dismiss>Cancelar</button>
-                            <button class="jemp-dialog__button jemp-dialog__button--primary" type="submit" data-item-submit-label>Cadastrar item</button>
-                        </footer>
-                    </form>
-                </section>
-            </div>
-            <div class="invoice-dialog-layer" data-dialog-layer="{{ $invoice['edit_target'] }}" data-invoice-mode="edit" data-imported-xml="{{ $invoice['imported_xml'] ? 'true' : 'false' }}" data-invoice-id="{{ $invoice['id'] }}" role="presentation" hidden>
-                    <x-dialogs.form-dialog class="invoice-form-dialog" mode="edit" :title="($invoice['imported_xml'] ? 'Pagamento da nota fiscal ' : 'Editar nota fiscal ').$invoice['number']" :description="$invoice['imported_xml'] ? 'Os dados e os itens importados são somente para leitura. Ao marcar como paga, a data de pagamento é registrada automaticamente. Notas não pagas ficam vencidas após o vencimento.' : 'Atualize os dados da nota. O total permanece calculado pelos itens.'" action="#" method="PUT" size="large" :submit-label="$invoice['imported_xml'] ? 'Salvar situação' : 'Salvar alterações'" :fields="$editFields" />
-            </div>
         @endforeach
-        <div class="invoice-dialog-layer" data-dialog-layer="invoice-item-delete-confirm" data-invoice-item-confirm-layer role="presentation" hidden>
-            <x-dialogs.confirmation title="Excluir item da nota?" message="" confirm-label="Excluir item" cancel-label="Cancelar" data-invoice-item-confirm-dialog />
-        </div>
     </div>
 </x-layouts.app>

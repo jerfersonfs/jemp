@@ -10,6 +10,7 @@
         'entrance' => 'Entradas',
         'internal' => 'Internas',
         'reports' => 'Relatórios',
+        'settings' => 'Parametrização',
     ];
 @endphp
 
@@ -28,6 +29,7 @@
         </summary>
         <div class="jemp-user-menu__popover">
             <span class="jemp-user-menu__caption">{{ auth()->user()->email }}</span>
+            <a href="{{ route('settings.edit') }}" @if ($page === 'settings') aria-current="page" @endif>Parametrização</a>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="jemp-user-menu__logout">Sair</button>

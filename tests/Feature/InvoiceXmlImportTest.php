@@ -15,6 +15,8 @@ use Tests\TestCase;
 
 class InvoiceXmlImportTest extends TestCase
 {
+    private const XML_FIXTURE = 'tests/Fixtures/nfe-refinamentos-codigo.xml';
+
     private array $temporaryFiles = [];
 
     protected function setUp(): void
@@ -27,6 +29,13 @@ class InvoiceXmlImportTest extends TestCase
         DB::setDefaultConnection('sqlite');
         $this->assertSame('sqlite', DB::connection()->getDriverName());
         $this->createSchema();
+        (require database_path('alterations/2026_11_22_224703_separate_invoice_payments.php'))->up();
+        DB::statement('CREATE VIEW vw_estoque AS SELECT i.*, p.sku, p.category, p.product_name, w.warehouse_name
+            FROM inventory i JOIN products p ON p.product_id = i.product_id JOIN warehouses w ON w.warehouse_id = i.warehouse_id');
+        (require database_path('alterations/2026_11_22_164231_apply_saleable_conditions_to_stock_view.php'))->up();
+        DB::statement("CREATE VIEW vw_estoque_baixo AS SELECT * FROM vw_estoque_atual WHERE stock_status IN ('Estoque baixo', 'Zerado')");
+
+        (require database_path('alterations/2026_11_22_164053_create_stock_condition_settings.php'))->up();
     }
 
     protected function tearDown(): void
@@ -56,10 +65,10 @@ class InvoiceXmlImportTest extends TestCase
         $this->postJson('/api/invoices/import/preview', ['xml_file' => $this->upload()])
             ->assertOk()->assertJsonPath('items.0.external_code', 'EXT-PAL-001')
             ->assertJsonPath('items.1.external_code', '0007')
-            ->assertJsonPath('items.1.product_id', null)->assertJsonPath('invoice.amount', '190.00');
+            ->assertJsonPath('items.1.product_id', $data['fixture_items'][1]['product_id'])->assertJsonPath('invoice.amount', '190.00');
         $this->assertDatabaseCount('invoices', 0);
         $this->assertDatabaseCount('product_xml_mappings', 0);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 10]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 10]);
     }
 
     public function test_confirm_imports_xml_prices_reduces_stock_and_locks_items(): void
@@ -69,24 +78,23 @@ class InvoiceXmlImportTest extends TestCase
         $data = $this->catalog();
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
         $invoice = Invoice::query()->sole();
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'amount' => 190, 'payment_status' => 'A vencer', 'issuer_document' => '99999999000191']);
+        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'amount' => 190, 'issuer_document' => '99999999000191']);
         $this->assertNotNull($invoice->stock_posted_at);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 8]);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][1]['product_id'], 'theoretical_balance' => 17]);
-        $this->assertDatabaseHas('invoice_items', ['product_id' => $data['items'][0]['product_id'], 'external_code' => 'EXT-PAL-001', 'unit_price' => 50]);
-        $this->assertDatabaseHas('products', ['product_id' => $data['items'][0]['product_id'], 'cost_price' => 5]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 8]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][1]['product_id'], 'theoretical_balance' => 17]);
+        $this->assertDatabaseHas('invoice_items', ['product_id' => $data['fixture_items'][0]['product_id'], 'external_code' => 'EXT-PAL-001', 'unit_price' => 50]);
+        $this->assertDatabaseHas('products', ['product_id' => $data['fixture_items'][0]['product_id'], 'cost_price' => 5]);
         $this->assertDatabaseHas('stock_movements', ['invoice_id' => $invoice->invoice_id, 'user_id' => $user->id, 'movement_type' => 'Saída', 'is_fiscal' => 1]);
         $this->assertDatabaseCount('stock_movements', 2);
-        $this->assertDatabaseHas('product_xml_mappings', ['external_code' => '0007', 'product_id' => $data['items'][1]['product_id']]);
+        $this->assertDatabaseHas('product_xml_mappings', ['external_code' => '0007', 'product_id' => $data['fixture_items'][1]['product_id']]);
         $item = $invoice->items()->firstOrFail();
         $this->postJson('/api/invoice-items', ['invoice_id' => $invoice->invoice_id, 'product_id' => $item->product_id, 'quantity' => 1])->assertUnprocessable()->assertJsonValidationErrors('invoice_id');
         $this->patchJson('/api/invoice-items/'.$item->item_id, ['quantity' => 9])->assertUnprocessable();
         $this->deleteJson('/api/invoice-items/'.$item->item_id)->assertUnprocessable();
         $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['invoice_number' => 12])->assertUnprocessable();
-        $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'Paga'])->assertOk()
-            ->assertJsonPath('data.payment_date', '2026-11-13');
+        $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'Paga'])->assertUnprocessable();
         $this->deleteJson('/api/invoices/'.$invoice->invoice_id)->assertUnprocessable();
-        $this->get('/consulta-nfe')->assertOk()->assertSee('Importar XML de venda')->assertSee('EXT-PAL-001')->assertSee('Itens bloqueados');
+        $this->get('/consulta-nfe')->assertOk()->assertSee('Importar XML de venda')->assertSee('EXT-PAL-001')->assertSee('Itens da nota confirmada');
     }
 
     public function test_duplicate_xml_returns_409_without_another_stock_change(): void
@@ -97,31 +105,31 @@ class InvoiceXmlImportTest extends TestCase
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertConflict()->assertJsonPath('message', 'Esta NF-e já foi importada. Nenhuma baixa adicional foi feita.');
         $this->assertDatabaseCount('invoices', 1);
         $this->assertDatabaseCount('stock_movements', 2);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 8]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 8]);
     }
 
     public function test_insufficient_second_product_rolls_back_every_change(): void
     {
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
-        DB::table('inventory')->where('product_id', $data['items'][1]['product_id'])->update(['theoretical_balance' => 2]);
+        DB::table('inventory')->where('product_id', $data['fixture_items'][1]['product_id'])->update(['theoretical_balance' => 2]);
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertUnprocessable()->assertJsonValidationErrors('quantity');
         $this->assertDatabaseCount('invoices', 0);
         $this->assertDatabaseCount('invoice_items', 0);
         $this->assertDatabaseCount('product_xml_mappings', 0);
         $this->assertDatabaseCount('stock_movements', 0);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 10]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 10]);
     }
 
     public function test_multiple_lines_for_one_product_use_the_combined_quantity(): void
     {
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
-        DB::table('inventory')->where('product_id', $data['items'][0]['product_id'])->update(['theoretical_balance' => 4]);
-        $data['items'][1]['product_id'] = $data['items'][0]['product_id'];
-        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertUnprocessable()->assertJsonValidationErrors('quantity');
+        DB::table('inventory')->where('product_id', $data['fixture_items'][0]['product_id'])->update(['theoretical_balance' => 4]);
+        $xml = str_replace('<cProd>0007</cProd>', '<cProd>EXT-PAL-001</cProd>', file_get_contents(base_path(self::XML_FIXTURE)));
+        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload($xml)])->assertUnprocessable()->assertJsonValidationErrors('quantity');
         $this->assertDatabaseCount('invoices', 0);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 4]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 4]);
     }
 
     public function test_suggestions_are_scoped_to_issuer_and_same_number_can_have_two_issuers(): void
@@ -131,10 +139,10 @@ class InvoiceXmlImportTest extends TestCase
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
         $next = $this->changedDocument(900003, '99999999000191');
         $this->postJson('/api/invoices/import/preview', ['xml_file' => $this->upload($next)])
-            ->assertOk()->assertJsonPath('items.0.product_id', $data['items'][0]['product_id']);
+            ->assertOk()->assertJsonPath('items.0.product_id', $data['fixture_items'][0]['product_id']);
         $otherIssuer = $this->changedDocument(900001, '88888888000191');
         $this->postJson('/api/invoices/import/preview', ['xml_file' => $this->upload($otherIssuer)])
-            ->assertOk()->assertJsonPath('items.0.product_id', null);
+            ->assertOk()->assertJsonPath('items.0.product_id', $data['fixture_items'][0]['product_id']);
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload($otherIssuer)])->assertCreated();
         $this->assertDatabaseCount('invoices', 2);
         $this->assertDatabaseCount('product_xml_mappings', 4);
@@ -147,7 +155,7 @@ class InvoiceXmlImportTest extends TestCase
         Customer::query()->whereKey($data['customer_id'])->update(['customer_document' => '22222222000191']);
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertUnprocessable()->assertJsonValidationErrors('customer_id');
         Customer::query()->whereKey($data['customer_id'])->update(['customer_document' => '11111111000191']);
-        array_pop($data['items']);
+        $data['items'] = $data['fixture_items'];
         $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertUnprocessable()->assertJsonValidationErrors('items');
         $this->assertDatabaseCount('invoices', 0);
     }
@@ -155,7 +163,7 @@ class InvoiceXmlImportTest extends TestCase
     public function test_unsupported_fractional_values_totals_and_external_entities_are_rejected(): void
     {
         $this->actingAs(User::factory()->create());
-        $contents = file_get_contents(base_path('tests/Fixtures/nfe-venda-ficticia.xml'));
+        $contents = file_get_contents(base_path(self::XML_FIXTURE));
         foreach ([
             str_replace('<qCom>2.0000</qCom>', '<qCom>2.5000</qCom>', $contents),
             str_replace('<vNF>190.00</vNF>', '<vNF>200.00</vNF>', $contents),
@@ -173,7 +181,7 @@ class InvoiceXmlImportTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         $this->catalog();
-        $contents = file_get_contents(base_path('tests/Fixtures/nfe-venda-ficticia.xml'));
+        $contents = file_get_contents(base_path(self::XML_FIXTURE));
         $withoutDeclaration = preg_replace('/<\?xml[^?]+\?>/', '', $contents);
         $wrapped = '<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">'.$withoutDeclaration.'</nfeProc>';
         $this->postJson('/api/invoices/import/preview', ['xml_file' => $this->upload($wrapped)])->assertOk()->assertJsonPath('items.0.line_number', 1);
@@ -187,19 +195,15 @@ class InvoiceXmlImportTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
-        $response = $this->postJson('/api/invoices', ['invoice_number' => 42, 'invoice_serie' => 1,
-            'customer_id' => $data['customer_id'], 'issue_date' => '2026-11-13', 'due_date' => '2026-12-13',
-            'payment_method' => 'Boleto', 'payment_terms_days' => 30])->assertCreated();
-        $invoice = Invoice::query()->sole();
-        $created = $this->postJson('/api/invoice-items', ['invoice_id' => $invoice->invoice_id,
-            'product_id' => $data['items'][0]['product_id'], 'quantity' => 2])->assertCreated();
+        $this->postJson('/api/invoices', ['invoice_number' => 42, 'invoice_serie' => 1, 'customer_id' => $data['customer_id'],
+            'items' => [['product_id' => $data['fixture_items'][0]['product_id'], 'quantity' => 2]],
+            'payment_terms_days' => 30, 'payment_status' => 'A vencer'])->assertCreated();
+        $invoice = Invoice::sole();
         $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'amount' => 10]);
-        $this->patchJson('/api/invoice-items/'.$created->json('data.item_id'), ['quantity' => 3])->assertOk();
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'amount' => 15]);
-        $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['due_date' => '2026-12-20'])
-            ->assertOk()->assertJsonPath('data.due_date', '2026-12-20');
+        $this->patchJson('/api/invoice-items/'.$invoice->items()->sole()->getKey(), ['quantity' => 3])->assertUnprocessable();
+        $this->patchJson('/api/invoices/'.$invoice->getKey(), ['due_date' => '2026-12-20'])->assertUnprocessable();
         $this->assertDatabaseCount('stock_movements', 0);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 10]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 10]);
     }
 
     public function test_legacy_invoice_without_issuer_blocks_ambiguous_import(): void
@@ -222,7 +226,7 @@ class InvoiceXmlImportTest extends TestCase
         $this->postJson('/saidas', [])->assertUnprocessable()->assertJsonValidationErrors('invoice_id');
         $this->postJson('/api/inventories/remove-stock', [])->assertUnprocessable();
         $this->postJson('/api/stock-movements', [
-            'product_id' => $data['items'][0]['product_id'], 'user_id' => $user->id,
+            'product_id' => $data['fixture_items'][0]['product_id'], 'user_id' => $user->id,
             'movement_type' => 'Saída', 'product_condition' => 'Novo', 'quantity' => 1,
             'movement_date' => '2026-11-13', 'is_fiscal' => false,
         ])->assertUnprocessable()->assertJsonValidationErrors('movement_type');
@@ -234,7 +238,7 @@ class InvoiceXmlImportTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
-        $productId = $data['items'][0]['product_id'];
+        $productId = $data['fixture_items'][0]['product_id'];
         $destination = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Destino teste']);
         $this->post('/entradas', ['date' => '2026-11-13T10:00', 'product_id' => $productId,
             'product_condition' => 'Novo', 'quantity' => 2, 'dest_warehouse_id' => $data['warehouse_id'],
@@ -261,7 +265,7 @@ class InvoiceXmlImportTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
-        $productId = $data['items'][0]['product_id'];
+        $productId = $data['fixture_items'][0]['product_id'];
         $origin = $data['warehouse_id'];
         $destination = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Destino para consultar']);
         DB::table('inventory')->insert([
@@ -274,7 +278,7 @@ class InvoiceXmlImportTest extends TestCase
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->getJson(route('movements.balances', array_replace($query, ['product_condition' => 'Reforma'])))
             ->assertOk()->assertJsonPath('balances.0.balance', 4)->assertJsonPath('balances.1.balance', 0);
-        $this->getJson(route('movements.balances', array_replace($query, ['product_id' => $data['items'][1]['product_id']])))
+        $this->getJson(route('movements.balances', array_replace($query, ['product_id' => $data['fixture_items'][1]['product_id']])))
             ->assertOk()->assertJsonPath('balances.0.balance', 20)->assertJsonPath('balances.1.balance', 0);
         $this->assertDatabaseCount('inventory', 4);
         $this->assertDatabaseCount('stock_movements', 0);
@@ -308,7 +312,7 @@ class InvoiceXmlImportTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'Paga'])->assertUnauthorized();
         $this->deleteJson('/api/invoices/'.$invoice->invoice_id)->assertUnauthorized();
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'payment_status' => 'A vencer']);
+        $this->assertDatabaseHas('payments', ['invoice_id' => $invoice->invoice_id, 'paid_at' => null]);
         $this->assertDatabaseCount('stock_movements', 2);
     }
 
@@ -320,11 +324,11 @@ class InvoiceXmlImportTest extends TestCase
         $invoice = Invoice::query()->sole();
         $original = $invoice->getAttributes();
         foreach (['issuer_document', 'customer_id', 'invoice_id', 'invoice_number', 'invoice_serie', 'issue_date',
-            'due_date', 'payment_method', 'delivery_driver', 'payment_terms_days', 'payment_date', 'amount',
+            'due_date', 'delivery_driver', 'payment_terms_days', 'payment_date', 'amount',
             'access_key', 'stock_posted_at', 'created_at', 'updated_at', 'items'] as $field) {
             $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'Paga', $field => null])
                 ->assertUnprocessable()->assertJsonValidationErrors($field)
-                ->assertJsonPath('errors.'.$field.'.0', 'Os dados da nota importada são somente para leitura. Altere apenas a situação do pagamento.');
+                ->assertJsonPath('errors.'.$field.'.0', 'Este campo está bloqueado. Registre o recebimento no pagamento da venda.');
         }
         foreach (['Vencida', 'Cancelada'] as $status) {
             $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => $status])
@@ -333,7 +337,7 @@ class InvoiceXmlImportTest extends TestCase
         $this->assertSame($original, $invoice->fresh()->getAttributes());
         $this->assertDatabaseCount('invoice_items', 2);
         $this->assertDatabaseCount('stock_movements', 2);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 8]);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 8]);
     }
 
     public function test_access_key_alone_prevents_deleting_imported_invoice_or_adding_items(): void
@@ -346,92 +350,28 @@ class InvoiceXmlImportTest extends TestCase
             'amount' => 0, 'access_key' => str_repeat('1', 44)]);
         $this->deleteJson('/api/invoices/'.$invoice->invoice_id)->assertUnprocessable()->assertJsonValidationErrors('invoice_id');
         $this->postJson('/api/invoice-items', ['invoice_id' => $invoice->invoice_id,
-            'product_id' => $data['items'][0]['product_id'], 'quantity' => 1])->assertUnprocessable()->assertJsonValidationErrors('invoice_id');
+            'product_id' => $data['fixture_items'][0]['product_id'], 'quantity' => 1])->assertUnprocessable()->assertJsonValidationErrors('invoice_id');
         $this->assertDatabaseCount('invoices', 1);
         $this->assertDatabaseCount('invoice_items', 0);
         $this->assertDatabaseCount('stock_movements', 0);
     }
 
-    public function test_due_today_is_not_overdue_until_the_next_day_in_sao_paulo_and_payment_only_changes_finances(): void
+    public function test_receiving_an_imported_sale_preserves_the_posted_stock(): void
     {
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
+        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
+        $invoice = Invoice::sole();
         $this->travelTo(Carbon::parse('2026-12-13 23:59:00', 'America/Sao_Paulo'));
-        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
-        $invoice = Invoice::query()->sole();
-        $this->get('/')->assertOk()->assertViewHas('receivables', fn (array $rows): bool => $rows[0]['status'] === 'A vencer');
         $this->getJson('/api/reports/upcoming-invoices?days=0')->assertOk()->assertJsonCount(1, 'data');
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'payment_status' => 'A vencer']);
         $this->travelTo(Carbon::parse('2026-12-14 00:01:00', 'America/Sao_Paulo'));
-        $this->getJson('/api/invoices/'.$invoice->invoice_id)->assertOk()->assertJsonPath('data.payment_status', 'Vencida');
-        $this->get('/')->assertOk()->assertViewHas('receivables', fn (array $rows): bool => $rows[0]['status'] === 'Vencida');
-        $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'Paga'])->assertOk()
-            ->assertJsonPath('data.payment_status', 'Paga')->assertJsonPath('data.payment_date', '2026-12-14');
-        $this->travelTo(Carbon::parse('2026-12-15 10:00:00', 'America/Sao_Paulo'));
-        $this->getJson('/api/invoices')->assertOk()->assertJsonPath('data.0.payment_status', 'Paga');
-        $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'Paga'])->assertOk()
-            ->assertJsonPath('data.payment_date', '2026-12-14');
-        $this->patchJson('/api/invoices/'.$invoice->invoice_id, ['payment_status' => 'A vencer'])->assertOk()
-            ->assertJsonPath('data.payment_status', 'Vencida')->assertJsonPath('data.payment_date', null);
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'amount' => 190]);
-        $this->assertSame('2026-12-13', $invoice->fresh()->due_date->toDateString());
+        $this->assertSame('Vencida', $invoice->financialStatus());
+        $this->postJson(route('payments.settle', $invoice), [
+            'paid_at' => '2026-12-14', 'payment_method' => 'PIX'])->assertOk();
+        $this->getJson('/api/invoices/'.$invoice->getKey())->assertOk()->assertJsonPath('data.status', 'Paga');
+        $this->get('/consulta-nfe')->assertOk()->assertSee('1 × R$ 190,00');
         $this->assertDatabaseCount('stock_movements', 2);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][0]['product_id'], 'theoretical_balance' => 8]);
-        $this->assertDatabaseHas('inventory', ['product_id' => $data['items'][1]['product_id'], 'theoretical_balance' => 17]);
-    }
-
-    public function test_importing_an_already_overdue_unpaid_invoice_sets_status_automatically(): void
-    {
-        $this->actingAs(User::factory()->create());
-        $data = $this->catalog();
-        $this->travelTo(Carbon::parse('2026-12-14 10:00:00', 'America/Sao_Paulo'));
-        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
-        $invoice = Invoice::query()->sole();
-        $this->assertSame('Vencida', $invoice->payment_status);
-        $this->assertNull($invoice->payment_date);
-        $this->assertSame('2026-12-13', $invoice->due_date->toDateString());
-        $this->assertDatabaseCount('stock_movements', 2);
-    }
-
-    public function test_overdue_command_preserves_paid_and_cancelled_invoices_and_is_idempotent(): void
-    {
-        $this->actingAs(User::factory()->create());
-        $data = $this->catalog();
-        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
-        $invoice = Invoice::query()->sole();
-        $paid = $invoice->replicate()->fill(['invoice_number' => 900010, 'access_key' => str_repeat('2', 44), 'payment_status' => 'Paga', 'payment_date' => '2026-11-13']);
-        $paid->save();
-        $cancelled = $invoice->replicate()->fill(['invoice_number' => 900011, 'access_key' => str_repeat('3', 44), 'payment_status' => 'Cancelada']);
-        $cancelled->save();
-        $future = $invoice->replicate()->fill(['invoice_number' => 900012, 'access_key' => str_repeat('4', 44), 'due_date' => '2027-01-20']);
-        $future->save();
-        Invoice::query()->whereKey($future->invoice_id)->update(['payment_status' => 'Vencida']);
-        $this->travelTo(Carbon::parse('2026-12-14 10:00:00', 'America/Sao_Paulo'));
-        $this->artisan('invoices:refresh-payment-status')->expectsOutput('Notas com situação de vencimento atualizada: 2')->assertSuccessful();
-        $this->artisan('invoices:refresh-payment-status')->expectsOutput('Notas com situação de vencimento atualizada: 0')->assertSuccessful();
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $invoice->invoice_id, 'payment_status' => 'Vencida']);
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $paid->invoice_id, 'payment_status' => 'Paga']);
-        $this->assertSame('2026-11-13', $paid->fresh()->payment_date->toDateString());
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $cancelled->invoice_id, 'payment_status' => 'Cancelada']);
-        $this->assertDatabaseHas('invoices', ['invoice_id' => $future->invoice_id, 'payment_status' => 'A vencer']);
-        $this->assertDatabaseCount('stock_movements', 2);
-    }
-
-    public function test_imported_invoice_form_exposes_only_payment_status(): void
-    {
-        $this->actingAs(User::factory()->create());
-        $data = $this->catalog();
-        $this->postJson('/api/invoices/import', $data + ['xml_file' => $this->upload()])->assertCreated();
-        $invoice = Invoice::query()->sole();
-        $response = $this->get('/consulta-nfe')->assertOk()->assertSee('Alterar situação')->assertSee('Salvar situação');
-        $dom = new \DOMDocument;
-        @$dom->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
-        $xpath = new \DOMXPath($dom);
-        $prefix = '//*[@data-dialog-layer="invoice-edit-'.$invoice->invoice_id.'"]';
-        $this->assertSame(1, $xpath->query($prefix.'//select[@name="payment_status"]')->length);
-        $this->assertSame(0, $xpath->query($prefix.'//input[not(@type="hidden")] | '.$prefix.'//textarea')->length);
-        $this->assertSame(2, $xpath->query($prefix.'//select[@name="payment_status"]/option')->length);
-        $this->assertSame('Não paga', $xpath->query($prefix.'//option[@value="A vencer"]')->item(0)->textContent);
+        $this->assertDatabaseHas('inventory', ['product_id' => $data['fixture_items'][0]['product_id'], 'theoretical_balance' => 8]);
     }
 
     public function test_customer_delete_action_follows_invoice_links_and_sales_is_not_in_the_sidebar(): void
@@ -440,7 +380,7 @@ class InvoiceXmlImportTest extends TestCase
         $data = $this->catalog();
         $linkedCustomer = Customer::query()->findOrFail($data['customer_id']);
         $freeCustomer = Customer::query()->create(['customer_name' => 'Cliente sem vínculos',
-            'customer_document' => '22222222000191', 'customer_payment_terms' => 'À vista']);
+            'customer_document' => '22222222000191']);
         $countDeleteButtons = function (string $html, int $customerId): int {
             $dom = new \DOMDocument;
             @$dom->loadHTML('<?xml encoding="UTF-8">'.$html);
@@ -453,7 +393,7 @@ class InvoiceXmlImportTest extends TestCase
         $this->assertSame(1, $countDeleteButtons($initialPage->getContent(), $freeCustomer->customer_id));
         $this->postJson('/api/invoices', ['invoice_number' => 852, 'invoice_serie' => 1,
             'customer_id' => $linkedCustomer->customer_id, 'issue_date' => '2026-11-13', 'due_date' => '2026-12-13',
-            'payment_method' => 'Boleto', 'payment_terms_days' => 30])->assertCreated();
+            'items' => [['product_id' => $data['fixture_items'][0]['product_id'], 'quantity' => 1]], 'payment_terms_days' => 30, 'payment_status' => 'A vencer'])->assertCreated();
         $invoice = Invoice::query()->sole();
         $linkedPage = $this->get('/clientes')->assertOk()
             ->assertSee('aria-label="Ver detalhes de '.$linkedCustomer->customer_name.'"', false)
@@ -471,20 +411,42 @@ class InvoiceXmlImportTest extends TestCase
         $this->delete(route('customers.destroy', $freeCustomer))->assertRedirect(route('customers.index'))
             ->assertSessionHas('status', 'Cliente excluído com sucesso.');
         $this->assertDatabaseMissing('customers', ['customer_id' => $freeCustomer->customer_id]);
-        $this->deleteJson('/api/invoices/'.$invoice->invoice_id)->assertOk();
-        $unlinkedPage = $this->get('/clientes')->assertOk();
-        $this->assertSame(1, $countDeleteButtons($unlinkedPage->getContent(), $linkedCustomer->customer_id));
-        $this->deleteJson('/api/customers/'.$linkedCustomer->customer_id)->assertOk();
-        $this->assertDatabaseMissing('customers', ['customer_id' => $linkedCustomer->customer_id]);
+        $this->deleteJson('/api/invoices/'.$invoice->invoice_id)->assertUnprocessable();
+    }
+
+    public function test_home_alerts_follow_saleable_inventory_conditions_even_at_zero(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $this->catalog();
+        DB::table('inventory')->where('product_id', 2)->update(['product_condition' => 'Descarte', 'theoretical_balance' => 0]);
+        $this->get('/')->assertOk()->assertViewHas('criticalPositionCount', 1)
+            ->assertSee('Produto interno A · Novo')->assertDontSee('Produto interno B · Descarte');
+        $this->put(route('settings.update'), ['edit_conditions' => 1, 'saleable_conditions' => ['Descarte']])
+            ->assertSessionHasNoErrors();
+        $this->get('/')->assertOk()->assertViewHas('criticalPositionCount', 1)
+            ->assertDontSee('Produto interno A · Novo')->assertSee('Produto interno B · Descarte');
+        $this->assertDatabaseHas('company_settings', ['low_stock_threshold' => 20]);
+    }
+
+    public function test_customer_crud_works_without_a_payment_terms_column(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $data = ['customer_name' => 'Cliente teste', 'customer_document' => '12345678901'];
+        $this->postJson('/api/customers', $data)->assertCreated()->assertJsonMissingPath('data.customer_payment_terms');
+        $customer = Customer::query()->sole();
+        $this->assertFalse(Schema::hasColumn('customers', 'customer_payment_terms'));
+        $this->patchJson('/api/customers/'.$customer->customer_id, $data)->assertOk()->assertJsonMissingPath('data.customer_payment_terms');
+        $this->assertDatabaseHas('customers', ['customer_id' => $customer->customer_id, 'customer_name' => $data['customer_name']]);
+        $this->get('/clientes')->assertOk()->assertDontSee('Condição de pagamento')->assertDontSee('Prazo antigo');
     }
 
     private function catalog(): array
     {
-        $customer = Customer::query()->create(['customer_name' => 'Cliente fictício', 'customer_document' => '11.111.111/0001-91', 'customer_payment_terms' => '30 dias']);
+        $customer = Customer::query()->create(['customer_name' => 'Cliente fictício', 'customer_document' => '11.111.111/0001-91']);
         $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Armazém teste']);
         $items = [];
         foreach (['A', 'B'] as $index => $suffix) {
-            $product = Product::query()->create(['sku' => 'INTERNO-'.$suffix, 'product_name' => 'Produto interno '.$suffix,
+            $product = Product::query()->create(['sku' => ['EXT-PAL-001', '0007'][$index], 'product_name' => 'Produto interno '.$suffix,
                 'category' => 'PBR', 'material' => 'Madeira', 'cost_price' => $index === 0 ? 5 : 8, 'length_mm' => 1200, 'width_mm' => 1000]);
             DB::table('inventory')->insert(['warehouse_id' => $warehouse, 'product_id' => $product->product_id,
                 'product_condition' => 'Novo', 'theoretical_balance' => $index === 0 ? 10 : 20]);
@@ -492,13 +454,13 @@ class InvoiceXmlImportTest extends TestCase
         }
 
         return ['customer_id' => $customer->customer_id, 'warehouse_id' => $warehouse, 'product_condition' => 'Novo',
-            'due_date' => '2026-12-13', 'payment_method' => 'Boleto', 'payment_terms_days' => 30, 'payment_status' => 'A vencer', 'items' => $items];
+            'payment_terms_days' => 30, 'payment_status' => 'A vencer', 'fixture_items' => $items];
     }
 
     private function upload(?string $contents = null): UploadedFile
     {
         $file = tempnam(sys_get_temp_dir(), 'jemp-xml-');
-        file_put_contents($file, $contents ?? file_get_contents(base_path('tests/Fixtures/nfe-venda-ficticia.xml')));
+        file_put_contents($file, $contents ?? file_get_contents(base_path(self::XML_FIXTURE)));
         $this->temporaryFiles[] = $file;
 
         return new UploadedFile($file, 'nfe-ficticia.xml', 'application/xml', UPLOAD_ERR_OK, true);
@@ -506,7 +468,7 @@ class InvoiceXmlImportTest extends TestCase
 
     private function changedDocument(int $number, string $issuer): string
     {
-        $contents = file_get_contents(base_path('tests/Fixtures/nfe-venda-ficticia.xml'));
+        $contents = file_get_contents(base_path(self::XML_FIXTURE));
         $base = '352611'.$issuer.'55099'.str_pad((string) $number, 9, '0', STR_PAD_LEFT).'112345678';
         $sum = 0;
         for ($position = 42, $weight = 2; $position >= 0; $position--, $weight = $weight === 9 ? 2 : $weight + 1) {
@@ -521,6 +483,7 @@ class InvoiceXmlImportTest extends TestCase
 
     private function createSchema(): void
     {
+        (require database_path('migrations/2026_11_21_185033_create_company_settings_table.php'))->up();
         Schema::create('users', function (Blueprint $table): void {
             $table->id();
             $table->string('name');

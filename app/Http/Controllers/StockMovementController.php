@@ -46,20 +46,7 @@ class StockMovementController extends Controller
 
         try {
             $movement = DB::transaction(function () use ($data) {
-                $type = $data['movement_type'];
-                $qty = $data['quantity'];
-                $productId = $data['product_id'];
-                $destWarehouseId = $data['dest_warehouse_id'] ?? null;
-                $originWarehouseId = $data['origin_warehouse_id'] ?? null;
-                $condition = $data['product_condition'];
-
-                if ($type === 'Transferência') {
-                    $this->stockLedger->change((int) $productId, (int) $originWarehouseId, $condition, -(int) $qty);
-                }
-                if ($type === 'Entrada' || $type === 'Transferência') {
-                    $this->stockLedger->change((int) $productId, (int) $destWarehouseId, $condition, (int) $qty);
-                }
-                $createdMovement = StockMovement::create($data);
+                $createdMovement = $this->stockLedger->record($data);
                 $createdMovement->load([
                     'product', 'originWarehouse', 'destinationWarehouse', 'user', 'invoice',
                 ]);

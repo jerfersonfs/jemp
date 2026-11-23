@@ -189,7 +189,7 @@ if (catalog) {
                 row.append(cell);
             }
             const statusCell = document.createElement('td');
-            const statusTemplate = find(Number(stock.theoretical_balance) > 0 ? 'stock-available' : 'stock-empty');
+            const statusTemplate = find(({ 'Estoque baixo': 'stock-low', 'Zerado': 'stock-empty', 'Fora de venda': 'stock-ineligible' })[stock.stock_status] || 'stock-available');
             statusCell.append(statusTemplate.content.cloneNode(true));
             row.append(statusCell);
             body.append(row);

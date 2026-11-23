@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
@@ -20,6 +21,8 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/parametrizacao', [CompanySettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/parametrizacao', [CompanySettingsController::class, 'update'])->name('settings.update');
 
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/produtos', [ProductController::class, 'index'])->name('products.index');
@@ -27,6 +30,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/clientes', [CustomerController::class, 'index'])->name('customers.index');
     Route::resource('clientes', CustomerController::class)->only(['store', 'update', 'destroy'])->names('customers');
     Route::get('/consulta-nfe', [SaleController::class, 'invoices'])->name('invoice-consult.index');
+    Route::post('/api/invoices/{invoice}/payment/settle', [InvoiceController::class, 'settle'])->name('payments.settle');
+    Route::post('/api/invoices', [InvoiceController::class, 'store'])->name('api.invoices.store');
     Route::post('/api/invoices/import/preview', [InvoiceXmlController::class, 'preview'])->name('invoice-import.preview');
     Route::post('/api/invoices/import', [InvoiceXmlController::class, 'store'])->name('invoice-import.store');
     Route::match(['put', 'patch'], '/api/invoices/{invoice}', [InvoiceController::class, 'update'])->name('api.invoices.update');

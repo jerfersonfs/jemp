@@ -103,7 +103,12 @@ body.invoice-dialog-open { overflow:hidden; }
 .invoice-import-dialog legend { margin-bottom: 16px; color: var(--color-primary); font-weight: 700; }
 .invoice-import-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding: 16px; background: var(--color-surface); border-radius: 8px; }
 .invoice-import-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
-.invoice-import-payment-terms { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.invoice-import-payment-terms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.invoice-installment-summary, [data-manual-items], .invoice-payment-detail { display: grid; gap: 8px; }
+.invoice-installment-summary output { align-self: center; color: var(--color-secondary); font-weight: 600; }
+.invoice-import-fields > button { align-self: end; }
+.invoice-payment-detail label { display: grid; gap: 6px; }
+.invoice-payment-detail input, .invoice-payment-detail select { min-height: 42px; padding: 8px 12px; border: 1px solid #cddfdd; border-radius: 6px; background: white; font: inherit; }
 .invoice-import-dialog .invoice-import-payment { border-top: 1px solid #cddfdd; padding-top: 16px; }
 .invoice-import-fields label, .invoice-import-fields input, .invoice-import-fields select { min-width: 0; width: 100%; }
 .invoice-import-links { display: flex; flex-wrap: wrap; gap: 12px 20px; }

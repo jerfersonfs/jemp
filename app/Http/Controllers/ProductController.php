@@ -19,7 +19,9 @@ class ProductController extends Controller
     public function index(Request $request): View|JsonResponse|AnonymousResourceCollection
     {
         $products = Product::query()
-            ->with(['inventory.warehouse', 'inventories.warehouse'])
+            ->when($request->expectsJson(), fn ($query) => $query->with(['inventory.warehouse', 'inventories.warehouse']),
+                fn ($query) => $query->with(['inventory' => fn ($inventory) => $inventory->from('vw_estoque_atual as inventory')->with('warehouse')]))
+            ->when($request->query('estoque') === 'baixo', fn ($query) => $query->whereIn('products.product_id', DB::table('vw_estoque_baixo')->select('product_id')))
             ->withSum('inventory', 'theoretical_balance')
             ->orderBy('sku')
             ->get();

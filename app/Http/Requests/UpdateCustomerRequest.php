@@ -21,10 +21,9 @@ class UpdateCustomerRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('customers', 'customer_document')->ignore($this->route('customer'), 'customer_id')
+                Rule::unique('customers', 'customer_document')->ignore($this->route('customer'), 'customer_id'),
             ],
             'customer_contact' => ['required', 'string', 'max:20'],
-            'default_payment_terms' => ['required', 'integer', 'min:0'],
             'customer_email' => ['nullable', 'email', 'max:255'],
         ];
     }

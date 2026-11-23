@@ -5,7 +5,6 @@ namespace App;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use SimpleXMLElement;
@@ -49,12 +48,9 @@ class InvoiceXmlImporter
         $document = $this->parse($contents);
         $customer = Customer::query()->findOrFail($data['customer_id']);
         $this->ensure($this->digits($customer->customer_document) === $document['recipient_document'], 'O CPF/CNPJ do cliente selecionado deve ser o destinatário do XML.', 'customer_id');
-        $issueDate = Carbon::parse($document['issue_date'])->startOfDay();
-        $this->ensure((int) $data['payment_terms_days'] <= $issueDate->diffInDays(Carbon::parse('9999-12-31')), 'O prazo resulta em uma data de vencimento inválida.', 'payment_terms_days');
-        $data['due_date'] = $issueDate->addDays((int) $data['payment_terms_days'])->toDateString();
         $products = Product::query()->whereIn('sku', array_column($document['items'], 'external_code'))->get();
         $byExternalCode = [];
-        $quantities = [];
+        $productIds = [];
         foreach ($document['items'] as &$item) {
             $product = $products->first(fn (Product $product): bool => $product->sku === $item['external_code']);
             $this->ensure($product !== null, "Produto de código {$item['external_code']} não cadastrado no JEMP. Cadastre-o antes de importar.", 'items');
@@ -62,44 +58,37 @@ class InvoiceXmlImporter
             $codeKey = 'code:'.$item['external_code'];
             $this->ensure(! isset($byExternalCode[$codeKey]) || $byExternalCode[$codeKey]['product_id'] === $item['product_id'], 'Um mesmo código do emitente deve apontar para o mesmo produto em todas as linhas.', 'items');
             $byExternalCode[$codeKey] = $item;
-            $quantities[$item['product_id']] = ($quantities[$item['product_id']] ?? 0) + $item['quantity'];
+            $productIds[$item['product_id']] = $item['product_id'];
         }
         unset($item);
-        ksort($quantities, SORT_NUMERIC);
 
-        return DB::transaction(function () use ($document, $data, $userId, $quantities, $byExternalCode): Invoice {
+        return DB::transaction(function () use ($document, $data, $userId, $productIds, $byExternalCode): Invoice {
             $this->assertAvailable($document);
-            $lockedProducts = Product::query()->whereIn('product_id', array_keys($quantities))->orderBy('product_id')->lockForUpdate()->get();
+            $lockedProducts = Product::query()->whereIn('product_id', array_values($productIds))->orderBy('product_id')->lockForUpdate()->get();
             foreach ($document['items'] as $item) {
                 $this->ensure($lockedProducts->contains(fn (Product $product): bool => $product->product_id === $item['product_id'] && $product->sku === $item['external_code']), 'O cadastro do produto mudou. Reabra o XML para conferir os códigos.', 'items');
             }
-            foreach ($quantities as $productId => $quantity) {
-                $this->stockLedger->change((int) $productId, (int) $data['warehouse_id'], $data['product_condition'], -$quantity);
-            }
-
             $invoice = Invoice::query()->create([
                 'issuer_document' => $document['issuer_document'], 'access_key' => $document['access_key'],
                 'invoice_number' => $document['number'], 'invoice_serie' => $document['series'],
                 'customer_id' => $data['customer_id'], 'issue_date' => $document['issue_date'],
-                'due_date' => $data['due_date'], 'payment_method' => $data['payment_status'] === 'Paga' ? $data['payment_method'] : '',
-                'payment_terms_days' => $data['payment_terms_days'], 'payment_status' => $data['payment_status'],
-                'payment_date' => $data['payment_status'] === 'Paga' ? $data['payment_date'] : null,
                 'amount' => $document['amount'], 'stock_posted_at' => now(),
             ]);
 
+            SalePayment::record($invoice, $data);
             foreach ($document['items'] as $item) {
                 $invoice->items()->create([
                     'product_id' => $item['product_id'], 'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'], 'xml_line_number' => $item['line_number'],
                     'external_code' => $item['external_code'], 'external_description' => $item['description'],
                 ]);
-                DB::table('stock_movements')->insert([
+                $this->stockLedger->record([
                     'origin_warehouse_id' => $data['warehouse_id'], 'dest_warehouse_id' => null,
                     'product_id' => $item['product_id'], 'product_condition' => $data['product_condition'],
                     'user_id' => $userId, 'invoice_id' => $invoice->invoice_id,
                     'quantity' => $item['quantity'], 'movement_type' => 'Saída', 'is_fiscal' => true,
                     'movement_justification' => 'Venda por XML NF-e '.$document['number'].' / '.$document['series'],
-                    'movement_date' => now(), 'created_at' => now(), 'updated_at' => now(),
+                    'movement_date' => now(),
                 ]);
             }
 
@@ -185,13 +174,16 @@ class InvoiceXmlImporter
         }
         $this->ensure(count($items) >= 1 && count($items) <= 990, 'A nota precisa conter de 1 a 990 itens.');
         $this->ensure($this->cents((string) $info->total->ICMSTot->vNF) === $totalCents, 'O total fiscal diverge da soma dos itens. Descontos, frete e outros componentes que alterem esse total ainda não são suportados.');
-        $paymentCodes = ['01' => 'Dinheiro', '02' => 'Cheque', '03' => 'Cartão de crédito', '04' => 'Cartão de débito', '15' => 'Boleto', '17' => 'PIX', '90' => 'Sem pagamento'];
+
+        $duplicates = $info->cobr->dup ?? null;
+        $paymentCodes = ['01' => 'Dinheiro', '02' => 'Cheque', '03' => 'Cartão de crédito', '04' => 'Cartão de débito', '15' => 'Boleto', '17' => 'PIX'];
 
         return [
             'issuer_document' => $issuer, 'issuer_name' => trim((string) $info->emit->xNome),
             'recipient_document' => $recipient, 'recipient_name' => trim((string) $info->dest->xNome),
             'access_key' => $key, 'number' => $number, 'series' => $series, 'issue_date' => $issueDate,
-            'due_date' => (string) $info->cobr->dup->dVenc,
+            'installment_count' => max(1, $duplicates?->count() ?? 0),
+            'due_date' => (string) ($duplicates[0]->dVenc ?? ''),
             'payment_method' => $paymentCodes[(string) $info->pag->detPag->tPag] ?? '',
             'amount' => $this->money($totalCents), 'items' => $items,
         ];

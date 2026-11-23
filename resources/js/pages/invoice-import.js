@@ -1,6 +1,8 @@
 import { requestJson } from '../components/loading.js';
 import { reloadWithFeedback } from '../components/feedback.js';
 
+import { salePaymentFields } from './sale-payment.js';
+
 export function initializeInvoiceImport(page) {
     const layer = page.querySelector('[data-invoice-import-layer]');
     const form = layer?.querySelector('[data-invoice-import-form]');
@@ -17,7 +19,7 @@ export function initializeInvoiceImport(page) {
     const summary = form.querySelector('[data-import-stock-summary]');
     const errorNotice = form.querySelector('[data-import-error]');
     const customer = form.elements.namedItem('customer_id');
-    const paymentDate = form.elements.namedItem('payment_date');
+    const payment = salePaymentFields(form);
     let document = null;
     let busy = false;
     const selected = new Map();
@@ -51,19 +53,6 @@ export function initializeInvoiceImport(page) {
         errorNotice.textContent = '';
     }
 
-    function syncPaymentDate() {
-        const paid = form.elements.namedItem('payment_status').value === 'Paga';
-        paymentDate.closest('label').hidden = !paid;
-        paymentDate.disabled = !paid;
-        paymentDate.required = paid;
-        if (!paid) paymentDate.value = '';
-        const method = form.elements.namedItem('payment_method');
-        method.closest('label').hidden = !paid;
-        method.disabled = !paid;
-        method.required = paid;
-
-    }
-
     function updateStock() {
         if (!document) { confirmButton.disabled = true; return; }
         const warehouseId = form.elements.namedItem('warehouse_id').value;
@@ -85,8 +74,8 @@ export function initializeInvoiceImport(page) {
             insufficient ||= missing;
         });
         const missingProduct = document.items.some((item) => !selected.get(item.line_number));
-        const ready = !missingProduct && Boolean(warehouseId) && Boolean(customer.value) && !insufficient;
-        summary.textContent = insufficient
+        const ready = Boolean(condition) && !missingProduct && Boolean(warehouseId) && Boolean(customer.value) && !insufficient;
+        summary.textContent = !condition ? 'Habilite uma condição de venda na Parametrização para importar a nota.' : insufficient
             ? 'Saldo insuficiente. Registre as entradas necessárias e abra uma nova importação para conferir os saldos. A importação ficará bloqueada enquanto houver falta.'
             : missingProduct ? 'Há códigos não cadastrados no JEMP. Cadastre os produtos e reabra o XML antes de importar.'
                 : !customer.value ? 'Cadastre ou selecione o cliente com o CPF/CNPJ destinatário do XML.'
@@ -152,21 +141,12 @@ export function initializeInvoiceImport(page) {
             document.customers.filter((candidate) => digits(candidate.document) === invoice.recipient_document)
                 .forEach((candidate) => customer.add(new Option(candidate.name + ' · ' + candidate.document, String(candidate.id))));
             customer.value = keepFinancial ? previousCustomer || String(document.customer_id || '') : String(document.customer_id || '');
-            if (!keepFinancial) {
-                form.elements.namedItem('due_date').value = invoice.due_date || '';
-                form.elements.namedItem('due_date').min = invoice.issue_date;
-                form.elements.namedItem('payment_method').value = invoice.payment_method || '';
-                form.elements.namedItem('payment_status').value = 'A vencer';
-                const days = invoice.due_date ? (Date.parse(invoice.due_date) - Date.parse(invoice.issue_date)) / 86400000 : 0;
-                form.elements.namedItem('payment_terms_days').value = String(Math.max(0, Math.round(days) || 0));
-            }
+            if (!keepFinancial) payment.reset(invoice);
             review.disabled = false;
             review.hidden = false;
             file.closest('label').hidden = true;
             confirmButton.hidden = false;
             renderItems();
-            syncDueDate();
-            syncPaymentDate();
         } catch (error) {
             file.value = '';
             resetReview();
@@ -196,12 +176,12 @@ export function initializeInvoiceImport(page) {
     }
 
     openButton.addEventListener('click', () => {
-        form.reset(); resetReview(); syncPaymentDate(); layer.hidden = false;
+        form.reset(); resetReview(); layer.hidden = false;
         window.document.body.classList.add('invoice-dialog-open'); file.focus();
     });
     layer.querySelectorAll('[data-invoice-import-close]').forEach((button) => button.addEventListener('click', () => {
         if (busy) return;
-        layer.hidden = true; form.reset(); resetReview(); syncPaymentDate();
+        layer.hidden = true; form.reset(); resetReview();
         window.document.body.classList.remove('invoice-dialog-open'); openButton.focus();
     }));
     function selectFile() {
@@ -241,18 +221,4 @@ export function initializeInvoiceImport(page) {
     confirmButton.addEventListener('click', confirmImport);
     form.addEventListener('submit', (event) => { event.preventDefault(); if (document) confirmImport(); else preview(); });
     ['warehouse_id', 'product_condition', 'customer_id'].forEach((name) => form.elements.namedItem(name).addEventListener('change', updateStock));
-    form.elements.namedItem('payment_status').addEventListener('change', syncPaymentDate);
-    function syncDueDate() {
-        if (!document) return;
-        const field = form.elements.namedItem('payment_terms_days');
-        const due = form.elements.namedItem('due_date');
-        const days = Number(field.value);
-        const date = new Date(document.invoice.issue_date + 'T00:00:00Z');
-        date.setUTCDate(date.getUTCDate() + days);
-        const valid = field.value !== '' && Number.isInteger(days) && days >= 0
-            && Number.isFinite(date.getTime()) && date.getUTCFullYear() <= 9999;
-        field.setCustomValidity(valid ? '' : 'Informe um prazo que resulte em uma data válida.');
-        due.value = valid ? date.toISOString().slice(0, 10) : '';
-    }
-    form.elements.namedItem('payment_terms_days').addEventListener('input', syncDueDate);
 }

@@ -1,7 +1,6 @@
 document.querySelectorAll('[data-customers-list]').forEach((list) => {
     list.querySelector('[data-customer-filters]').addEventListener('submit', (event) => event.preventDefault());
     const queryInput = list.querySelector('[data-customer-search]');
-    const paymentFilter = list.querySelector('[data-customer-payment]');
     const rows = [...list.querySelectorAll('[data-customer-row]')];
     const emptyRow = list.querySelector('[data-customer-empty]');
     const summary = list.querySelector('[data-customer-summary]');
@@ -161,9 +160,7 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
 
     const renderRows = () => {
         const query = queryInput?.value.trim().toLocaleLowerCase('pt-BR') ?? '';
-        const paymentTerms = paymentFilter?.value ?? '';
-        const filteredRows = rows.filter((row) => row.dataset.search.toLocaleLowerCase('pt-BR').includes(query)
-            && (!paymentTerms || row.dataset.payment === paymentTerms));
+        const filteredRows = rows.filter((row) => row.dataset.search.toLocaleLowerCase('pt-BR').includes(query));
         const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
         currentPage = Math.min(currentPage, totalPages);
         filteredRows.forEach((row, index) => {
@@ -205,10 +202,6 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         currentPage = 1;
         renderRows();
     });
-    paymentFilter?.addEventListener('change', () => {
-        currentPage = 1;
-        renderRows();
-    });
     list.querySelector('[data-customer-previous]')?.addEventListener('click', () => {
         currentPage -= 1;
         renderRows();
@@ -238,8 +231,8 @@ document.querySelectorAll('[data-customers-list]').forEach((list) => {
         const customer = JSON.parse(row.dataset.record);
         if (trigger.matches('[data-customer-view]') && detailsLayer && detailsDialog) {
             activeTrigger = trigger;
-            const detailLabels = ['Cliente / Empresa', 'Documento', 'Contato', 'E-mail', 'Condição de pagamento'];
-            const detailKeys = ['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms'];
+            const detailLabels = ['Cliente / Empresa', 'Documento', 'Contato', 'E-mail'];
+            const detailKeys = ['customer_name', 'customer_document', 'customer_contact', 'customer_email'];
             const grid = detailsDialog.querySelector('.jemp-details-dialog__grid');
             grid.replaceChildren();
             detailLabels.forEach((label, index) => {

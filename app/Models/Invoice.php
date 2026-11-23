@@ -8,58 +8,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Validation\ValidationException;
 
-#[Fillable(['invoice_number', 'invoice_serie', 'customer_id', 'issue_date', 'due_date', 'payment_method', 'delivery_driver', 'payment_terms_days', 'payment_status', 'payment_date', 'amount', 'issuer_document', 'access_key', 'stock_posted_at'])]
+#[Fillable(['invoice_number', 'invoice_serie', 'customer_id', 'issue_date', 'delivery_driver', 'amount', 'issuer_document', 'access_key', 'stock_posted_at'])]
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */
     use HasFactory;
 
-    public const PAYMENT_METHODS = ['Dinheiro', 'PIX', 'Cartão de crédito', 'Cartão de débito', 'Boleto', 'Transferência bancária', 'Cheque', 'Outros'];
-
     protected $primaryKey = 'invoice_id';
 
-    protected static function booted(): void
+    public function payment(): HasOne
     {
-        static::saving(function (Invoice $invoice): void {
-            if ($invoice->due_date !== null && in_array($invoice->payment_status ?? 'A vencer', ['A vencer', 'Vencida'], true)) {
-                $invoice->payment_status = self::unpaidStatus($invoice->due_date->toDateString());
-                $invoice->payment_date = null;
-            }
-        });
+        return $this->hasOne(Payment::class, 'invoice_id');
     }
 
-    public static function paymentDateToday(): string
+    public function financialStatus(): string
     {
-        return now('America/Sao_Paulo')->toDateString();
-    }
-
-    public static function unpaidStatus(string $dueDate): string
-    {
-        return $dueDate < self::paymentDateToday() ? 'Vencida' : 'A vencer';
-    }
-
-    public static function refreshOverdueStatuses(): int
-    {
-        $today = self::paymentDateToday();
-        $overdue = self::query()->where('payment_status', 'A vencer')->where('due_date', '<', $today)
-            ->update(['payment_status' => 'Vencida']);
-        $upcoming = self::query()->where('payment_status', 'Vencida')->where('due_date', '>=', $today)
-            ->update(['payment_status' => 'A vencer']);
-
-        return $overdue + $upcoming;
-    }
-
-    public function changePaymentState(bool $paid): void
-    {
-        $paymentDate = $paid
-            ? ($this->payment_status === 'Paga' && $this->payment_date !== null ? $this->payment_date->toDateString() : self::paymentDateToday())
-            : null;
-        $this->payment_status = $paid ? 'Paga' : self::unpaidStatus($this->due_date->toDateString());
-        $this->payment_date = $paymentDate;
-        $this->save();
+        return $this->is_cancelled ? 'Cancelada' : ($this->payment?->status ?? 'Sem pagamento cadastrado');
     }
 
     public function customer(): BelongsTo
@@ -83,7 +50,7 @@ class Invoice extends Model
             return (float) $this->items->sum(fn (InvoiceItem $item): float => (int) $item->quantity * (float) $item->unit_price);
         }
 
-        return (float) $this->items()->sum(DB::raw('quantity * unit_price'));
+        return (float) $this->items()->sum(InvoiceItem::totalExpression());
     }
 
     public function recalculateAmount(): void
@@ -93,7 +60,7 @@ class Invoice extends Model
 
     public function itemsAreLocked(): bool
     {
-        return $this->access_key !== null || $this->stock_posted_at !== null || ($this->hasAttribute('has_stock_exit')
+        return $this->payment()->exists() || $this->is_cancelled || $this->access_key !== null || $this->stock_posted_at !== null || ($this->hasAttribute('has_stock_exit')
             ? (bool) $this->has_stock_exit
             : $this->stockMovements()->where('movement_type', 'Saída')->exists());
     }
@@ -102,7 +69,7 @@ class Invoice extends Model
     {
         if ($this->itemsAreLocked()) {
             throw ValidationException::withMessages([
-                'invoice_id' => 'Os itens desta nota estão bloqueados porque a saída do estoque já foi registrada.',
+                'invoice_id' => 'Os itens desta nota estão bloqueados para edição após a confirmação.',
             ]);
         }
     }
@@ -111,12 +78,11 @@ class Invoice extends Model
     {
         return [
             'issue_date' => 'date',
-            'due_date' => 'date',
-            'payment_date' => 'date',
+            'is_cancelled' => 'boolean',
+            'amount' => 'decimal:2',
             'stock_posted_at' => 'datetime',
             'invoice_number' => 'integer',
             'invoice_serie' => 'integer',
-            'payment_terms_days' => 'integer',
         ];
     }
 }

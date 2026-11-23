@@ -39,7 +39,7 @@
                     <section class="jemp-details-dialog__section" data-tab-panel="{{ $section['id'] }}">
                         @if (isset($section['items']))
                             @if ($section['items_locked'] ?? false)
-                                <p class="invoice-import-help">Itens bloqueados: a saída de estoque desta nota já foi registrada.</p>
+                                <p class="invoice-import-help">Itens da nota confirmada.</p>
                             @endif
                             <div class="invoice-items-table-wrap" role="region" aria-label="Itens da nota fiscal" tabindex="0">
                                 <table class="invoice-items-table">
@@ -50,7 +50,7 @@
                                                 <td>{{ $item['product'] }}@if (!empty($item['external_code']))<small class="invoice-item-source">XML: {{ $item['external_code'] }} · {{ $item['external_description'] }}</small>@endif</td><td>{{ $item['sku'] }}</td><td>{{ $item['quantity'] }}</td><td>{{ $item['unit_price_display'] }}</td><td>{{ $item['subtotal'] }}</td>
                                                 <td><div class="invoice-item-actions">
                                                     @if ($section['items_locked'] ?? false)
-                                                        <span title="Saída já registrada">Bloqueado</span>
+                                                        <span title="Item confirmado">Bloqueado</span>
                                                     @else
                                                     <button type="button" data-invoice-item-action="edit" data-item-id="{{ $item['id'] }}" data-product-id="{{ $item['product_id'] }}" data-quantity="{{ $item['quantity'] }}" data-unit-price="{{ $item['unit_price'] }}" aria-label="Editar item {{ $item['product'] }}" title="Editar item"><i class="ph ph-pencil-simple" aria-hidden="true"></i></button>
                                                     <button type="button" data-invoice-item-action="delete" data-item-id="{{ $item['id'] }}" data-item-label="{{ $item['product'] }}" aria-label="Excluir item {{ $item['product'] }}" title="Excluir item"><i class="ph ph-trash" aria-hidden="true"></i></button>

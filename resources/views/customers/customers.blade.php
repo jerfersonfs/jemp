@@ -24,8 +24,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
             <x-inputs.input id="customer-search" label="Buscar cliente" type="search" placeholder="Buscar por nome, documento, contato ou e-mail..." data-customer-search>
                 <x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading>
             </x-inputs.input>
-            <x-inputs.input id="customer-payment-filter" label="Condição de pagamento" type="select"
-                :options="['' => 'Todas as condições'] + $customers->pluck('customer_payment_terms', 'customer_payment_terms')->filter()->sort()->all()" data-customer-payment />
         </x-filters.filter-bar>
 
         <div class="jemp-table-scroll customers-table-scroll" role="region" aria-label="Lista de clientes" tabindex="0">
@@ -37,19 +35,17 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                         <th scope="col">Documento </th>
                         <th scope="col">Contato</th>
                         <th scope="col">E-mail</th>
-                        <th scope="col">Condição de pagamento</th>
                         <th scope="col">Ações</th>
                     </tr>
                 </thead>
                 <tbody data-customer-rows>
                     @foreach ($customers as $customer)
-                    <tr data-customer-row data-payment="{{ $customer->customer_payment_terms }}" data-search="{{ strtolower(implode(' ', $customer->only(['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms']))) }}" data-update-url="{{ route('customers.update', $customer) }}" data-delete-url="{{ route('customers.destroy', $customer) }}" data-record="{{ $customer->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}">
+                    <tr data-customer-row data-search="{{ strtolower(implode(' ', $customer->only(['customer_name', 'customer_document', 'customer_contact', 'customer_email']))) }}" data-update-url="{{ route('customers.update', $customer) }}" data-delete-url="{{ route('customers.destroy', $customer) }}" data-record="{{ $customer->toJson(JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}">
                         <td>{{ $customer->customer_id }}</td>
                         <td>{{ $customer->customer_name }}</td>
                         <td>{{ $customer->customer_document }}</td>
                         <td data-customer-contact-display>{{ $customer->customer_contact }}</td>
                         <td>{{ $customer->customer_email }}</td>
-                        <td>{{ $customer->customer_payment_terms }}</td>
                         <td>
                             <div class="customers-table__actions">
                                 <button class="customers-table__action customers-table__action--view" type="button" data-customer-view aria-label="Ver detalhes de {{ $customer->customer_name }}" title="Ver detalhes"><i class="ph ph-eye" aria-hidden="true"></i></button>
@@ -62,7 +58,7 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                     </tr>
                     @endforeach
                     <tr data-customer-empty hidden>
-                        <td colspan="8">Nenhum cliente corresponde aos filtros selecionados.</td>
+                        <td colspan="6">Nenhum cliente corresponde aos filtros selecionados.</td>
                     </tr>
                 </tbody>
             </table>
@@ -92,7 +88,6 @@ $errors = $errors ?? session('errors', new \Illuminate\Support\ViewErrorBag());
                             <option value="cnpj">CNPJ</option>
                         </select><input name="customer_document" data-customer-document inputmode="numeric" maxlength="18" autocomplete="off" value="{{ old('customer_document') }}" required></span></label>
                 <label>Contato<input name="customer_contact" type="tel" data-customer-contact placeholder="(11) 91234-5678" maxlength="20" value="{{ old('customer_contact') }}"></label><label>E-mail<input name="customer_email" type="email" value="{{ old('customer_email') }}"></label>
-                <label>Condição de pagamento<input name="customer_payment_terms" value="{{ old('customer_payment_terms') }}" required></label>
                 <footer class="jemp-dialog__footer"><button class="jemp-dialog__button jemp-dialog__button--secondary" type="button" data-customer-close>Cancelar</button><button class="jemp-dialog__button jemp-dialog__button--primary" type="submit">Salvar Cliente</button></footer>
             </form>
         </section>

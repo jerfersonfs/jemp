@@ -151,18 +151,7 @@ class MovementController extends Controller
             $isFiscal = filter_var($data['is_fiscal'] ?? false, FILTER_VALIDATE_BOOLEAN);
             $invoiceId = $isFiscal ? (int) $data['invoice_id'] : null;
 
-            Product::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
-
-            if ($direction === 'Entrada') {
-                $this->stockLedger->change($productId, $destinationWarehouseId, $condition, $quantity);
-            } elseif ($direction === 'Saída') {
-                $this->stockLedger->change($productId, $originWarehouseId, $condition, -$quantity);
-            } else {
-                $this->stockLedger->change($productId, $originWarehouseId, $condition, -$quantity);
-                $this->stockLedger->change($productId, $destinationWarehouseId, $condition, $quantity);
-            }
-
-            DB::table('stock_movements')->insert([
+            $this->stockLedger->record([
                 'origin_warehouse_id' => $originWarehouseId,
                 'dest_warehouse_id' => $destinationWarehouseId,
                 'product_id' => $productId,
@@ -174,8 +163,6 @@ class MovementController extends Controller
                 'movement_justification' => $data['movement_justification'] ?? null,
                 'movement_date' => $data['date'],
                 'is_fiscal' => $isFiscal,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
         });
     }

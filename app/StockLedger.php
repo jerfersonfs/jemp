@@ -3,22 +3,77 @@
 namespace App;
 
 use App\Models\Product;
+use App\Models\StockMovement;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class StockLedger
 {
-    public function change(int $productId, ?int $warehouseId, string $condition, int $change): void
+    /** @param array<string, mixed> $data */
+    public function record(array $data): StockMovement
     {
         if (DB::transactionLevel() === 0) {
             throw new \LogicException('A movimentação de estoque exige uma transação.');
         }
 
-        if ($warehouseId === null) {
-            throw ValidationException::withMessages(['warehouse_id' => 'Selecione um armazém.']);
+        $product = Product::query()->whereKey($data['product_id'])->lockForUpdate()->firstOrFail();
+        $quantity = (int) $data['quantity'];
+        $origin = isset($data['origin_warehouse_id']) ? (int) $data['origin_warehouse_id'] : null;
+        $destination = isset($data['dest_warehouse_id']) ? (int) $data['dest_warehouse_id'] : null;
+        $validWarehouses = match ($data['movement_type']) {
+            'Entrada' => $origin === null && $destination !== null,
+            'Saída' => $origin !== null && $destination === null,
+            'Transferência' => $origin !== null && $destination !== null && $origin !== $destination,
+            default => false,
+        };
+
+        if (! $validWarehouses || $quantity < 1 || $quantity > 2147483647) {
+            throw ValidationException::withMessages(['movement_type' => 'Confira a quantidade, origem e destino da movimentação.']);
         }
 
-        $product = Product::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
+        if ($data['movement_type'] === 'Saída' && ! DB::table('stock_condition_settings')
+            ->where('product_condition', $data['product_condition'])->sharedLock()->value('saleable')) {
+            throw ValidationException::withMessages(['product_condition' => 'Esta condição está desabilitada para venda na Parametrização.']);
+        }
+
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+            $migrations = config('database.migrations.table');
+            if (! DB::table($migrations)->where('migration', '2026_11_21_182508_create_stock_movement_inventory_triggers')->exists()) {
+                throw ValidationException::withMessages(['movement_type' => 'A atualização do banco para movimentações ainda está pendente.']);
+            }
+        } else {
+            if ($origin !== null) {
+                $this->change($product, $origin, $data['product_condition'], -$quantity);
+            }
+
+            if ($destination !== null) {
+                $this->change($product, $destination, $data['product_condition'], $quantity);
+            }
+        }
+
+        try {
+            return StockMovement::query()->create($data);
+        } catch (QueryException $exception) {
+            $number = (int) ($exception->errorInfo[1] ?? 0);
+            $message = match ($number) {
+                30101 => 'Confira a quantidade, origem e destino da movimentação.',
+                30102 => "Saldo insuficiente de {$product->sku} na origem selecionada. Nenhum item foi baixado.",
+                30103 => 'O saldo resultante excede o limite do estoque.',
+                default => null,
+            };
+
+            if ($message === null || ($exception->errorInfo[0] ?? null) !== '45000') {
+                throw $exception;
+            }
+
+            throw ValidationException::withMessages(['quantity' => $message]);
+        }
+    }
+
+    private function change(Product $product, int $warehouseId, string $condition, int $change): void
+    {
+        $productId = $product->getKey();
         $query = DB::table('inventory')->where('product_id', $productId)
             ->where('warehouse_id', $warehouseId)->where('product_condition', $condition);
         $inventory = (clone $query)->lockForUpdate()->first();

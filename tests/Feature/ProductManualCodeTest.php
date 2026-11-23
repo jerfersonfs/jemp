@@ -19,6 +19,12 @@ class ProductManualCodeTest extends TestCase
         DB::purge('sqlite');
         DB::setDefaultConnection('sqlite');
         $this->createSchema();
+        (require database_path('migrations/2026_11_21_185033_create_company_settings_table.php'))->up();
+        (require database_path('alterations/2026_11_22_164053_create_stock_condition_settings.php'))->up();
+        DB::statement('CREATE VIEW vw_estoque AS SELECT i.*, p.sku, p.category, p.product_name, w.warehouse_name
+            FROM inventory i JOIN products p ON p.product_id = i.product_id JOIN warehouses w ON w.warehouse_id = i.warehouse_id');
+        (require database_path('alterations/2026_11_22_164231_apply_saleable_conditions_to_stock_view.php'))->up();
+        DB::statement("CREATE VIEW vw_estoque_baixo AS SELECT * FROM vw_estoque_atual WHERE stock_status IN ('Estoque baixo', 'Zerado')");
     }
 
     protected function tearDown(): void

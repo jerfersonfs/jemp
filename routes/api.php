@@ -26,7 +26,7 @@ Route::name('api.')->group(function (): void {
     Route::apiResource('invoice-items', InvoiceItemController::class);
     Route::apiResource('stock-movements', StockMovementController::class);
     Route::apiResource('warehouses', WarehouseController::class);
-    Route::apiResource('invoices', InvoiceController::class)->except(['update', 'destroy']);
+    Route::apiResource('invoices', InvoiceController::class)->only(['index', 'show']);
 });
 
 // Endpoints de Relatórios e Filtros
