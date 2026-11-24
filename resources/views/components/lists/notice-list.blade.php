@@ -2,6 +2,7 @@
     'title',
     'items' => [],
     'description' => null,
+    'countLabel' => null,
 ])
 
 <section {{ $attributes->class(['notice-list']) }} aria-label="{{ $title }}">
@@ -12,7 +13,7 @@
                 <p class="notice-list__description">{{ $description }}</p>
             @endif
         </div>
-        <span class="notice-list__count">{{ count($items) }} itens</span>
+        <span class="notice-list__count">{{ $countLabel ?? (count($items).' itens') }}</span>
     </header>
 
     <ul class="notice-list__items">

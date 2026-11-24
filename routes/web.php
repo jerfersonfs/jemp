@@ -1,12 +1,16 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoiceXmlController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -18,17 +22,30 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/parametrizacao', [CompanySettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/parametrizacao', [CompanySettingsController::class, 'update'])->name('settings.update');
 
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/produtos', [ProductController::class, 'index'])->name('products.index');
     Route::resource('produtos', ProductController::class)->only(['store', 'update', 'destroy'])->names('products');
     Route::get('/clientes', [CustomerController::class, 'index'])->name('customers.index');
     Route::resource('clientes', CustomerController::class)->only(['store', 'update', 'destroy'])->names('customers');
+    Route::get('/armazens', [WarehouseController::class, 'page'])->name('warehouses.index');
+    Route::post('/armazens', [WarehouseController::class, 'store'])->name('warehouses.store');
+    Route::prefix('api')->name('api.')->group(function (): void {
+        Route::apiResource('warehouses', WarehouseController::class)->only(['index', 'show', 'store']);
+    });
     Route::get('/consulta-nfe', [SaleController::class, 'invoices'])->name('invoice-consult.index');
-    Route::get('/vendas', [SaleController::class, 'index'])->name('sales.index');
+    Route::post('/api/invoices/{invoice}/payment/settle', [InvoiceController::class, 'settle'])->name('payments.settle');
+    Route::post('/api/invoices', [InvoiceController::class, 'store'])->name('api.invoices.store');
+    Route::post('/api/invoices/import/preview', [InvoiceXmlController::class, 'preview'])->name('invoice-import.preview');
+    Route::post('/api/invoices/import', [InvoiceXmlController::class, 'store'])->name('invoice-import.store');
+    Route::match(['put', 'patch'], '/api/invoices/{invoice}', [InvoiceController::class, 'update'])->name('api.invoices.update');
+    Route::delete('/api/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('api.invoices.destroy');
     Route::get('/entradas', [MovementController::class, 'entries'])->name('entrance.index');
+    Route::get('/movimentacoes/saldos', [MovementController::class, 'balances'])->name('movements.balances');
     Route::post('/entradas', [MovementController::class, 'storeEntry'])->name('entrance.store');
-    Route::get('/saidas', [MovementController::class, 'exits'])->name('exits.index');
+    Route::get('/saidas', fn () => redirect()->route('invoice-consult.index'))->name('exits.index');
     Route::post('/saidas', [MovementController::class, 'storeExit'])->name('exits.store');
     Route::get('/internas', [MovementController::class, 'transfers'])->name('internal.index');
     Route::post('/internas', [MovementController::class, 'storeTransfer'])->name('internal.store');

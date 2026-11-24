@@ -10,7 +10,7 @@
             'fiscal' => $movement->is_fiscal ? 'Sim' : 'Não',
             'invoice_id' => $movement->invoice_id ?? '—',
             'justification' => $movement->movement_justification,
-            '_data' => ['destination' => $movement->dest_warehouse_id],
+            '_data' => ['condition' => $movement->product_condition, 'destination' => $movement->dest_warehouse_id],
         ])->all();
         $entryColumns = [
             ['key' => 'sm_id', 'label' => 'ID'],
@@ -21,7 +21,7 @@
             ['key' => 'destination', 'label' => 'Destino'],
             ['key' => 'fiscal', 'label' => 'Possui NF?'],
             ['key' => 'invoice_id', 'label' => 'N° da NF'],
-            ['key' => 'justification', 'label' => 'Justificação'],
+            ['key' => 'justification', 'label' => 'Justificativa'],
         ];
         $productOptions = $products->mapWithKeys(fn ($product) => [$product->product_id => $product->sku.' — '.$product->product_name])->all();
         $entryFormFields = [
@@ -37,8 +37,6 @@
     @endphp
 
     <div class="page-head movement-page__head"><div><h1>Entradas</h1></div></div>
-    @if (session('status')) <p class="movement-feedback" role="status">{{ session('status') }}</p> @endif
-    @if ($errors->any()) <p class="movement-feedback movement-feedback--error" role="alert">{{ $errors->first() }}</p> @endif
 
     <x-cards.panel class="movement-panel movement-panel--entries" variant="mint" title="Listagem de Entradas" description="Gerencie todas as entradas do seu catálogo.">
         <x-slot:actions>
@@ -48,8 +46,8 @@
         </x-slot:actions>
         <x-slot:filters>
             <x-filters.filter-bar class="movement-filter-bar" label="Filtrar entradas" data-movement-filter-form>
-                <div class="movement-search"><x-inputs.input name="search" type="search" size="sm" placeholder="Buscar produto..." aria-label="Buscar entradas" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input></div>
-                <x-inputs.input name="type" label="Tipo" type="select" size="sm" :options="['' => 'Todos os tipos', 'Entrada' => 'Entrada']" data-movement-filter="type" />
+                <x-inputs.input name="search" label="Buscar produto" type="search" size="sm" placeholder="Buscar produto..." aria-label="Buscar entradas" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input>
+                <x-inputs.input name="condition" label="Condição" type="select" size="sm" :options="['' => 'Todas as condições', 'Novo' => 'Novo', 'Reforma' => 'Reforma', 'Descarte' => 'Descarte']" data-movement-filter="condition" />
                 <x-inputs.input name="destination" label="Destino" type="select" size="sm" :options="['' => 'Todos os armazéns'] + $locations" data-movement-filter="destination" />
             </x-filters.filter-bar>
         </x-slot:filters>

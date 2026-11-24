@@ -327,6 +327,7 @@ a {
 }
 
 .card {
+    box-shadow: var(--shadow-surface);
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 14px
@@ -337,7 +338,7 @@ a {
 }
 
 .stats .stat-card { min-height: 9.25rem; }
-.home-panel { overflow: hidden; border-color: color-mix(in srgb, var(--color-subheading) 34%, white); box-shadow: 0 2px 5px rgb(27 64 65 / 4%); }
+.home-panel { overflow: hidden; border-color: color-mix(in srgb, var(--color-subheading) 34%, white); box-shadow: var(--shadow-surface); }
 .home-panel .card-header { align-items: center; gap: 16px; }
 .home-panel .card-header .eyebrow { margin-bottom: 5px; }
 .home-panel .card-title { color: var(--color-heading); font-size: var(--font-size-section); }
@@ -516,8 +517,8 @@ a {
 
 .data-table th {
     text-align: left;
-    background: #fafbfa;
-    color: #849085;
+    background: var(--filter-surface);
+    color: var(--color-secondary);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: .07em;

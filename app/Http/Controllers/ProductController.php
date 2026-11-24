@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -20,7 +19,9 @@ class ProductController extends Controller
     public function index(Request $request): View|JsonResponse|AnonymousResourceCollection
     {
         $products = Product::query()
-            ->with(['inventory.warehouse', 'inventories.warehouse'])
+            ->when($request->expectsJson(), fn ($query) => $query->with(['inventory.warehouse', 'inventories.warehouse']),
+                fn ($query) => $query->with(['inventory' => fn ($inventory) => $inventory->from('vw_estoque_atual as inventory')->with('warehouse')]))
+            ->when($request->query('estoque') === 'baixo', fn ($query) => $query->whereIn('products.product_id', DB::table('vw_estoque_baixo')->select('product_id')))
             ->withSum('inventory', 'theoretical_balance')
             ->orderBy('sku')
             ->get();
@@ -32,7 +33,7 @@ class ProductController extends Controller
         return view('products.products', [
             'page' => 'products',
             'products' => $products,
-            'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(),
+            'warehouses' => Warehouse::query()->active()->orderBy('warehouse_name')->get(),
         ]);
     }
 
@@ -43,21 +44,10 @@ class ProductController extends Controller
 
         try {
             $product = DB::transaction(function () use ($data): Product {
-                $temporarySku = 'TMP-'.Str::random(8);
-                $product = Product::query()->create([
-                    ...$this->productData($data),
-                    'sku' => $temporarySku,
-                ]);
-                $product->update([
-                    'sku' => $this->generateSku(
-                        $data['category'],
-                        (int) $data['length_mm'],
-                        (int) $data['width_mm'],
-                        $product->product_id,
-                    ),
-                ]);
+                $product = Product::query()->create($this->productData($data));
 
                 if (isset($data['warehouse_id'])) {
+                    Warehouse::lockActive(['warehouse_id' => $data['warehouse_id']]);
                     DB::table('inventory')->insert([
                         'warehouse_id' => $data['warehouse_id'],
                         'product_id' => $product->product_id,
@@ -70,6 +60,8 @@ class ProductController extends Controller
 
                 return $product->load('inventory.warehouse');
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Falha ao cadastrar produto.'], 500);
@@ -87,7 +79,7 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $produto): RedirectResponse|JsonResponse
     {
-        $data = $request->validate($this->rules());
+        $data = $request->validate($this->rules(produto: $produto));
         $this->assertSpecificationIsAvailable($data, $produto);
 
         try {
@@ -129,9 +121,13 @@ class ProductController extends Controller
 
         try {
             DB::transaction(function () use ($produto): void {
+                $warehouseIds = $produto->inventory()->distinct()->pluck('warehouse_id')->all();
+                Warehouse::lockActive($warehouseIds);
                 DB::table('inventory')->where('product_id', $produto->product_id)->delete();
                 $produto->delete();
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             if (request()->expectsJson()) {
                 return response()->json(['message' => 'Falha ao excluir produto.'], 500);
@@ -151,6 +147,7 @@ class ProductController extends Controller
     private function productData(array $data): array
     {
         return [
+            'sku' => $data['sku'],
             'category' => $data['category'],
             'product_name' => $data['product_name'],
             'material' => $data['material'],
@@ -158,17 +155,6 @@ class ProductController extends Controller
             'length_mm' => $data['length_mm'],
             'width_mm' => $data['width_mm'],
         ];
-    }
-
-    private function generateSku(string $category, int $lengthMm, int $widthMm, int $sequence): string
-    {
-        $categoryCode = match ($category) {
-            'PBR' => 'PBR',
-            'Descartável' => 'DESC',
-            'Não Standard' => 'NS',
-        };
-
-        return sprintf('%s-%dX%d-%03d', $categoryCode, $lengthMm, $widthMm, $sequence);
     }
 
     /** @param array<string, mixed> $data */
@@ -191,9 +177,10 @@ class ProductController extends Controller
     }
 
     /** @return array<string, array<int, mixed>> */
-    private function rules(bool $includeInitialInventory = false): array
+    private function rules(bool $includeInitialInventory = false, ?Product $produto = null): array
     {
         $rules = [
+            'sku' => ['required', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($produto?->product_id, 'product_id')],
             'product_name' => ['required', 'string', 'max:150'],
             'category' => ['required', Rule::in(['PBR', 'Descartável', 'Não Standard'])],
             'material' => ['required', 'string', 'max:100'],
@@ -204,7 +191,7 @@ class ProductController extends Controller
 
         if ($includeInitialInventory) {
             $rules += [
-                'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+                'warehouse_id' => ['required', 'integer', Warehouse::activeIdRule()],
                 'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
                 'theoretical_balance' => ['required', 'integer', 'min:0', 'max:2147483647'],
             ];

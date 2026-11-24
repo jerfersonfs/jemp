@@ -6,6 +6,7 @@
     $icons = [
         'house' => 'ph-house',
         'cube' => 'ph-cube',
+        'warehouse' => 'ph-warehouse',
         'users-three' => 'ph-users-three',
         'note-pencil' => 'ph-note-pencil',
         'handshake' => 'ph-handshake',

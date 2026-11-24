@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms'])]
+#[Fillable(['customer_name', 'customer_document', 'customer_contact', 'customer_email'])]
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
@@ -16,7 +16,7 @@ class Customer extends Model
 
     protected $primaryKey = 'customer_id';
 
-    protected $fillable = ['customer_name', 'customer_document', 'customer_contact', 'customer_email', 'customer_payment_terms'];
+    protected $fillable = ['customer_name', 'customer_document', 'customer_contact', 'customer_email'];
 
     public function invoices(): HasMany
     {

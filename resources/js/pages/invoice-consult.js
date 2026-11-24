@@ -1,44 +1,21 @@
-import { showFeedback } from '../components/feedback.js';
+import { requestJson } from '../components/loading.js';
+import { initializeManualInvoice } from './sale-payment.js';
+import { initializeInvoiceImport } from './invoice-import.js';
+import { reloadWithFeedback, showFeedback } from '../components/feedback.js';
 
 const page = document.querySelector('[data-invoice-page]');
 
 if (page) {
-    const importLayer = page.querySelector('[data-invoice-import-layer]');
-    const importForm = page.querySelector('[data-invoice-import-form]');
-    const importFeedback = page.querySelector('[data-invoice-import-feedback]');
-    const openImport = page.querySelector('[data-invoice-import-open]');
-    let importFeedbackTimer;
-    const setImportFeedback = (message, isError = false) => {
-        window.clearTimeout(importFeedbackTimer);
-        importFeedback.textContent = message;
-        importFeedback.hidden = !message;
-        importFeedback.dataset.error = String(isError);
-        if (message) importFeedbackTimer = window.setTimeout(() => { importFeedback.hidden = true; }, 15_000);
-    };
-    openImport?.addEventListener('click', () => { setImportFeedback(''); importLayer.hidden = false; importForm.querySelector('input[type="file"]').focus(); });
-    page.querySelectorAll('[data-invoice-import-close]').forEach(button => button.addEventListener('click', () => { importLayer.hidden = true; openImport?.focus(); }));
-    importForm?.addEventListener('submit', async (event) => {
-        event.preventDefault(); setImportFeedback('Enviando XML...');
-        try {
-            const response = await fetch('/api/invoices/import', { method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(importForm) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.details || Object.values(result.errors || {}).flat().join(' ') || result.message || 'Falha ao importar o XML.');
-            setImportFeedback(result.message || 'NF-e importada com sucesso.');
-            sessionStorage.setItem('invoice-page-feedback', result.message || 'NF-e importada com sucesso.');
-            window.setTimeout(() => window.location.reload(), 900);
-        } catch (error) { setImportFeedback(error.message, true); }
-    });
-    const pendingFeedback = sessionStorage.getItem('invoice-page-feedback');
-    if (pendingFeedback) {
-        sessionStorage.removeItem('invoice-page-feedback');
-        showFeedback(pendingFeedback, 'success');
-    }
+    initializeInvoiceImport(page);
+    initializeManualInvoice(page);
     const filterForm = page.querySelector('[data-invoice-filter]');
-    const rows = [...page.querySelectorAll('[data-table-row]')];
+    const rows = [...page.querySelectorAll('.invoice-table [data-table-row]')];
     const noResults = page.querySelector('[data-invoice-no-results]');
     const dialogLayers = [...page.querySelectorAll('[data-dialog-layer]')];
-    const itemConfirmLayer = page.querySelector('[data-invoice-item-confirm-layer]');
-    let pendingItemDelete = null;
+    const previousButton = page.querySelector('[data-invoice-previous]');
+    const nextButton = page.querySelector('[data-invoice-next]');
+    const pageSize = 10;
+    let currentPage = 1;
     let activeLayer = null;
     let activeTrigger = null;
     let fallbackTrigger = null;
@@ -96,20 +73,34 @@ if (page) {
             if (matches) visibleRows.push(row);
         });
 
-        if (noResults) noResults.hidden = visibleRows.length > 0;
+        const totalPages = Math.max(1, Math.ceil(visibleRows.length / pageSize));
+        currentPage = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * pageSize;
+        visibleRows.forEach((row, index) => { row.hidden = index < start || index >= start + pageSize; });
+        previousButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+        page.querySelector('[data-invoice-current]').textContent = currentPage + ' / ' + totalPages;
+        page.querySelector('[data-invoice-pagination-summary]').textContent =
+            'Mostrando ' + (visibleRows.length ? start + 1 : 0) + '–' + Math.min(start + pageSize, visibleRows.length) + ' de ' + visibleRows.length + ' notas fiscais';
+        if (noResults) noResults.hidden = visibleRows.length > 0 || rows.length === 0;
         updateSummary(visibleRows);
     }
 
-    filterForm?.addEventListener('input', applyFilters);
-    filterForm?.addEventListener('change', applyFilters);
-    filterForm?.addEventListener('submit', (event) => { event.preventDefault(); applyFilters(); });
-    filterForm?.addEventListener('reset', () => window.requestAnimationFrame(applyFilters));
+    function resetPagination() {
+        currentPage = 1;
+        applyFilters();
+    }
+
+    previousButton.addEventListener('click', () => { currentPage = Math.max(1, currentPage - 1); applyFilters(); });
+    nextButton.addEventListener('click', () => { currentPage += 1; applyFilters(); });
+    filterForm?.addEventListener('input', resetPagination);
+    filterForm?.addEventListener('change', resetPagination);
+    filterForm?.addEventListener('submit', (event) => { event.preventDefault(); resetPagination(); });
+    filterForm?.addEventListener('reset', () => window.requestAnimationFrame(resetPagination));
 
     function closeDialog({ restoreFocus = true } = {}) {
         if (!activeLayer) return;
-        const closingItemConfirm = activeLayer === itemConfirmLayer;
         activeLayer.hidden = true;
-        if (closingItemConfirm) pendingItemDelete = null;
         document.body.classList.remove('invoice-dialog-open');
         if (restoreFocus) {
             const triggerIsHidden = activeTrigger?.closest("[data-dialog-layer]")?.hidden;
@@ -136,143 +127,30 @@ if (page) {
     }
 
     page.querySelectorAll('[data-dialog-open]').forEach((trigger) => {
-        trigger.addEventListener('click', () => {
-            const target = trigger.dataset.dialogOpen;
-            const layer = dialogLayers.find((candidate) => candidate.dataset.dialogLayer === target);
-            if (layer) {
-                if (layer.querySelector('[data-invoice-item-form]')) {
-                    const form = layer.querySelector('[data-invoice-item-form]');
-                    form?.reset();
-                    delete layer.dataset.itemId;
-                    layer.querySelector('[data-item-dialog-title]').textContent = 'Adicionar item à nota';
-                    layer.querySelector('[data-item-submit-label]').textContent = 'Cadastrar item';
-                    syncItemPrice(form);
-                    layer.dataset.invoiceMode = 'item';
-                }
-                openDialog(layer, trigger);
-            }
-        });
+        const layer = dialogLayers.find((candidate) => candidate.dataset.dialogLayer === trigger.dataset.dialogOpen);
+        if (layer) trigger.addEventListener('click', () => openDialog(layer, trigger));
     });
 
-    function syncItemPrice(form) {
-        if (!form) return;
-        const product = form.elements.product_id?.selectedOptions[0];
-        const price = form.elements.unit_price;
-        if (price) price.value = product?.dataset.unitPrice ?? '';
-    }
+    dialogLayers.forEach((layer) => layer.addEventListener('click', (event) => {
+        if (event.target.closest('[data-dialog-dismiss]')) closeDialog();
+    }));
 
-    page.querySelectorAll('[data-invoice-item-form]').forEach((form) => {
-        form.elements.product_id?.addEventListener('change', () => syncItemPrice(form));
-    });
-
-    page.addEventListener('click', async (event) => {
-        const confirmDelete = event.target.closest('[data-invoice-item-confirm-layer] [data-movement-confirm]');
-        if (confirmDelete && pendingItemDelete) {
-            const item = pendingItemDelete;
-            closeDialog({ restoreFocus: false });
+    page.querySelectorAll('[data-financial-form]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button.disabled) return;
+            button.disabled = true;
             try {
-                const response = await fetch('/api/invoice-items/' + item.id, {
-                    method: 'DELETE',
-                    headers: { Accept: 'application/json' },
+                const { response, data } = await requestJson(form.action, {
+                    method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(form),
                 });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Não foi possível excluir o item.');
-                sessionStorage.setItem('invoice-page-feedback', 'Item excluído da nota fiscal.');
-                window.location.reload();
+                if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(' ') || data.message);
+                reloadWithFeedback(data.message || 'Nota fiscal cadastrada.');
             } catch (error) {
                 showFeedback(error.message, 'error');
+                button.disabled = false;
             }
-            return;
-        }
-
-        const action = event.target.closest('[data-invoice-item-action]');
-        if (!action) return;
-        const detailLayer = action.closest('[data-dialog-layer]');
-        const itemLayerId = detailLayer?.querySelector('[data-dialog-open][data-dialog-open^="invoice-add-item-"]')?.dataset.dialogOpen;
-        const itemLayer = dialogLayers.find((layer) => layer.dataset.dialogLayer === itemLayerId);
-        if (!itemLayer) return;
-
-        if (action.dataset.invoiceItemAction === 'edit') {
-            const form = itemLayer.querySelector('[data-invoice-item-form]');
-            form.elements.product_id.value = action.dataset.productId;
-            form.elements.quantity.value = action.dataset.quantity;
-            form.elements.unit_price.value = action.dataset.unitPrice;
-            itemLayer.dataset.itemId = action.dataset.itemId;
-            itemLayer.dataset.invoiceMode = 'item-edit';
-            itemLayer.querySelector('[data-item-dialog-title]').textContent = 'Editar item da nota';
-            itemLayer.querySelector('[data-item-submit-label]').textContent = 'Salvar alterações';
-            openDialog(itemLayer, action);
-            return;
-        }
-
-        pendingItemDelete = { id: action.dataset.itemId, label: action.dataset.itemLabel };
-        const message = itemConfirmLayer?.querySelector('.jemp-confirmation__message');
-        if (message) {
-            message.textContent = 'Confirma excluir o item “' + pendingItemDelete.label + '” desta nota fiscal? Esta ação não poderá ser desfeita.';
-        }
-        openDialog(itemConfirmLayer, action);
-    });
-
-    dialogLayers.forEach((layer) => {
-        layer.addEventListener('click', (event) => {
-            if (event.target.closest('[data-dialog-dismiss], .jemp-dialog__close')) closeDialog();
-        });
-        layer.querySelectorAll('form').forEach((form) => {
-            const paymentStatus = form.querySelector('[name="payment_status"]');
-            const paymentDate = form.querySelector('[name="payment_date"]');
-            const paymentDateField = paymentDate?.closest('.jemp-form-dialog__field');
-            const customerSelect = form.querySelector('[name="customer_id"]');
-            const customerDocument = form.querySelector('[name="customer_document_preview"]');
-            const syncCustomerDocument = () => {
-                if (customerDocument) customerDocument.value = customerSelect?.selectedOptions[0]?.dataset.customerDocument || '';
-            };
-            const syncPaymentDate = () => {
-                const isPaid = paymentStatus?.value === 'Paga';
-                if (paymentDateField) paymentDateField.hidden = !isPaid;
-                if (paymentDate) {
-                    paymentDate.required = isPaid;
-                    if (!isPaid) paymentDate.value = '';
-                }
-            };
-            customerSelect?.addEventListener('change', syncCustomerDocument);
-            paymentStatus?.addEventListener('change', syncPaymentDate);
-            syncCustomerDocument();
-            syncPaymentDate();
-
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const invoiceMode = layer.dataset.invoiceMode;
-                const payload = Object.fromEntries(new FormData(form).entries());
-                if (['item', 'item-edit'].includes(invoiceMode)) delete payload.unit_price;
-                const invoiceId = layer.dataset.invoiceId;
-                const endpoint = invoiceMode === 'item-edit'
-                    ? `/api/invoice-items/${layer.dataset.itemId}`
-                    : invoiceMode === 'item' ? '/api/invoice-items'
-                    : invoiceMode === 'edit' ? `/api/invoices/${invoiceId}` : '/api/invoices';
-                const method = ['edit', 'item-edit'].includes(invoiceMode) ? 'PUT' : 'POST';
-
-                try {
-                    const response = await fetch(endpoint, {
-                        method,
-                        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                    });
-                    const result = await response.json();
-                    if (!response.ok) {
-                        const validationMessage = Object.values(result.errors || {}).flat().join(' ');
-                        throw new Error(validationMessage || result.message || 'Não foi possível salvar a nota fiscal.');
-                    }
-
-                    const message = ['item', 'item-edit'].includes(invoiceMode)
-                        ? invoiceMode === 'item-edit' ? 'Item da nota fiscal atualizado com sucesso.' : 'Item adicionado à nota fiscal com sucesso.'
-                        : invoiceMode === 'edit' ? 'Nota fiscal atualizada com sucesso.' : 'Nota fiscal cadastrada com sucesso.';
-                    sessionStorage.setItem('invoice-page-feedback', message);
-                    closeDialog();
-                    window.location.reload();
-                } catch (error) {
-                    showFeedback(error.message, 'error');
-                }
-            });
         });
     });
 
@@ -289,8 +167,5 @@ if (page) {
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
-    page.querySelectorAll('.jemp-notice__close').forEach((button) => {
-        button.addEventListener('click', () => button.closest('.jemp-notice')?.remove());
-    });
     applyFilters();
 }

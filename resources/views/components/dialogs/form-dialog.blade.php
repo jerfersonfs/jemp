@@ -90,6 +90,8 @@
             </div>
         @endforeach
 
+        {{ $slot }}
+
         <footer class="jemp-form-dialog__footer">
 
 <button

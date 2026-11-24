@@ -19,14 +19,15 @@
             <header class="sales-items__header">
                 <h3 id="sale-items-title">Notas Fiscais</h3>
             </header>
-            <div class="sales-table-wrap">
+            <div class="jemp-table-scroll sales-table-wrap">
                 <table class="sales-table">
-                    <thead><tr><th>Número</th><th>Série</th><th>Cliente</th><th>Emissão</th><th>Unidades</th><th>Situação</th><th>Total calculado</th></tr></thead>
+                    <thead><tr><th>Número</th><th>Série</th><th>CNPJ emitente</th><th>Cliente</th><th>Emissão</th><th>Unidades</th><th>Situação</th><th>Total calculado</th></tr></thead>
                     <tbody>
                         @forelse ($invoices as $invoice)
                             <tr>
                                 <td>{{ $invoice['number'] }}</td>
                                 <td>{{ $invoice['series'] }}</td>
+                                <td>{{ $invoice['issuer_document'] }}</td>
                                 <td>{{ $invoice['customer'] }}</td>
                                 <td>{{ $invoice['date'] }}</td>
                                 <td>{{ $invoice['items'] }}</td>
@@ -34,7 +35,7 @@
                                 <td>R$ {{ number_format($invoice['total'], 2, ',', '.') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="7">Nenhuma nota fiscal encontrada.</td></tr>
+                            <tr><td colspan="8">Nenhuma nota fiscal encontrada.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -51,16 +52,16 @@
             </div>
         </header>
 
-        <form method="GET" action="{{ route('sales.index') }}" style="display:flex; flex-wrap:wrap; align-items:end; gap:.75rem; padding:1rem 1.125rem">
-            <label>Data inicial <input type="date" name="start_date" value="{{ $startDate }}" required></label>
-            <label>Data final <input type="date" name="end_date" value="{{ $endDate }}" required></label>
-            <button class="btn btn-primary" type="submit">Consultar período</button>
-        </form>
+        <x-filters.filter-bar class="sales-period-filter" :action="route('sales.index')" label="Filtrar vendas por período">
+            <x-inputs.input type="date" name="start_date" label="Data inicial" :value="$startDate" required />
+            <x-inputs.input type="date" name="end_date" label="Data final" :value="$endDate" required />
+            <x-slot:actions><x-buttons.button type="submit">Consultar período</x-buttons.button></x-slot:actions>
+        </x-filters.filter-bar>
 
         @if ($salesReportError)
             <p role="alert" style="padding:0 1.125rem; color:var(--color-danger)">{{ $salesReportError }}</p>
         @else
-            <div class="sales-table-wrap">
+            <div class="jemp-table-scroll sales-table-wrap">
                 <table class="sales-table">
                     <thead><tr><th>SKU</th><th>Produto</th><th>Notas</th><th>Unidades vendidas</th><th>Faturamento bruto</th><th>Saldo atual</th></tr></thead>
                     <tbody>

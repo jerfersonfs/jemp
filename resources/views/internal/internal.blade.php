@@ -29,7 +29,7 @@
     ['name' => 'quantity', 'label' => 'Quantidade', 'type' => 'number', 'min' => 1, 'step' => 1, 'required' => true],
     ['name' => 'origin_warehouse_id', 'label' => 'Origem', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione a origem'] + $locations],
     ['name' => 'dest_warehouse_id', 'label' => 'Destino', 'type' => 'select', 'required' => true, 'options' => ['' => 'Selecione o destino'] + $locations],
-    ['name' => 'movement_justification', 'label' => 'Justificação', 'type' => 'textarea'],
+    ['name' => 'movement_justification', 'label' => 'Justificativa', 'type' => 'textarea'],
     ];
     @endphp
 
@@ -38,13 +38,11 @@
             <h1>Transferências</h1>
         </div>
     </div>
-    @if (session('status')) <p class="movement-feedback" role="status">{{ session('status') }}</p> @endif
-    @if ($errors->any()) <p class="movement-feedback movement-feedback--error" role="alert">{{ $errors->first() }}</p> @endif
     <x-cards.panel class="movement-panel movement-panel--internal" variant="mint" title="Histórico de Movimentações" description="Gerencie todas as movimentações entre os armazéns.">
         <x-slot:actions><button class="btn btn-primary movement-action-button" type="button" data-dialog-open="movement-form" aria-label="Cadastrar nova transferência"><x-icons.icon name="plus" size="sm" color="white" /> Nova Transferência</button></x-slot:actions>
         <x-slot:filters>
             <x-filters.filter-bar class="movement-filter-bar" label="Filtrar transferências" data-movement-filter-form>
-                <div class="movement-search"><x-inputs.input name="search" type="search" size="sm" placeholder="Buscar produto..." aria-label="Buscar movimentações" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input></div>
+                <x-inputs.input name="search" label="Buscar produto" type="search" size="sm" placeholder="Buscar produto..." aria-label="Buscar movimentações" data-movement-search><x-slot:leading><i class="ph ph-magnifying-glass" aria-hidden="true"></i></x-slot:leading></x-inputs.input>
                 <x-inputs.input name="origin" label="Origem" type="select" size="sm" :options="['' => 'Todas as origens'] + $locations" data-movement-filter="origin" />
                 <x-inputs.input name="destination" label="Destino" type="select" size="sm" :options="['' => 'Todos os destinos'] + $locations" data-movement-filter="destination" />
             </x-filters.filter-bar>

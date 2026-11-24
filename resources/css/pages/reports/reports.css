@@ -42,15 +42,6 @@
     padding: var(--spacing-sm);
 }
 
-.reports-workspace__filters .jemp-input__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-}
-
 .reports-workspace__filters .jemp-input__control {
     min-height: 2rem;
     padding-block: .25rem;
@@ -192,6 +183,7 @@
 }
 
 .reports-pagination button {
+    box-shadow: var(--shadow-control);
     display: inline-flex;
     min-height: 2.25rem;
     align-items: center;

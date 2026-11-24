@@ -2,54 +2,39 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateInvoiceRequest extends FormRequest
 {
-    protected function prepareForValidation(): void
-    {
-        $invoice = $this->route('invoice');
-        if (! $this->filled('issue_date') && $invoice instanceof \App\Models\Invoice) {
-            $this->merge(['issue_date' => $invoice->issue_date->toDateString()]);
-        }
-
-        if (
-            $this->has('payment_status')
-            && $this->input('payment_status') !== 'Paga'
-            && ! $this->exists('payment_date')
-        ) {
-            $this->merge(['payment_date' => null]);
-        }
-    }
-
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        return [
+        $protected = ['invoice_id', 'due_date', 'payment_method', 'payment_terms_days', 'payment_status', 'payment_date',
+            'amount', 'access_key', 'is_cancelled', 'stock_posted_at', 'created_at', 'updated_at', 'items', 'payment', 'payments', 'paid_at', 'installment_count'];
+        $header = ['issuer_document', 'customer_id', 'invoice_number', 'invoice_serie', 'issue_date', 'delivery_driver'];
+        if ($this->has('payment_status')) {
+            return [
+                'payment_status' => ['required', Rule::in(['Paga', 'A vencer'])],
+                'payment_method' => ['nullable', 'required_if:payment_status,Paga', 'prohibited_unless:payment_status,Paga', Rule::in(Payment::METHODS)],
+            ] + array_fill_keys(array_merge($protected, $header), ['missing']);
+        }
+        if ($this->route('invoice')->access_key !== null) {
+            $protected = array_merge($protected, $header);
+        }
+
+        return array_fill_keys($protected, ['missing']) + [
+            'issuer_document' => ['sometimes', 'nullable', 'digits:14'],
             'customer_id' => ['sometimes', 'required', 'exists:customers,customer_id'],
             'invoice_number' => ['sometimes', 'required', 'integer', 'min:1'],
             'invoice_serie' => ['sometimes', 'required', 'integer', 'min:1'],
-            'issue_date' => ['sometimes', 'required', 'date'],
-            'due_date' => ['sometimes', 'required', 'date', 'after_or_equal:issue_date'],
-            'payment_method' => ['sometimes', 'required', 'string', 'max:50'],
+            'issue_date' => ['sometimes', 'required', 'date_format:Y-m-d'],
             'delivery_driver' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'payment_terms_days' => ['sometimes', 'required', 'integer', 'min:0'],
-            'payment_status' => ['sometimes', 'required', 'in:A vencer,Vencida,Paga,Cancelada'],
-            'payment_date' => ['sometimes', 'nullable', 'required_if:payment_status,Paga', 'prohibited_unless:payment_status,Paga', 'date'],
-            'amount' => ['prohibited'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return ['missing' => 'Este campo está bloqueado. Registre o recebimento no pagamento da venda.'];
     }
 }

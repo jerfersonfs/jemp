@@ -54,6 +54,7 @@ class LegacySchemaIntegrationTest extends TestCase
             $table->text('warehouse_description')->nullable();
             $table->timestamps();
         });
+        (require database_path('alterations/2026_11_24_015651_add_request_workflow_to_warehouses.php'))->up();
 
         Schema::create('inventory', function (Blueprint $table): void {
             $table->unsignedBigInteger('warehouse_id');
@@ -314,10 +315,7 @@ class LegacySchemaIntegrationTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->get(route('sales.index'))
-            ->assertOk()
-            ->assertSee('Cliente NF')
-            ->assertSee('25,00');
+        $this->get('/vendas')->assertNotFound();
         $this->get(route('invoice-consult.index'))
             ->assertOk()
             ->assertSee('42')
@@ -329,6 +327,7 @@ class LegacySchemaIntegrationTest extends TestCase
     {
         return (int) DB::table('warehouses')->insertGetId([
             'warehouse_name' => $name,
+            'warehouse_situation' => 'Ativo',
             'warehouse_description' => null,
             'created_at' => now(),
             'updated_at' => now(),

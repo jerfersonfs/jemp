@@ -18,8 +18,9 @@ if (reportPage) {
 
     function selectedRows(section) {
         const search = (searchInput?.value || '').trim().toLocaleLowerCase('pt-BR');
+        const preset = presetValue();
         return section.rows.filter((row) => {
-            const matchesPreset = presetValue() === 'all' || row.preset === presetValue();
+            const matchesPreset = preset === 'all' || row.preset === preset || (preset === 'low' && row.preset === 'zero');
             const matchesSearch = !search || Object.entries(row)
                 .filter(([key]) => !['preset', 'detailTarget'].includes(key))
                 .some(([, value]) => String(value).toLocaleLowerCase('pt-BR').includes(search));

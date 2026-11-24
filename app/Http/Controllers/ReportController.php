@@ -2,41 +2,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Inventory;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\StockMovement;
+use App\SalePayment;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ReportController extends Controller
 {
-    public function upcomingInvoices(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function upcomingInvoices(Request $request): JsonResponse
     {
+        $today = Payment::today();
         $days = max(0, min(365, (int) $request->query('days', 7)));
-        $invoices = \App\Models\Invoice::with('customer')
-            ->where('payment_status', 'A vencer')
-            ->whereBetween('due_date', [now()->toDateString(), now()->addDays($days)->toDateString()])
-            ->orderBy('due_date')->get();
+        $invoices = Invoice::with(['customer', 'payment'])->join('payments', 'payments.invoice_id', '=', 'invoices.invoice_id')
+            ->where('invoices.is_cancelled', false)->whereNull('payments.paid_at')
+            ->whereBetween('payments.due_date', [$today, Carbon::parse($today)->addDays($days)->toDateString()])
+            ->orderBy('payments.due_date')->orderBy('invoices.invoice_id')->get(['invoices.*', 'payments.due_date']);
 
         return response()->json(['data' => $invoices]);
     }
 
-    public function movementExtract(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function movementExtract(Request $request): JsonResponse
     {
         $filters = $request->validate([
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'product_id' => ['nullable', 'integer', 'exists:products,product_id'],
         ]);
-        $query = \App\Models\StockMovement::with(['product', 'originWarehouse', 'destinationWarehouse', 'user']);
-        if (!empty($filters['start_date'])) $query->whereDate('movement_date', '>=', $filters['start_date']);
-        if (!empty($filters['end_date'])) $query->whereDate('movement_date', '<=', $filters['end_date']);
-        if (!empty($filters['product_id'])) $query->where('product_id', $filters['product_id']);
+        $query = StockMovement::with(['product', 'originWarehouse', 'destinationWarehouse', 'user']);
+        if (! empty($filters['start_date'])) {
+            $query->whereDate('movement_date', '>=', $filters['start_date']);
+        }
+        if (! empty($filters['end_date'])) {
+            $query->whereDate('movement_date', '<=', $filters['end_date']);
+        }
+        if (! empty($filters['product_id'])) {
+            $query->where('product_id', $filters['product_id']);
+        }
 
         return response()->json(['data' => $query->latest('movement_date')->get()]);
     }
 
-    public function inventoryValuation(): \Illuminate\Http\JsonResponse
+    public function inventoryValuation(): JsonResponse
     {
-        $items = \App\Models\Inventory::with('product')->get()
+        $items = Inventory::with('product')->get()
             ->filter(fn ($item) => $item->product !== null)
             ->map(fn ($item) => [
                 'product_name' => $item->product->product_name,
@@ -58,26 +72,11 @@ class ReportController extends Controller
             'invoice_count' => 0,
         ];
 
-        $overviewInventory = DB::table('vw_estoque')
-            ->orderBy('product_name')
-            ->orderBy('warehouse_name')
-            ->get();
         $inventory = DB::table('vw_estoque_atual')
             ->orderBy('product_name')
             ->orderBy('warehouse_name')
             ->get();
-        $lowInventory = DB::table('vw_estoque_baixo')
-            ->orderBy('product_name')
-            ->orderBy('warehouse_name')
-            ->get();
-        $invoices = DB::table('vw_notas_fiscais')
-            ->orderByDesc('issue_date')
-            ->orderByDesc('invoice_id')
-            ->get();
-        $overdueInvoices = DB::table('vw_notas_vencidas')
-            ->orderByDesc('due_date')
-            ->orderByDesc('invoice_id')
-            ->get();
+        $invoices = Invoice::with(['customer', 'payment'])->orderByDesc('issue_date')->orderByDesc('invoice_id')->get();
         $movementDocuments = DB::table('vw_movimentacoes')
             ->get(['sm_id', 'associated_document'])
             ->keyBy('sm_id');
@@ -94,21 +93,14 @@ class ReportController extends Controller
             ->orderBy('product_name')
             ->get();
 
-        $overviewRows = $overviewInventory
-            ->map(fn (object $row): array => $this->inventoryRow($row))
-            ->all();
         $inventoryRows = $inventory
             ->map(fn (object $row): array => $this->inventoryRow($row))
             ->all();
-        $lowInventoryRows = $lowInventory
-            ->map(fn (object $row): array => $this->inventoryRow($row))
-            ->all();
+        $lowInventoryRows = collect($inventoryRows)->whereIn('preset', ['low', 'zero'])->values()->all();
         $invoiceRows = $invoices
             ->map(fn (object $invoice): array => $this->invoiceRow($invoice))
             ->all();
-        $overdueInvoiceRows = $overdueInvoices
-            ->map(fn (object $invoice): array => $this->invoiceRow($invoice))
-            ->all();
+        $overdueInvoiceRows = collect($invoiceRows)->where('preset', 'overdue')->values()->all();
         $productSalesRows = $productSales->map(function (object $row): array {
             $unitsSold = (int) $row->units_sold_last_90_days;
             $revenue = (float) $row->revenue_last_90_days;
@@ -173,7 +165,7 @@ class ReportController extends Controller
                 'label' => 'Visão Geral',
                 'heading' => 'Visão geral da operação',
                 'description' => 'Estoque por barracão, condição e situação atual.',
-                'rows' => $overviewRows,
+                'rows' => $inventoryRows,
                 'presets' => [
                     ['value' => 'all', 'label' => 'Todos os produtos'],
                     ['value' => 'low', 'label' => 'Estoque baixo'],
@@ -218,8 +210,10 @@ class ReportController extends Controller
                     ['key' => 'document', 'label' => 'Documento'],
                     ['key' => 'date', 'label' => 'Emissão'],
                     ['key' => 'due_date', 'label' => 'Vencimento'],
-                    ['key' => 'payment_method', 'label' => 'Pagamento'],
-                    ['key' => 'payment_date', 'label' => 'Data de pagamento'],
+                    ['key' => 'paid_total', 'label' => 'Recebido'],
+                    ['key' => 'open_total', 'label' => 'A receber'],
+                    ['key' => 'overdue_total', 'label' => 'Vencido'],
+                    ['key' => 'installments', 'label' => 'Parcelamento'],
                     ['key' => 'value', 'label' => 'Valor calculado'],
                     ['key' => 'status', 'label' => 'Situação', 'type' => 'status'],
                     ['key' => 'detailTarget', 'label' => 'Ações', 'type' => 'detail', 'target' => 'report-record-details', 'detailLabel' => 'Ver'],
@@ -272,7 +266,7 @@ class ReportController extends Controller
             'stock' => [
                 'label' => 'Estoque',
                 'heading' => 'Estoque atual',
-                'description' => 'Posição dos produtos por barracão e condição; baixo estoque segue o limite de 20 unidades do Notion.',
+                'description' => 'Saldo e situação de cada produto por barracão e condição.',
                 'rows' => $inventoryRows,
                 'presets' => [
                     ['value' => 'all', 'label' => 'Todos os produtos'],
@@ -383,11 +377,7 @@ class ReportController extends Controller
     private function inventoryRow(object $row): array
     {
         $quantity = (int) $row->theoretical_balance;
-        $status = $row->stock_status ?? match (true) {
-            $quantity === 0 => 'Zerado',
-            $quantity <= 20 => 'Estoque baixo',
-            default => 'Normal',
-        };
+        $status = $row->stock_status;
 
         return [
             'product_id' => $row->product_id,
@@ -402,27 +392,33 @@ class ReportController extends Controller
             'preset' => match ($status) {
                 'Estoque baixo' => 'low',
                 'Zerado' => 'zero',
+                'Fora de venda' => 'unavailable',
                 default => 'normal',
             },
         ];
     }
 
-    /** @return array{number: string, series: string, customer: string, document: string, date: string, due_date: string, payment_method: string|null, payment_date: string, value: string, raw_total: float, status: string, preset: string} */
-    private function invoiceRow(object $invoice): array
+    private function invoiceRow(Invoice $invoice): array
     {
+        $payment = $invoice->payment;
+        $status = $invoice->financialStatus();
+        $value = 'R$ '.number_format((float) $invoice->amount, 2, ',', '.');
+
         return [
             'number' => (string) $invoice->invoice_number,
             'series' => (string) $invoice->invoice_serie,
-            'customer' => $invoice->customer_name,
-            'document' => $invoice->customer_document,
+            'customer' => $invoice->customer->customer_name,
+            'document' => $invoice->customer->customer_document,
             'date' => $this->formatDate($invoice->issue_date, 'd/m/Y'),
-            'due_date' => $this->formatDate($invoice->due_date, 'd/m/Y'),
-            'payment_method' => $invoice->payment_method,
-            'payment_date' => $this->formatDate($invoice->payment_date, 'd/m/Y'),
-            'value' => 'R$ '.number_format((float) $invoice->total_value, 2, ',', '.'),
-            'raw_total' => (float) $invoice->total_value,
-            'status' => $invoice->payment_status,
-            'preset' => match ($invoice->payment_status) {
+            'due_date' => $this->formatDate($payment?->due_date, 'd/m/Y'),
+            'paid_total' => $status === 'Paga' ? $value : 'R$ 0,00',
+            'open_total' => in_array($status, ['Vencida', 'A vencer'], true) ? $value : 'R$ 0,00',
+            'overdue_total' => $status === 'Vencida' ? $value : 'R$ 0,00',
+            'installments' => $payment ? SalePayment::describe($invoice->amount, $payment->installment_count) : '—',
+            'value' => $value,
+            'raw_total' => (float) $invoice->amount,
+            'status' => $status,
+            'preset' => match ($status) {
                 'Paga' => 'paid',
                 'A vencer' => 'due',
                 'Vencida' => 'overdue',

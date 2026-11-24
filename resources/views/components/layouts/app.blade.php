@@ -31,6 +31,7 @@
     @else
         {{ $slot }}
     @endif
+    <x-status.feedback :modal-loading="(bool) $page" :validation-message="$page ? ($errors ?? null)?->first() : null" />
 </body>
 
 </html>

@@ -82,3 +82,19 @@ if (document.readyState === 'loading') {
 } else {
     animateHomeStatistics();
 }
+
+const stockOverview = document.querySelector('[data-critical-stock-overview]');
+if (stockOverview) {
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) window.location.reload();
+    });
+}
+if ('BroadcastChannel' in window && (stockOverview || document.querySelector('[data-stock-settings-saved]'))) {
+    const changes = new BroadcastChannel('jemp-stock-settings');
+    if (stockOverview) {
+        changes.onmessage = () => window.location.reload();
+    } else {
+        changes.postMessage('saved');
+        changes.close();
+    }
+}

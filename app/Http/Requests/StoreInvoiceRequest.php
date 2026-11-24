@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\SalePayment;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -29,17 +30,15 @@ class StoreInvoiceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        return SalePayment::rules() + [
             'customer_id' => ['required', 'exists:customers,customer_id'],
             'invoice_number' => ['required', 'integer', 'min:1'],
             'invoice_serie' => ['required', 'integer', 'min:1'],
             'issue_date' => ['sometimes', 'required', 'date'],
-            'due_date' => ['required', 'date', 'after_or_equal:issue_date'],
-            'payment_method' => ['required', 'string', 'max:50'],
             'delivery_driver' => ['nullable', 'string', 'max:100'],
-            'payment_terms_days' => ['required', 'integer', 'min:0'],
-            'payment_status' => ['sometimes', 'in:A vencer,Vencida,Paga,Cancelada'],
-            'payment_date' => ['nullable', 'required_if:payment_status,Paga', 'prohibited_unless:payment_status,Paga', 'date'],
+            'items' => ['required', 'array', 'list', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,product_id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:2147483647'],
             'amount' => ['prohibited'],
         ];
     }

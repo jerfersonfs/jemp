@@ -20,7 +20,6 @@ class CustomerResource extends JsonResource
             'customer_document' => (string) $this->customer_document,
             'customer_contact' => $this->customer_contact ?? 'Não informado',
             'customer_email' => $this->customer_email ?? 'Não informado',
-            'default_payment_terms' => (string) $this->customer_payment_terms,
         ];
     }
 }

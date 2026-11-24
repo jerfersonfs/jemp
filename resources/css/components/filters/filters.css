@@ -1,21 +1,50 @@
-.jemp-filter-bar {
+.jemp-filter-bar,
+.jemp-vertical-filter {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    min-width: 0;
     gap: var(--spacing-md);
-    border: 1px solid color-mix(in srgb, var(--color-secondary) 14%, white);
-    border-radius: .75rem;
-    background: white;
     padding: var(--spacing-md);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-card);
+    background: var(--filter-surface);
+    box-shadow: var(--shadow-surface);
+}
+
+.jemp-filter-bar {
+    container: jemp-filters / inline-size;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: end;
+}
+
+.jemp-filter-bar:has(> .jemp-filter-bar__actions) {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+:is(.jemp-filter-bar, .jemp-vertical-filter) .jemp-input__label {
+    color: var(--color-caption);
+    font-size: .75rem;
+}
+
+:is(.jemp-filter-bar, .jemp-vertical-filter) .jemp-input__control-wrap:not(:focus-within) {
+    border-color: color-mix(in srgb, var(--color-subheading) 54%, white);
+    box-shadow: none;
+}
+
+:is(.jemp-filter-bar, .jemp-vertical-filter) .jemp-input__control {
+    min-height: 2.625rem;
+    font-size: .875rem;
 }
 
 .jemp-filter-bar__fields {
     display: grid;
     min-width: 0;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     align-items: end;
     gap: var(--spacing-md);
+}
+
+@container jemp-filters (min-width: 32rem) {
+    .jemp-filter-bar--search .jemp-filter-bar__fields { grid-template-columns: 2fr 1fr; }
 }
 
 .jemp-filter-bar__actions {
@@ -26,15 +55,8 @@
 }
 
 .jemp-vertical-filter {
-    display: grid;
     min-height: 15rem;
     align-content: start;
-    gap: var(--spacing-md);
-    border: 1px solid color-mix(in srgb, var(--color-secondary) 12%, white);
-    border-radius: .75rem;
-    background: white;
-    padding: var(--spacing-md);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
 .jemp-vertical-filter__options {
@@ -101,7 +123,7 @@
 }
 
 @media (max-width: 640px) {
-    .jemp-filter-bar {
+    .jemp-filter-bar:has(> .jemp-filter-bar__actions) {
         grid-template-columns: 1fr;
     }
 

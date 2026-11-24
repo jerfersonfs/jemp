@@ -107,7 +107,6 @@ class CustomerController extends Controller
             'customer_document' => ['required', 'string', 'max:20', Rule::unique('customers', 'customer_document')->ignore($cliente?->customer_id, 'customer_id')],
             'customer_contact' => ['nullable', 'string', 'max:30'],
             'customer_email' => ['nullable', 'email', 'max:255'],
-            'customer_payment_terms' => ['required', 'string', 'max:255'],
         ];
     }
 }

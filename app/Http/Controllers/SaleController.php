@@ -6,10 +6,12 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Warehouse;
+use App\SalePayment;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SaleController extends Controller
@@ -46,32 +48,35 @@ class SaleController extends Controller
     {
         return view('invoice_consult.invoice-consult', [
             'page' => 'invoice-consult',
+            'saleableConditions' => DB::table('stock_condition_settings')->where('saleable', true)->orderBy('product_condition')->pluck('product_condition'),
             'invoices' => $this->invoiceRows(forConsult: true),
             'customers' => Customer::query()->orderBy('customer_name')->get(['customer_id', 'customer_name', 'customer_document']),
             'products' => Product::query()->orderBy('product_name')->get(['product_id', 'product_name', 'sku', 'cost_price']),
-            'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(['warehouse_id', 'warehouse_name']),
+            'warehouses' => Warehouse::query()->active()->orderBy('warehouse_name')->get(['warehouse_id', 'warehouse_name']),
         ]);
     }
 
     /** @return Collection<int, array<string, int|float|string>> */
     private function invoiceRows(bool $forConsult = false): Collection
     {
+
         return Invoice::query()
-            ->with(['customer', 'items.product'])
+            ->with(['customer', 'items.product', 'payment'])
             ->latest('issue_date')
             ->get()
             ->map(function (Invoice $invoice) use ($forConsult): array {
-                $total = $invoice->calculatedAmount();
+                $total = (float) $invoice->amount;
                 $customerName = $invoice->customer?->customer_name ?? '—';
 
-                if (!$forConsult) {
+                if (! $forConsult) {
                     return [
                         'number' => $invoice->invoice_number,
                         'series' => $invoice->invoice_serie,
+                        'issuer_document' => $invoice->issuer_document ?: 'Não informado',
                         'customer' => $customerName,
                         'date' => $invoice->issue_date->format('d/m/Y'),
                         'items' => $invoice->items->sum('quantity'),
-                        'status' => $invoice->payment_status,
+                        'status' => $invoice->financialStatus(),
                         'total' => $total,
                     ];
                 }
@@ -83,6 +88,8 @@ class SaleController extends Controller
                     'product_id' => (string) $item->product_id,
                     'product' => $item->product?->product_name ?? 'Produto',
                     'sku' => $item->product?->sku ?? '—',
+                    'external_code' => $item->external_code,
+                    'external_description' => $item->external_description,
                     'quantity' => (int) $item->quantity,
                     'unit_price' => number_format((float) $item->unit_price, 2, '.', ''),
                     'unit_price_display' => 'R$ '.number_format((float) $item->unit_price, 2, ',', '.'),
@@ -91,6 +98,10 @@ class SaleController extends Controller
 
                 return [
                     'id' => $id,
+                    'issuer_document_raw' => $invoice->issuer_document,
+                    'imported_xml' => $invoice->access_key !== null,
+                    'issuer_document' => $invoice->issuer_document ?: 'Não informado',
+                    'access_key' => $invoice->access_key,
                     'customer_id' => (string) $invoice->customer_id,
                     'number' => (string) $invoice->invoice_number,
                     'series' => (string) $invoice->invoice_serie,
@@ -98,18 +109,13 @@ class SaleController extends Controller
                     'document' => $invoice->customer?->customer_document ?? '—',
                     'issue_date' => $invoice->issue_date->format('d/m/Y'),
                     'issue_date_iso' => $invoice->issue_date->format('Y-m-d'),
-                    'due_date' => $invoice->due_date->format('d/m/Y'),
-                    'due_date_iso' => $invoice->due_date->format('Y-m-d'),
-                    'payment_date' => $invoice->payment_date?->format('d/m/Y') ?? '—',
-                    'payment_date_iso' => $invoice->payment_date?->format('Y-m-d') ?? '',
-                    'amount' => number_format($total, 2, '.', ''),
-                    'payment_method' => $invoice->payment_method,
-                    'payment_terms_days' => (string) $invoice->payment_terms_days,
+                    'due_date' => $invoice->payment ? Carbon::parse($invoice->payment->due_date)->format('d/m/Y') : '—',
+                    'payment_date' => $invoice->payment?->paid_at ? Carbon::parse($invoice->payment->paid_at)->format('d/m/Y') : '—',
+                    'installments' => $invoice->payment ? SalePayment::describe($invoice->amount, $invoice->payment->installment_count) : '—',
+                    'payment' => $invoice->payment,
                     'total' => $formattedTotal,
-                    'status' => $invoice->payment_status,
+                    'status' => $invoice->financialStatus(),
                     'details_target' => 'invoice-details-'.$id,
-                    'edit_target' => 'invoice-edit-'.$id,
-                    'add_item_target' => 'invoice-add-item-'.$id,
                     'search_terms' => $invoice->invoice_number.' '.$invoice->invoice_serie.' '.$customerName.' '.($invoice->customer?->customer_document ?? ''),
                     'items' => $items,
                 ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\SalePayment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,13 +21,17 @@ class InvoiceResource extends JsonResource
             'invoice_number' => (string) $this->invoice_number,
             'invoice_serie' => (int) $this->invoice_serie,
             'issue_date' => $this->issue_date->format('Y-m-d'),
-            'due_date' => $this->due_date->format('Y-m-d'),
-            'payment_method' => (string) $this->payment_method,
             'delivery_driver' => (string) $this->delivery_driver,
-            'payment_terms_days' => (int) $this->payment_terms_days,
-            'payment_status' => (string) $this->payment_status,
-            'payment_date' => $this->payment_date?->format('Y-m-d'),
-            'amount' => $this->calculatedAmount(),
+            'amount' => $this->amount,
+            'status' => $this->resource->financialStatus(),
+            'payment_status' => $this->resource->financialStatus(),
+            'due_date' => $this->payment?->due_date,
+            'payment_method' => $this->payment?->payment_method,
+            'payment_date' => $this->payment?->paid_at,
+            'payment_terms_days' => $this->payment?->payment_terms_days,
+            'payment' => $this->payment,
+            'installments' => $this->payment ? SalePayment::breakdown($this->amount, $this->payment->installment_count) : [],
+            'items' => $this->whenLoaded('items'),
         ];
     }
 }
