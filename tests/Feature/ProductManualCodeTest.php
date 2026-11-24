@@ -93,7 +93,7 @@ class ProductManualCodeTest extends TestCase
 
     public function test_web_form_accepts_manual_code_and_initial_inventory(): void
     {
-        $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Teste'], 'warehouse_id');
+        $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Teste', 'warehouse_situation' => 'Ativo'], 'warehouse_id');
         $this->actingAs(User::factory()->create())
             ->post(route('products.store'), [...$this->payload(), 'warehouse_id' => $warehouse,
                 'product_condition' => 'Novo', 'theoretical_balance' => 5])
@@ -147,6 +147,7 @@ class ProductManualCodeTest extends TestCase
             $table->text('warehouse_description')->nullable();
             $table->timestamps();
         });
+        (require database_path('alterations/2026_11_24_015651_add_request_workflow_to_warehouses.php'))->up();
         Schema::create('inventory', function (Blueprint $table): void {
             $table->unsignedBigInteger('warehouse_id');
             $table->unsignedBigInteger('product_id');

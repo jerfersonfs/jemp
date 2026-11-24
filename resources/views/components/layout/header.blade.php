@@ -5,6 +5,7 @@
         'home' => 'Visão geral',
         'products' => 'Produtos',
         'customers' => 'Clientes',
+        'warehouses' => 'Armazéns',
         'invoice-consult' => 'Consulta NF-e',
         'sales' => 'Vendas',
         'entrance' => 'Entradas',

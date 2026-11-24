@@ -5,6 +5,7 @@
         [
             ['page' => 'products', 'route' => 'products.index', 'label' => 'Produtos', 'icon' => 'cube'],
             ['page' => 'customers', 'route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'users-three'],
+            ['page' => 'warehouses', 'route' => 'warehouses.index', 'label' => 'Armazéns', 'icon' => 'warehouse'],
         ],
         [
             ['page' => 'invoice-consult', 'route' => 'invoice-consult.index', 'label' => 'Consulta NF-e', 'icon' => 'note-pencil'],

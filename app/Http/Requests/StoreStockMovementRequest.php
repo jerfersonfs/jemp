@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Warehouse;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStockMovementRequest extends FormRequest
@@ -14,8 +15,8 @@ class StoreStockMovementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'origin_warehouse_id' => ['nullable', 'integer'],
-            'dest_warehouse_id' => ['nullable', 'integer'],
+            'origin_warehouse_id' => ['nullable', 'integer', Warehouse::activeIdRule()],
+            'dest_warehouse_id' => ['nullable', 'integer', Warehouse::activeIdRule()],
             'invoice_id' => ['nullable', 'integer'],
             'product_id' => ['required', 'integer'],
             'user_id' => ['required', 'integer'],

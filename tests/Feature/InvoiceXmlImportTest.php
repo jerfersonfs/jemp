@@ -239,7 +239,7 @@ class InvoiceXmlImportTest extends TestCase
         $this->actingAs(User::factory()->create());
         $data = $this->catalog();
         $productId = $data['fixture_items'][0]['product_id'];
-        $destination = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Destino teste']);
+        $destination = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Destino teste', 'warehouse_situation' => 'Ativo']);
         $this->post('/entradas', ['date' => '2026-11-13T10:00', 'product_id' => $productId,
             'product_condition' => 'Novo', 'quantity' => 2, 'dest_warehouse_id' => $data['warehouse_id'],
             'is_fiscal' => false])->assertRedirect(route('entrance.index'))->assertSessionHasNoErrors();
@@ -267,7 +267,7 @@ class InvoiceXmlImportTest extends TestCase
         $data = $this->catalog();
         $productId = $data['fixture_items'][0]['product_id'];
         $origin = $data['warehouse_id'];
-        $destination = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Destino para consultar']);
+        $destination = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Destino para consultar', 'warehouse_situation' => 'Ativo']);
         DB::table('inventory')->insert([
             ['product_id' => $productId, 'warehouse_id' => $origin, 'product_condition' => 'Reforma', 'theoretical_balance' => 4],
             ['product_id' => $productId, 'warehouse_id' => $destination, 'product_condition' => 'Novo', 'theoretical_balance' => 3],
@@ -443,7 +443,7 @@ class InvoiceXmlImportTest extends TestCase
     private function catalog(): array
     {
         $customer = Customer::query()->create(['customer_name' => 'Cliente fictício', 'customer_document' => '11.111.111/0001-91']);
-        $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Armazém teste']);
+        $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Armazém teste', 'warehouse_situation' => 'Ativo']);
         $items = [];
         foreach (['A', 'B'] as $index => $suffix) {
             $product = Product::query()->create(['sku' => ['EXT-PAL-001', '0007'][$index], 'product_name' => 'Produto interno '.$suffix,
@@ -519,6 +519,7 @@ class InvoiceXmlImportTest extends TestCase
             $table->text('warehouse_description')->nullable();
             $table->timestamps();
         });
+        (require database_path('alterations/2026_11_24_015651_add_request_workflow_to_warehouses.php'))->up();
         Schema::create('inventory', function (Blueprint $table): void {
             $table->unsignedBigInteger('warehouse_id');
             $table->unsignedBigInteger('product_id');

@@ -10,7 +10,6 @@
         <x-cards.stat-card label="Total Recebido" :value="$receivedTotal" variant="mint" :href="route('reports.index')" />
         <x-cards.stat-card label="Total a Receber" :value="$receivableTotal" :href="route('reports.index')" />
         <x-cards.stat-card label="Saldo vencido" :value="$overdueTotal" :href="route('reports.index')" />
-        <x-cards.stat-card label="Notas Emitidas"  :value="$invoiceCount.' NF-e'" variant="mint" :href="route('invoice-consult.index')" />
         <x-cards.stat-card label="Estoque Crítico" :value="$criticalProductCount.' Produtos'" :href="route('products.index', ['estoque' => 'baixo'])" />
     </section>
 

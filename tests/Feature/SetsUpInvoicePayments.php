@@ -39,7 +39,7 @@ trait SetsUpInvoicePayments
     {
         $this->actingAs(User::factory()->create());
         $customer = Customer::query()->create(['customer_name' => 'Cliente teste', 'customer_document' => '11111111000191']);
-        $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Teste']);
+        $warehouse = DB::table('warehouses')->insertGetId(['warehouse_name' => 'Teste', 'warehouse_situation' => 'Ativo']);
         foreach (['EXT-PAL-001', '0007'] as $index => $sku) {
             $product = Product::query()->create(['sku' => $sku, 'product_name' => $index === 0 ? 'PALETE FICTICIO XML A' : 'Outra descrição',
                 'category' => 'PBR', 'material' => 'Madeira', 'cost_price' => 5, 'length_mm' => 1200, 'width_mm' => 1000]);
@@ -103,6 +103,7 @@ trait SetsUpInvoicePayments
             $table->text('warehouse_description')->nullable();
             $table->timestamps();
         });
+        (require database_path('alterations/2026_11_24_015651_add_request_workflow_to_warehouses.php'))->up();
         Schema::create('inventory', function (Blueprint $table): void {
             $table->unsignedBigInteger('warehouse_id');
             $table->unsignedBigInteger('product_id');

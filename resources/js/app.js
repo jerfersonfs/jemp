@@ -12,4 +12,5 @@ import './pages/products.js';
 import './pages/entrance.js';
 import './pages/sales.js';
 import './pages/customers.js';
+import './pages/warehouses.js';
 import './pages/invoice-consult.js';

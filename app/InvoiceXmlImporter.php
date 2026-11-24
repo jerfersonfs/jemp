@@ -17,7 +17,7 @@ class InvoiceXmlImporter
     {
         $document = $this->parse($contents);
         $this->assertAvailable($document);
-        $products = Product::query()->with('inventory')->orderBy('product_name')->get();
+        $products = Product::query()->with(['inventory' => fn ($stock) => $stock->whereHas('warehouse', fn ($query) => $query->active())])->orderBy('product_name')->get();
         $customers = Customer::query()->orderBy('customer_name')->get();
 
         return [

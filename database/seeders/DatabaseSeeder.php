@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -18,10 +18,12 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('senha123'),
         ]);
 
-        Warehouse::create([
+        $warehouse = new Warehouse([
             'warehouse_name' => 'Service Base',
             'warehouse_description' => 'Cargas Gerais',
         ]);
+        $warehouse->warehouse_situation = Warehouse::ACTIVE;
+        $warehouse->save();
 
         Product::create([
             'sku' => 'PBR-TEST-001',

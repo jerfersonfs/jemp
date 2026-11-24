@@ -10,6 +10,7 @@ use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -29,6 +30,11 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('produtos', ProductController::class)->only(['store', 'update', 'destroy'])->names('products');
     Route::get('/clientes', [CustomerController::class, 'index'])->name('customers.index');
     Route::resource('clientes', CustomerController::class)->only(['store', 'update', 'destroy'])->names('customers');
+    Route::get('/armazens', [WarehouseController::class, 'page'])->name('warehouses.index');
+    Route::post('/armazens', [WarehouseController::class, 'store'])->name('warehouses.store');
+    Route::prefix('api')->name('api.')->group(function (): void {
+        Route::apiResource('warehouses', WarehouseController::class)->only(['index', 'show', 'store']);
+    });
     Route::get('/consulta-nfe', [SaleController::class, 'invoices'])->name('invoice-consult.index');
     Route::post('/api/invoices/{invoice}/payment/settle', [InvoiceController::class, 'settle'])->name('payments.settle');
     Route::post('/api/invoices', [InvoiceController::class, 'store'])->name('api.invoices.store');

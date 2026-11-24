@@ -52,7 +52,7 @@ class SaleController extends Controller
             'invoices' => $this->invoiceRows(forConsult: true),
             'customers' => Customer::query()->orderBy('customer_name')->get(['customer_id', 'customer_name', 'customer_document']),
             'products' => Product::query()->orderBy('product_name')->get(['product_id', 'product_name', 'sku', 'cost_price']),
-            'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(['warehouse_id', 'warehouse_name']),
+            'warehouses' => Warehouse::query()->active()->orderBy('warehouse_name')->get(['warehouse_id', 'warehouse_name']),
         ]);
     }
 

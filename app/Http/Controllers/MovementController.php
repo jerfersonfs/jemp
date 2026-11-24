@@ -28,13 +28,13 @@ class MovementController extends Controller
             'product_id' => ['required', 'integer', 'exists:products,product_id'],
             'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
             'warehouse_ids' => ['required', 'array', 'min:1', 'max:2'],
-            'warehouse_ids.*' => ['required', 'integer', 'distinct', 'exists:warehouses,warehouse_id'],
+            'warehouse_ids.*' => ['required', 'integer', 'distinct', Warehouse::activeIdRule()],
         ], [
             'product_id.required' => 'Selecione um produto para consultar o saldo.',
             'product_id.exists' => 'O produto selecionado não existe.',
             'product_condition.in' => 'Selecione uma condição válida para consultar o saldo.',
             'warehouse_ids.required' => 'Selecione um armazém para consultar o saldo.',
-            'warehouse_ids.*.exists' => 'Um dos armazéns selecionados não existe.',
+            'warehouse_ids.*.exists' => 'Selecione apenas armazéns ativos.',
         ]);
         $warehouseIds = array_map('intval', $data['warehouse_ids']);
         $balances = DB::table('inventory')->where('product_id', $data['product_id'])
@@ -63,7 +63,7 @@ class MovementController extends Controller
     public function storeEntry(Request $request): RedirectResponse
     {
         $data = $request->validate($this->commonRules() + [
-            'dest_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+            'dest_warehouse_id' => ['required', 'integer', Warehouse::activeIdRule()],
         ]);
         $data['origin_warehouse_id'] = null;
 
@@ -82,8 +82,8 @@ class MovementController extends Controller
     public function storeTransfer(Request $request): RedirectResponse
     {
         $data = $request->validate($this->commonRules() + [
-            'origin_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id', 'different:dest_warehouse_id'],
-            'dest_warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id', 'different:origin_warehouse_id'],
+            'origin_warehouse_id' => ['required', 'integer', Warehouse::activeIdRule(), 'different:dest_warehouse_id'],
+            'dest_warehouse_id' => ['required', 'integer', Warehouse::activeIdRule(), 'different:origin_warehouse_id'],
         ]);
 
         $this->createMovement($data, 'Transferência');
@@ -119,9 +119,7 @@ class MovementController extends Controller
                     (string) $invoice->invoice_id => $invoice->invoice_number.' / '.$invoice->invoice_serie,
                 ])
                 ->all(),
-            'locations' => Warehouse::query()->orderBy('warehouse_name')->get()->mapWithKeys(
-                fn (Warehouse $warehouse): array => [(string) $warehouse->warehouse_id => $warehouse->warehouse_name],
-            )->all(),
+            'locations' => Warehouse::query()->active()->orderBy('warehouse_name')->pluck('warehouse_name', 'warehouse_id')->all(),
         ]);
     }
 

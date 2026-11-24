@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Warehouse;
 use App\SalePayment;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +12,7 @@ class ImportInvoiceXmlRequest extends PreviewInvoiceXmlRequest
     {
         return parent::rules() + SalePayment::rules() + [
             'customer_id' => ['required', 'integer', 'exists:customers,customer_id'],
-            'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+            'warehouse_id' => ['required', 'integer', Warehouse::activeIdRule()],
             'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
             'items' => ['prohibited'],
         ];
@@ -21,6 +22,7 @@ class ImportInvoiceXmlRequest extends PreviewInvoiceXmlRequest
     {
         return parent::messages() + [
             'required' => 'Preencha :attribute.', 'exists' => 'O cadastro selecionado em :attribute não existe.',
+            'warehouse_id.exists' => 'Selecione um armazém de origem ativo.',
             'items.prohibited' => 'Os produtos são identificados automaticamente pelo código do XML.',
             'date_format' => 'Informe uma data válida em :attribute.',
         ];

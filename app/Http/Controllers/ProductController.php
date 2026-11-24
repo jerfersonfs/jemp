@@ -33,7 +33,7 @@ class ProductController extends Controller
         return view('products.products', [
             'page' => 'products',
             'products' => $products,
-            'warehouses' => Warehouse::query()->orderBy('warehouse_name')->get(),
+            'warehouses' => Warehouse::query()->active()->orderBy('warehouse_name')->get(),
         ]);
     }
 
@@ -47,6 +47,7 @@ class ProductController extends Controller
                 $product = Product::query()->create($this->productData($data));
 
                 if (isset($data['warehouse_id'])) {
+                    Warehouse::lockActive(['warehouse_id' => $data['warehouse_id']]);
                     DB::table('inventory')->insert([
                         'warehouse_id' => $data['warehouse_id'],
                         'product_id' => $product->product_id,
@@ -59,6 +60,8 @@ class ProductController extends Controller
 
                 return $product->load('inventory.warehouse');
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Falha ao cadastrar produto.'], 500);
@@ -118,9 +121,13 @@ class ProductController extends Controller
 
         try {
             DB::transaction(function () use ($produto): void {
+                $warehouseIds = $produto->inventory()->distinct()->pluck('warehouse_id')->all();
+                Warehouse::lockActive($warehouseIds);
                 DB::table('inventory')->where('product_id', $produto->product_id)->delete();
                 $produto->delete();
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             if (request()->expectsJson()) {
                 return response()->json(['message' => 'Falha ao excluir produto.'], 500);
@@ -184,7 +191,7 @@ class ProductController extends Controller
 
         if ($includeInitialInventory) {
             $rules += [
-                'warehouse_id' => ['required', 'integer', 'exists:warehouses,warehouse_id'],
+                'warehouse_id' => ['required', 'integer', Warehouse::activeIdRule()],
                 'product_condition' => ['required', Rule::in(['Novo', 'Reforma', 'Descarte'])],
                 'theoretical_balance' => ['required', 'integer', 'min:0', 'max:2147483647'],
             ];

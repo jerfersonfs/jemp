@@ -4,6 +4,7 @@ namespace App;
 
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -31,6 +32,8 @@ class StockLedger
         if (! $validWarehouses || $quantity < 1 || $quantity > 2147483647) {
             throw ValidationException::withMessages(['movement_type' => 'Confira a quantidade, origem e destino da movimentação.']);
         }
+
+        Warehouse::lockActive(['origin_warehouse_id' => $origin, 'dest_warehouse_id' => $destination]);
 
         if ($data['movement_type'] === 'Saída' && ! DB::table('stock_condition_settings')
             ->where('product_condition', $data['product_condition'])->sharedLock()->value('saleable')) {

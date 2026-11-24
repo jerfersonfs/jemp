@@ -8,7 +8,6 @@ use App\Http\Controllers\MovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockMovementController;
-use App\Http\Controllers\WarehouseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,7 +24,6 @@ Route::name('api.')->group(function (): void {
     Route::apiResource('inventories', InventoryController::class);
     Route::apiResource('invoice-items', InvoiceItemController::class);
     Route::apiResource('stock-movements', StockMovementController::class);
-    Route::apiResource('warehouses', WarehouseController::class);
     Route::apiResource('invoices', InvoiceController::class)->only(['index', 'show']);
 });
 
